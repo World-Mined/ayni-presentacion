@@ -85,3 +85,4 @@ El simulador de iOS a veces no maneja correctamente el caché del Service Worker
    - Cierra Safari y abre la app desde el nuevo icono de **AYNI** en tu pantalla de inicio.
 6. Ahora, pon tu iPhone en **Modo Avión** (sin Wi-Fi ni datos móviles).
 7. Abre la app de AYNI en tu pantalla de inicio. Verás cómo carga toda la presentación interactiva instantáneamente y de forma fluida.
+
