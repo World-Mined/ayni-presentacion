@@ -64,7 +64,7 @@ export const MOBILE_HOME_CARD_IMAGES: Record<string, ImageMetadata> = {
   PRODUCTOS: mobileProductosCard,
   'PLAN DE COMPENSACIÓN': mobilePlanCard,
   BONOS: mobileBonosCard,
-} as const;
+};
 
 export const MOBILE_HOME_BACKGROUND = mobileHomeBackground;
 export const MOBILE_PRODUCTS_BACKGROUND = mobileProductosBackground;
@@ -73,7 +73,7 @@ export const MOBILE_PRODUCTS_CARD_IMAGES: Record<string, ImageMetadata> = {
   'CAPUCCI 360': mobileCapucciCard,
   'MORAVI 360': mobileMoraviCard,
   'RESET 360': mobileResetCard,
-} as const;
+};
 
 export const MOBILE_PRICING_ASSETS = {
   background: mobilePricingBackground,
@@ -92,7 +92,7 @@ export const MOBILE_FIGMA_BACKGROUNDS: Record<string, ImageMetadata> = {
   'reset-360': mobileResetBackground,
   'reset-formula': mobileResetFormulaBackground,
   'bonos-2': mobileBonusTravel,
-} as const;
+};
 
 export const MOBILE_MENU_ASSETS = {
   ayniLogo: mobileMenuAyniLogo,
