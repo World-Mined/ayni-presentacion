@@ -1,33 +1,20 @@
 ---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Layout from '../layouts/Layout.astro';
 import PWA from '../components/PWA.astro';
 import InstallPrompt from '../components/InstallPrompt.astro';
 import DesktopSlideHeader from '../components/DesktopSlideHeader.astro';
 import { SLIDES, type Slide } from '../data/slides';
-
-const MOBILE_HOME_CARD_IMAGES: Record<string, string> = {
-  PRODUCTOS: '/assets/mobile-home/productos-card.png',
-  'PLAN DE COMPENSACIÓN': '/assets/mobile-home/plan-card.png',
-  BONOS: '/assets/mobile-home/bonos-card.png',
-};
-
-const MOBILE_HOME_BACKGROUND = '/assets/mobile-home/home-background.png';
-const MOBILE_PRODUCTS_BACKGROUND = '/assets/mobile-products/productos-background.png';
-
-
-const MOBILE_PRODUCTS_CARD_IMAGES: Record<string, string> = {
-  'CAPUCCI 360': '/assets/mobile-products/capucci-card.png',
-  'MORAVI 360': '/assets/mobile-products/moravi-card.png',
-  'RESET 360': '/assets/mobile-products/reset-card.png',
-};
-
-const MOBILE_PRICING_ASSETS = {
-  background: '/assets/mobile-pricing/background.png',
-  logo: '/assets/mobile-pricing/ayni-logo.png',
-  capucci: '/assets/mobile-pricing/capucci.png',
-  moravi: '/assets/mobile-pricing/moravi.png',
-  reset: '/assets/mobile-pricing/reset.png',
-} as const;
+import {
+  MOBILE_FIGMA_BACKGROUNDS,
+  MOBILE_HOME_BACKGROUND,
+  MOBILE_HOME_CARD_IMAGES,
+  MOBILE_MENU_ASSETS,
+  MOBILE_PRICING_ASSETS,
+  MOBILE_PRODUCTS_BACKGROUND,
+  MOBILE_PRODUCTS_CARD_IMAGES,
+} from '../data/images';
 
 const MOBILE_PRICING_CARDS = [
   {
@@ -42,27 +29,16 @@ const MOBILE_PRICING_CARDS = [
   },
 ] as const;
 
-const MOBILE_FIGMA_BACKGROUNDS: Record<string, string> = {
-  'bonos-1': '/assets/mobile-home/bonos-bg.png',
-  'capucci-360': '/assets/mobile-products/capucci-bg.png',
-  'capucci-formula': '/assets/mobile-products/capucci-formula-bg.png',
-  'moravi-360': '/assets/mobile-products/moravi-bg.png',
-  'moravi-formula': '/assets/mobile-products/moravi-formula-bg.png',
-  'reset-360': '/assets/mobile-products/reset-bg.png',
-  'reset-formula': '/assets/mobile-products/reset-formula-bg.png',
-  'bonos-2': '/assets/mobile-bonus-travel/bonos2-bg.png',
-};
-
 interface MobileComposedSceneCard {
   name: string;
-  image: string;
+  image: ImageMetadata;
   linkTo?: string;
   disabled?: boolean;
 }
 
 interface MobileComposedSceneConfig {
   id: 'home' | 'productos';
-  background: string;
+  background: ImageMetadata;
   stackTop: number;
   cards: MobileComposedSceneCard[];
   footer?: {
@@ -205,11 +181,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
             data-mobile-next={mobileNextAction?.target || ""}
           >
             <div class="slide-backdrop" aria-hidden="true">
-              <img
+              <Image
                 src={slide.bgImage}
                 alt=""
                 class="slide-backdrop-img"
-                loading="eager"
+                widths={[960, 1440, 1920]}
+                sizes="100vw"
+                quality={82}
               />
             </div>
 
@@ -217,11 +195,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
             <div class="slide-frame">
               <!-- Slide Background Artwork -->
               <div class="slide-bg">
-                <img
+                <Image
                   src={slide.bgImage}
                   alt={slide.name}
                   class="slide-bg-img"
-                  loading="eager"
+                  widths={[960, 1440, 1920]}
+                  sizes="100vw"
+                  quality={82}
                 />
               </div>
 
@@ -233,7 +213,14 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                         class="interactive-btn disabled"
                         style={`left: ${btn.x}px; top: ${btn.y}px; width: ${btn.width}px; height: ${btn.height}px;`}
                       >
-                        <img src={btn.image} alt={btn.name} class="btn-card-img" />
+                        <Image
+                          src={btn.image}
+                          alt={btn.name}
+                          class="btn-card-img"
+                          widths={[250, 375, 500]}
+                          sizes="26vw"
+                          quality={82}
+                        />
                       </div>
                     ) : (
                       <a
@@ -241,7 +228,14 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                         class="interactive-btn"
                         style={`left: ${btn.x}px; top: ${btn.y}px; width: ${btn.width}px; height: ${btn.height}px;`}
                       >
-                        <img src={btn.image} alt={btn.name} class="btn-card-img" />
+                        <Image
+                          src={btn.image}
+                          alt={btn.name}
+                          class="btn-card-img"
+                          widths={[250, 375, 500]}
+                          sizes="26vw"
+                          quality={82}
+                        />
                       </a>
                     )
                   ))}
@@ -254,7 +248,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
             <div class="mobile-stage">
               <div class="mobile-backdrop" aria-hidden="true">
-                <img
+                <Image
                   src={isMobilePricingScene
                     ? MOBILE_PRICING_ASSETS.background
                     : mobileFigmaBg
@@ -266,24 +260,32 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                         : slide.bgImage)}
                   alt=""
                   class="mobile-backdrop-img"
-                  loading="eager"
+                  widths={[390, 780, 1080]}
+                  sizes="100vw"
+                  quality={82}
                 />
               </div>
 
               <div class:list={['mobile-scroll', isMobileProductImage && 'mobile-scroll--product']}>
                 {isMobilePricingScene ? (
                   <div class="mobile-scene mobile-pricing-scene">
-                    <img
+                    <Image
                       src={MOBILE_PRICING_ASSETS.background}
                       alt=""
                       class="mobile-pricing-background"
+                      widths={[390, 780, 1080]}
+                      sizes="100vw"
+                      quality={82}
                     />
                     <div class="mobile-pricing-glow" aria-hidden="true"></div>
 
-                    <img
+                    <Image
                       src={MOBILE_PRICING_ASSETS.logo}
                       alt="AYNI"
                       class="mobile-pricing-logo"
+                      widths={[121, 241]}
+                      sizes="31vw"
+                      quality={82}
                     />
 
                     <div class="mobile-pricing-heading">
@@ -292,20 +294,29 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                     </div>
 
                     <div class="mobile-pricing-products" aria-label="Productos AYNI">
-                      <img
+                      <Image
                         src={MOBILE_PRICING_ASSETS.moravi}
                         alt="Moravi 360"
                         class="mobile-pricing-product mobile-pricing-product--moravi"
+                        widths={[220, 440, 660]}
+                        sizes="48vw"
+                        quality={82}
                       />
-                      <img
+                      <Image
                         src={MOBILE_PRICING_ASSETS.capucci}
                         alt="Capucci 360"
                         class="mobile-pricing-product mobile-pricing-product--capucci"
+                        widths={[220, 440, 660]}
+                        sizes="56vw"
+                        quality={82}
                       />
-                      <img
+                      <Image
                         src={MOBILE_PRICING_ASSETS.reset}
                         alt="Reset 360"
                         class="mobile-pricing-product mobile-pricing-product--reset"
+                        widths={[220, 440, 660]}
+                        sizes="48vw"
+                        quality={82}
                       />
                     </div>
 
@@ -321,10 +332,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                   </div>
                 ) : mobileComposedScene ? (
                   <div class:list={['mobile-scene', 'mobile-composed-scene', `mobile-composed-scene--${mobileComposedScene.id}`]}>
-                    <img
+                    <Image
                       src={mobileComposedScene.background}
                       alt={slide.name}
                       class="mobile-composed-scene-bg"
+                      widths={[390, 780, 1080]}
+                      sizes="100vw"
+                      quality={82}
                     />
 
                     <div
@@ -334,18 +348,24 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                       {mobileComposedScene.cards.map((card) => (
                         card.linkTo ? (
                           <a href={`#${card.linkTo}`} class="mobile-composed-card" aria-label={card.name}>
-                            <img
+                            <Image
                               src={card.image}
                               alt={card.name}
                               class="mobile-composed-card-image"
+                              widths={[358, 716]}
+                              sizes="92vw"
+                              quality={82}
                             />
                           </a>
                         ) : (
                           <div class="mobile-composed-card mobile-composed-card--static" aria-label={card.name}>
-                            <img
+                            <Image
                               src={card.image}
                               alt={card.name}
                               class="mobile-composed-card-image"
+                              widths={[358, 716]}
+                              sizes="92vw"
+                              quality={82}
                             />
                           </div>
                         )
@@ -359,11 +379,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                     isMobileProductImage && 'mobile-image-scene--product',
                     isMobileFormulaImage && 'mobile-image-scene--formula',
                   ]}>
-                    <img
+                    <Image
                       src={mobileFigmaBg || slide.bgImage}
                       alt={slide.name}
                       class:list={['mobile-slide-image', isMobileProductImage && 'mobile-slide-image--product']}
-                      loading="eager"
+                      widths={[390, 780, 1080]}
+                      sizes={isMobileProductImage ? '125vw' : '100vw'}
+                      quality={82}
                     />
                   </div>
                 )}
@@ -410,10 +432,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     <div class="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Menu de navegacion">
       <div class="mobile-menu-content">
         <div class="mobile-menu-header">
-          <img
-            src="/assets/mobile-menu/ayni-logo.png"
+          <Image
+            src={MOBILE_MENU_ASSETS.ayniLogo}
             alt="AYNI"
             class="mobile-menu-brand"
+            widths={[92, 184]}
+            sizes="92px"
+            quality={82}
           />
           <button type="button" class="mobile-menu-close" data-mobile-menu-close aria-label="Cerrar menú">
             <img src="/assets/mobile-topbar/close-icon.svg" alt="" />
@@ -438,10 +463,13 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
             data-mobile-menu-link
             aria-label="Visitar el sitio web de World GEN"
           >
-            <img
-              src="/assets/mobile-menu/worldgen-logo.png"
+            <Image
+              src={MOBILE_MENU_ASSETS.worldgenLogo}
               alt="World GEN"
               class="mobile-menu-worldgen-logo"
+              widths={[168, 336]}
+              sizes="168px"
+              quality={82}
             />
           </a>
         </nav>
@@ -863,10 +891,6 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     aspect-ratio: 390 / 844;
     overflow: hidden;
     background-color: #000000;
-    background-image: url('/assets/mobile-pricing/background.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 100% 100%;
     container-type: inline-size;
   }
 
@@ -1147,8 +1171,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     width: 100%;
     height: 100%;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 0 0 16px;
+    min-height: 0;
+    padding: 0 0 max(16px, env(safe-area-inset-bottom));
     background: rgba(0, 0, 0, 0.92);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -1157,7 +1181,10 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-content {
     display: flex;
+    min-height: 0;
+    flex: 1;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .mobile-menu-header {
@@ -1167,6 +1194,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     height: 56px;
     align-items: center;
     justify-content: space-between;
+    flex: 0 0 56px;
     overflow: hidden;
     padding: 0 16px;
     background: #000000;
@@ -1182,10 +1210,11 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-close {
     display: inline-flex;
-    width: 24px;
-    height: 24px;
+    width: 44px;
+    height: 44px;
     align-items: center;
     justify-content: center;
+    margin-right: -10px;
     padding: 0;
   }
 
@@ -1196,11 +1225,18 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-nav {
     display: flex;
+    min-height: 0;
+    flex: 1;
     flex-direction: column;
     gap: 8px;
     margin: 0;
-    padding: 24px 0 0;
+    padding: 24px 0 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
     list-style: none;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
   }
 
   .mobile-menu-divider {
@@ -1260,13 +1296,35 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-dismiss {
     display: flex;
-    height: 38px;
+    min-height: 44px;
+    flex: 0 0 44px;
     align-items: center;
     justify-content: flex-end;
     padding: 0 16px;
     color: #f3c864;
     font-size: 20px;
     font-weight: 400;
+  }
+
+  /* Safari and embedded browsers leave less usable height than the design
+     canvas. Preserve the original type and logo scale, compact only the
+     vertical rhythm, and let navigation scroll between both close actions. */
+  @media (max-height: 760px) {
+    .mobile-menu-nav {
+      gap: 2px;
+      padding-top: 12px;
+      padding-bottom: 8px;
+    }
+
+    .mobile-menu-section-label,
+    .mobile-menu-link {
+      min-height: 44px;
+      height: 44px;
+    }
+
+    .mobile-menu-worldgen {
+      margin-top: 0;
+    }
   }
 
   /* Layout & Scaling Wrapper */
