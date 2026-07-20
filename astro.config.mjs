@@ -4,6 +4,10 @@ import pwa from '@vite-pwa/astro';
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
+  // The toolbar overlays bottom controls when testing on a real phone.
+  devToolbar: {
+    enabled: false
+  },
   build: {
     format: 'file'
   },
@@ -43,13 +47,26 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        // Keep the app shell available offline. Astro-generated optimized
+        // images are cached on first use so installation stays lightweight.
         globPatterns: ['**/*.{html,js,css,svg,png,ico,woff,woff2}'],
-        // This was the former static mobile pricing poster. Keeping it out of
-        // the precache prevents an older worker from presenting it again.
-        globIgnores: ['**/mobile-products/precios-bg.png'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/offline.html',
         runtimeCaching: [
+          {
+            urlPattern: ({ request, url }) =>
+              request.destination === 'image' &&
+              url.origin === self.location.origin &&
+              url.pathname.startsWith('/_astro/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ayni-optimized-images',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
             handler: 'CacheFirst',
