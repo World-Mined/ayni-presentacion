@@ -569,6 +569,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
   }
 
   .mobile-stage {
+    --mobile-footer-height: clamp(52px, 14vw, 56px);
     display: none;
     position: absolute;
     inset: 0;
@@ -644,7 +645,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     /* Image/content starts at the very top, under the pinned navbar
        (the artwork already reserves space for the top bar). */
     padding-top: 0;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
   }
 
   .mobile-scroll::-webkit-scrollbar {
@@ -738,7 +739,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     overflow-x: hidden;
     overflow-x: clip;
     overscroll-behavior-y: contain;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
   }
 
   .slide:is([data-slide-id='bonos-1'], [data-slide-id='bonos-2']) .mobile-image-scene {
@@ -828,12 +829,12 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     container-type: inline-size;
   }
 
-  /* Productos has a fixed 56px footer. Its artwork fills the remaining
+  /* Productos accounts for the responsive footer. Its artwork fills the remaining
      viewport, while retaining the original 390px composition on short
      screens where vertical scrolling is still required. */
   .mobile-composed-scene--productos {
     aspect-ratio: 390 / 788;
-    min-height: calc(var(--mobile-vh) - 56px - env(safe-area-inset-bottom));
+    min-height: calc(var(--mobile-vh) - var(--mobile-footer-height) - env(safe-area-inset-bottom));
   }
 
   .mobile-composed-scene-bg {
@@ -1126,8 +1127,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     gap: 12px;
     width: var(--mobile-vw, 100%);
     max-width: 100%;
-    height: calc(56px + env(safe-area-inset-bottom));
-    padding: 0 16px env(safe-area-inset-bottom);
+    height: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
+    padding: 0 clamp(12px, 4vw, 16px) env(safe-area-inset-bottom);
     border-top: 1px solid rgba(243, 200, 100, 0.16);
     background: #000000;
   }
@@ -1135,11 +1136,12 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
   .mobile-footer-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    min-height: 44px;
+    gap: clamp(6px, 1.8vw, 8px);
     color: #f3c864;
-    font-size: 20px;
+    font-size: clamp(17px, 4.6vw, 20px);
     font-weight: 400;
-    line-height: 28px;
+    line-height: 24px;
     text-decoration: none;
   }
 
@@ -1152,8 +1154,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
   }
 
   .mobile-footer-icon {
-    width: 24px;
-    height: 24px;
+    width: clamp(20px, 5.6vw, 24px);
+    height: clamp(20px, 5.6vw, 24px);
     object-fit: contain;
   }
 
@@ -1173,6 +1175,10 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
   }
 
   .mobile-menu-panel {
+    --mobile-menu-gutter: clamp(12px, 4vw, 16px);
+    --mobile-menu-font-size: clamp(17px, 4.6vw, 20px);
+    --mobile-menu-icon-size: clamp(20px, 5.6vw, 24px);
+    --mobile-menu-header-height: clamp(52px, 14vw, 56px);
     position: relative;
     display: flex;
     box-sizing: border-box;
@@ -1199,19 +1205,20 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     display: flex;
     box-sizing: border-box;
     width: 100%;
-    height: 56px;
+    height: var(--mobile-menu-header-height);
     align-items: center;
     justify-content: space-between;
-    flex: 0 0 56px;
+    flex: 0 0 var(--mobile-menu-header-height);
     overflow: hidden;
-    padding: 0 16px;
+    padding: 0 var(--mobile-menu-gutter);
     background: #000000;
   }
 
   .mobile-menu-brand {
     display: block;
-    width: 92px;
-    height: 27px;
+    width: clamp(82px, 22vw, 92px);
+    height: auto;
+    max-height: 27px;
     object-fit: contain;
     object-position: left center;
   }
@@ -1227,8 +1234,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
   }
 
   .mobile-menu-close img {
-    width: 24px;
-    height: 24px;
+    width: var(--mobile-menu-icon-size);
+    height: var(--mobile-menu-icon-size);
   }
 
   .mobile-menu-nav {
@@ -1236,9 +1243,9 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     min-height: 0;
     flex: 1;
     flex-direction: column;
-    gap: 8px;
+    gap: clamp(2px, 0.5vw, 4px);
     margin: 0;
-    padding: 24px 0 16px;
+    padding: clamp(12px, 2.4dvh, 24px) 0 clamp(8px, 1.6dvh, 16px);
     overflow-x: hidden;
     overflow-y: auto;
     list-style: none;
@@ -1249,27 +1256,29 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-divider {
     height: 1px;
-    margin: 0 16px;
+    margin: 0 var(--mobile-menu-gutter);
     background: rgba(243, 200, 100, 0.25);
   }
 
   .mobile-menu-section-label {
     display: flex;
-    height: 38px;
+    min-height: 44px;
+    height: 44px;
     align-items: center;
-    padding: 0 16px;
+    padding: 0 var(--mobile-menu-gutter);
     color: #ffffff;
-    font-size: 20px;
+    font-size: var(--mobile-menu-font-size);
     font-weight: 700;
   }
 
   .mobile-menu-link {
     display: flex;
-    height: 38px;
+    min-height: 44px;
+    height: 44px;
     align-items: center;
-    padding: 0 16px;
+    padding: 0 var(--mobile-menu-gutter);
     color: #f3c864;
-    font-size: 20px;
+    font-size: var(--mobile-menu-font-size);
     font-weight: 400;
     text-decoration: none;
   }
@@ -1278,7 +1287,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     display: flex;
     width: fit-content;
     align-items: center;
-    margin: 4px 16px 0 0;
+    margin: 4px var(--mobile-menu-gutter) 0 0;
     padding: 4px 0;
     border-radius: 4px;
     text-decoration: none;
@@ -1298,7 +1307,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
   .mobile-menu-worldgen-logo {
     display: block;
-    width: 168px;
+    width: clamp(145px, 41vw, 168px);
     height: auto;
   }
 
@@ -1308,26 +1317,20 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     flex: 0 0 44px;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 16px;
+    padding: 0 var(--mobile-menu-gutter);
     color: #f3c864;
-    font-size: 20px;
+    font-size: var(--mobile-menu-font-size);
     font-weight: 400;
   }
 
   /* Safari and embedded browsers leave less usable height than the design
-     canvas. Preserve the original type and logo scale, compact only the
-     vertical rhythm, and let navigation scroll between both close actions. */
+     canvas. Compact the vertical rhythm while preserving 44px touch targets,
+     and let navigation scroll between both close actions. */
   @media (max-height: 760px) {
     .mobile-menu-nav {
       gap: 2px;
       padding-top: 12px;
       padding-bottom: 8px;
-    }
-
-    .mobile-menu-section-label,
-    .mobile-menu-link {
-      min-height: 44px;
-      height: 44px;
     }
 
     .mobile-menu-worldgen {
