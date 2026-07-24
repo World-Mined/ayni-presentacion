@@ -1,5 +1,6 @@
 ---
 import type { SlideHeader } from '../data/slides';
+import { SlideId } from '../data/slide-ids';
 
 interface Props {
   header: SlideHeader;
@@ -55,19 +56,19 @@ const { header } = Astro.props;
     <nav class="header-center" aria-label="Productos AYNI">
       <div class="product-tabs">
         <a
-          href="#capucci-360"
+          href={`#${SlideId.Capucci}`}
           class:list={['tab-pill', header.activeTab === 'capucci' && 'active', header.disabledTabs?.includes('capucci') && 'disabled']}
         >
           Capucci 360
         </a>
         <a
-          href="#moravi-360"
+          href={`#${SlideId.Moravi}`}
           class:list={['tab-pill', header.activeTab === 'moravi' && 'active', header.disabledTabs?.includes('moravi') && 'disabled']}
         >
           Moravi 360
         </a>
         <a
-          href="#reset-360"
+          href={`#${SlideId.Reset}`}
           class:list={['tab-pill', header.activeTab === 'reset' && 'active', header.disabledTabs?.includes('reset') && 'disabled']}
         >
           Reset 360

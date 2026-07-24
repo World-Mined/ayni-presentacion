@@ -6,6 +6,7 @@ import PWA from '../components/PWA.astro';
 import InstallPrompt from '../components/InstallPrompt.astro';
 import DesktopSlideHeader from '../components/DesktopSlideHeader.astro';
 import { SLIDES, type Slide } from '../data/slides';
+import { SlideId } from '../data/slide-ids';
 import {
   MOBILE_FIGMA_BACKGROUNDS,
   MOBILE_HOME_BACKGROUND,
@@ -32,43 +33,38 @@ const MOBILE_PRICING_CARDS = [
 interface MobileComposedSceneCard {
   name: string;
   image: ImageMetadata;
-  linkTo?: string;
+  linkTo?: SlideId;
   disabled?: boolean;
 }
 
-enum MobileComposedSceneId {
-  Home = 'home',
-  Products = 'productos',
-}
-
 interface MobileComposedSceneConfig {
-  id: MobileComposedSceneId;
+  id: SlideId.Home | SlideId.Products;
   background: ImageMetadata;
   stackTop: number;
   cards: MobileComposedSceneCard[];
   footer?: {
-    backTarget: string;
-    nextTarget?: string;
+    backTarget: SlideId;
+    nextTarget?: SlideId;
   };
 }
 
 const MOBILE_COMPOSED_SCENE_STACKS = {
-  [MobileComposedSceneId.Home]: {
+  [SlideId.Home]: {
     top: 271,
   },
-  [MobileComposedSceneId.Products]: {
+  [SlideId.Products]: {
     top: 260,
   },
 } as const;
 
 function getMobileBackAction(slide: Slide) {
-  if (slide.id === MobileComposedSceneId.Home || slide.id === 'precios') {
+  if (slide.id === SlideId.Home || slide.id === SlideId.Pricing) {
     return null;
   }
 
-  if (slide.id === MobileComposedSceneId.Products) {
+  if (slide.id === SlideId.Products) {
     return {
-      target: MobileComposedSceneId.Home,
+      target: SlideId.Home,
       label: 'Atrás',
     };
   }
@@ -85,17 +81,17 @@ function getMobileBackAction(slide: Slide) {
 }
 
 function getMobileNextAction(slide: Slide) {
-  if (slide.id === MobileComposedSceneId.Home) {
+  if (slide.id === SlideId.Home) {
     return null;
   }
 
-  if (slide.id === MobileComposedSceneId.Products) {
+  if (slide.id === SlideId.Products) {
     return null;
   }
 
-  if (slide.id === 'precios') {
+  if (slide.id === SlideId.Pricing) {
     return {
-      target: slide.header?.closeTo || MobileComposedSceneId.Home,
+      target: slide.header?.closeTo || SlideId.Home,
       label: 'Ir a inicio',
     };
   }
@@ -107,7 +103,7 @@ function getMobileNextAction(slide: Slide) {
     };
   }
 
-  if ((slide.id === 'bonos-2' || slide.id === 'precios') && slide.header?.closeTo) {
+  if ((slide.id === SlideId.BonusesTravel || slide.id === SlideId.Pricing) && slide.header?.closeTo) {
     return {
       target: slide.header.closeTo,
       label: 'Ir a inicio',
@@ -122,11 +118,11 @@ function toMobileCqw(value: number) {
 }
 
 function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null {
-  if (slide.id === MobileComposedSceneId.Home) {
+  if (slide.id === SlideId.Home) {
     return {
-      id: MobileComposedSceneId.Home,
+      id: SlideId.Home,
       background: MOBILE_HOME_BACKGROUND,
-      stackTop: MOBILE_COMPOSED_SCENE_STACKS[MobileComposedSceneId.Home].top,
+      stackTop: MOBILE_COMPOSED_SCENE_STACKS[SlideId.Home].top,
       cards: (slide.buttons || []).map((button) => ({
         name: button.name,
         image: MOBILE_HOME_CARD_IMAGES[button.name] || button.image,
@@ -136,18 +132,18 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     };
   }
 
-  if (slide.id === MobileComposedSceneId.Products) {
+  if (slide.id === SlideId.Products) {
     return {
-      id: MobileComposedSceneId.Products,
+      id: SlideId.Products,
       background: MOBILE_PRODUCTS_BACKGROUND,
-      stackTop: MOBILE_COMPOSED_SCENE_STACKS[MobileComposedSceneId.Products].top,
+      stackTop: MOBILE_COMPOSED_SCENE_STACKS[SlideId.Products].top,
       cards: (slide.buttons || []).map((button) => ({
         name: button.name,
         image: MOBILE_PRODUCTS_CARD_IMAGES[button.name] || button.image,
         linkTo: button.linkTo,
       })),
       footer: {
-        backTarget: slide.header?.closeTo || MobileComposedSceneId.Home,
+        backTarget: slide.header?.closeTo || SlideId.Home,
       },
     };
   }
@@ -168,8 +164,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
         const mobileNextAction = getMobileNextAction(slide);
         const mobileComposedScene = getMobileComposedScene(slide);
         const mobileFigmaBg = MOBILE_FIGMA_BACKGROUNDS[slide.id] || null;
-        const isMobilePricingScene = slide.id === 'precios';
-        const isInitialSlide = slide.id === MobileComposedSceneId.Home;
+        const isMobilePricingScene = slide.id === SlideId.Pricing;
+        const isInitialSlide = slide.id === SlideId.Home;
         // Product slides keep their original poster artwork, but mobile always
         // fits it to the viewport width so the document never pans sideways.
         const isMobileProductImage = !mobileComposedScene && !!slide.header?.activeTab;
@@ -260,9 +256,9 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                     ? MOBILE_PRICING_ASSETS.background
                     : mobileFigmaBg
                     || mobileComposedScene?.background
-                    || (slide.id === MobileComposedSceneId.Home
+                    || (slide.id === SlideId.Home
                       ? MOBILE_HOME_BACKGROUND
-                      : slide.id === MobileComposedSceneId.Products
+                      : slide.id === SlideId.Products
                         ? MOBILE_PRODUCTS_BACKGROUND
                         : slide.bgImage)}
                   alt=""
@@ -405,21 +401,21 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                 </button>
               </header>
 
-              {slide.id !== MobileComposedSceneId.Home && (
+              {slide.id !== SlideId.Home && (
                 <footer class="mobile-footer">
                   {mobileBackAction ? (
                     <a href={`#${mobileBackAction.target}`} class="mobile-footer-link">
                       <img src="/assets/mobile-arrow-left.svg" alt="" class="mobile-footer-icon" />
                       <span>{mobileBackAction.label}</span>
                     </a>
-                  ) : slide.id !== 'precios' ? (
+                  ) : slide.id !== SlideId.Pricing ? (
                     <span class="mobile-footer-link mobile-footer-link--hidden">Atrás</span>
                   ) : null}
 
                   {mobileNextAction ? (
                     <a href={`#${mobileNextAction.target}`} class="mobile-footer-link mobile-footer-link--next">
                       <span>{mobileNextAction.label}</span>
-                      {slide.id !== 'precios' && (
+                      {slide.id !== SlideId.Pricing && (
                         <img src="/assets/mobile-arrow-right.svg" alt="" class="mobile-footer-icon" />
                       )}
                     </a>

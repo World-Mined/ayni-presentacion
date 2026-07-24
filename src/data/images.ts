@@ -1,4 +1,5 @@
 import type { ImageMetadata } from 'astro';
+import { SlideId } from './slide-ids';
 import bgBonos from '../assets/bg_bonos.webp';
 import bgBonosTravel from '../assets/bg_bonos_travel.webp';
 import bgCapucci from '../assets/bg_capucci.webp';
@@ -83,15 +84,15 @@ export const MOBILE_PRICING_ASSETS = {
   reset: mobilePricingReset,
 } as const;
 
-export const MOBILE_FIGMA_BACKGROUNDS: Record<string, ImageMetadata> = {
-  'bonos-1': mobileBonosBackground,
-  'capucci-360': mobileCapucciBackground,
-  'capucci-formula': mobileCapucciFormulaBackground,
-  'moravi-360': mobileMoraviBackground,
-  'moravi-formula': mobileMoraviFormulaBackground,
-  'reset-360': mobileResetBackground,
-  'reset-formula': mobileResetFormulaBackground,
-  'bonos-2': mobileBonusTravel,
+export const MOBILE_FIGMA_BACKGROUNDS: Partial<Record<SlideId, ImageMetadata>> = {
+  [SlideId.Bonuses]: mobileBonosBackground,
+  [SlideId.Capucci]: mobileCapucciBackground,
+  [SlideId.CapucciFormula]: mobileCapucciFormulaBackground,
+  [SlideId.Moravi]: mobileMoraviBackground,
+  [SlideId.MoraviFormula]: mobileMoraviFormulaBackground,
+  [SlideId.Reset]: mobileResetBackground,
+  [SlideId.ResetFormula]: mobileResetFormulaBackground,
+  [SlideId.BonusesTravel]: mobileBonusTravel,
 };
 
 export const MOBILE_MENU_ASSETS = {
