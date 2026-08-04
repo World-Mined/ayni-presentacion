@@ -5,9 +5,11 @@ import Layout from '../layouts/Layout.astro';
 import PWA from '../components/PWA.astro';
 import InstallPrompt from '../components/InstallPrompt.astro';
 import DesktopSlideHeader from '../components/DesktopSlideHeader.astro';
+import NutritionSidebar from '../components/NutritionSidebar.astro';
 import WorldGenLogo from '../components/WorldGenLogo.astro';
 import { SLIDES, type Slide } from '../data/slides';
 import { SlideId } from '../data/slide-ids';
+import { NUTRITION_FACTS, NUTRITION_SIDEBAR_ANCHOR } from '../data/nutrition';
 import {
   MOBILE_FIGMA_BACKGROUNDS,
   MOBILE_HOME_BACKGROUND,
@@ -171,6 +173,10 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
         // fits it to the viewport width so the document never pans sideways.
         const isMobileProductImage = !mobileComposedScene && !!slide.header?.activeTab;
         const isMobileFormulaImage = slide.id.endsWith('-formula');
+        const nutritionFacts = NUTRITION_FACTS[slide.id];
+        const ingredientsLink = (slide.header?.activeTab && !isMobileFormulaImage)
+          ? slide.header.nextSlide
+          : undefined;
 
         return (
           <section
@@ -246,11 +252,33 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                 </div>
               )}
 
+              {ingredientsLink && (
+                <a href={`#${ingredientsLink}`} class="slide-pill slide-pill--ingredients">
+                  <span>Ver ingredientes</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
+                    <path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" />
+                  </svg>
+                </a>
+              )}
+
+              {nutritionFacts && (
+                <button type="button" class="slide-pill slide-pill--nutrition" data-nutrition-open>
+                  <span>Ver tabla nutricional</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
+                    <path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" />
+                  </svg>
+                </button>
+              )}
+
               <WorldGenLogo />
             </div>
             </div>
 
             {slide.header && <DesktopSlideHeader header={slide.header} />}
+
+            {nutritionFacts && (
+              <NutritionSidebar facts={nutritionFacts} anchor={NUTRITION_SIDEBAR_ANCHOR} />
+            )}
 
             <div class="mobile-stage">
               <div class="mobile-backdrop" aria-hidden="true">
@@ -512,6 +540,76 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     pointer-events: none;
   }
 
+  .slide-pill {
+    position: absolute;
+    right: 120px;
+    bottom: 40px;
+    z-index: 30;
+    display: flex;
+    height: 48px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px 12px 20px;
+    border: 1px solid #f3c864;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #f3c864;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    gap: 10px;
+    line-height: 24px;
+    text-decoration: none;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+  }
+
+  .slide-pill span {
+    text-decoration: underline;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .slide-pill svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    fill: #f3c864;
+  }
+
+  .slide-pill--ingredients {
+    width: 275px;
+  }
+
+  .slide-pill--nutrition {
+    width: 338px;
+  }
+
+  .slide-pill:hover {
+    background: rgba(243, 200, 100, 0.14);
+    transform: scale(1.02);
+  }
+
+  .slide-pill:active {
+    transform: scale(0.98);
+  }
+
+  .slide-pill:focus-visible {
+    outline: 2px solid #f3c864;
+    outline-offset: 3px;
+  }
+
+  html[data-presentation-mode='mobile'] .slide-pill {
+    display: none;
+  }
+
+  .slide.nutrition-open .slide-pill--nutrition {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
   .slide-frame {
     position: absolute;
     top: 0;
@@ -521,6 +619,25 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
     transform-origin: top left;
     transform: translate3d(var(--slide-frame-left), var(--slide-frame-top), 0) scale(var(--slide-frame-scale));
     will-change: transform;
+  }
+
+  /* La navegación queda inerte: con la tabla abierta no se cambia de producto.
+     El header vive en otro componente, de ahí el :global. */
+  .slide.nutrition-open .buttons-container,
+  .slide.nutrition-open .slide-pill,
+  .slide.nutrition-open :global(.worldgen-logo) {
+    pointer-events: none;
+  }
+
+  .slide.nutrition-open :global(.desktop-slide-header) {
+    opacity: 0.35;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+
+  .slide.nutrition-open :global(.header-left),
+  .slide.nutrition-open :global(.header-center) {
+    pointer-events: none;
   }
 
   .desktop-scroll-canvas {
@@ -1501,6 +1618,7 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
       targetSlide.setAttribute('aria-hidden', 'false');
       activeSlideId = targetId;
       setMobileMenuOpen(false);
+      closeAllNutritionPanels();
 
       // Each slide opens at the top and stays horizontally locked to the
       // viewport. Only vertical content scrolling is allowed on mobile.
@@ -1537,14 +1655,63 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
 
     if (target === mobileMenuOverlay) {
       setMobileMenuOpen(false);
+      return;
+    }
+
+    const openTrigger = target.closest('[data-nutrition-open]');
+    if (openTrigger) {
+      setNutritionOpen(openTrigger.closest('.slide'), true);
+      return;
+    }
+
+    if (target.closest('[data-nutrition-close]')) {
+      setNutritionOpen(target.closest('.slide'), false);
     }
   });
+
+  // Con la tabla abierta, cualquier clic fuera del panel solo la cierra: no debe
+  // llegar a los tabs de producto ni a ningún otro control de la slide.
+  document.addEventListener('click', (event) => {
+    const openSlide = document.querySelector('.slide.nutrition-open');
+    if (!openSlide) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-nutrition-panel]')) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    setNutritionOpen(openSlide, false);
+  }, true);
+
+  function setNutritionOpen(slide, isOpen) {
+    if (!slide) return;
+    slide.classList.toggle('nutrition-open', isOpen);
+    const panel = slide.querySelector('[data-nutrition-panel]');
+    if (panel) panel.setAttribute('aria-hidden', String(!isOpen));
+    // El panel repagina contra el alto disponible, que depende de la escala.
+    if (isOpen) document.dispatchEvent(new CustomEvent('nutrition:layout'));
+  }
+
+  function closeAllNutritionPanels() {
+    document.querySelectorAll('.slide.nutrition-open').forEach((slide) => {
+      setNutritionOpen(slide, false);
+    });
+  }
 
   window.addEventListener('keydown', (e) => {
     if (root.classList.contains('mobile-menu-open')) {
       if (e.key === 'Escape') {
         e.preventDefault();
         setMobileMenuOpen(false);
+      }
+      return;
+    }
+
+    const openPanelSlide = document.querySelector('.slide.nutrition-open');
+    if (openPanelSlide) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setNutritionOpen(openPanelSlide, false);
       }
       return;
     }
