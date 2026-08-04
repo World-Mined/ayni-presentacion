@@ -293,12 +293,12 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     height: 22px;
     flex: none;
     border-radius: 2px;
-    background: #e9c267;
+    background: var(--color-brand-gold-highlight);
   }
 
   .nutrition-title {
     margin: 0;
-    color: #e9c267;
+    color: var(--color-brand-gold-highlight);
     font-size: var(--nut-fs-title);
     font-weight: 700;
     letter-spacing: 0.01em;
@@ -308,7 +308,7 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
 
   .nutrition-divider {
     width: 100%;
-    border-top: 1px solid #e9c267;
+    border-top: 1px solid var(--color-brand-gold-highlight);
   }
 
   /* Serving info */
@@ -383,7 +383,7 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     /* Moravi y Reset no entran completos en 1080px: la barra queda siempre
        visible para que se note que la lista continúa. */
     overflow-y: auto;
-    scrollbar-color: #cba34e rgba(255, 255, 255, 0.06);
+    scrollbar-color: var(--color-brand-gold-muted) rgba(255, 255, 255, 0.06);
     scrollbar-width: thin;
   }
 
@@ -397,7 +397,7 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
 
   .nutrition-rows::-webkit-scrollbar-thumb {
     border-radius: 999px;
-    background: #cba34e;
+    background: var(--color-brand-gold-muted);
   }
 
   .nutrition-row {
@@ -450,7 +450,7 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
   }
 
   .nutrition-row--energy .nutrition-cell-name {
-    color: #cba34e;
+    color: var(--color-brand-gold-muted);
     font-size: var(--nut-fs-energy);
     font-weight: 600;
     line-height: 1.25;
@@ -536,7 +536,7 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
   }
 
   .nutrition-close-icon:hover svg {
-    fill: #e9c267;
+    fill: var(--color-brand-gold-highlight);
   }
 
   .nutrition-footer {
@@ -563,13 +563,13 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
   }
 
   .nutrition-close-text:hover {
-    color: #e9c267;
+    color: var(--color-brand-gold-highlight);
   }
 
   .nutrition-close-icon:focus-visible,
   .nutrition-close-text:focus-visible,
   .nutrition-pager-btn:focus-visible {
-    outline: 2px solid #e9c267;
+    outline: 2px solid var(--color-brand-gold-highlight);
     outline-offset: 3px;
   }
 </style>
