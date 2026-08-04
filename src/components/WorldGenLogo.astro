@@ -1,0 +1,49 @@
+---
+import { Image } from 'astro:assets';
+import { WORLDGEN_LOGO } from '../data/images';
+
+const WORLDGEN_URL = 'https://worldgen.vip/';
+---
+
+<a
+  class="worldgen-logo"
+  href={WORLDGEN_URL}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="World Gen"
+>
+  <Image src={WORLDGEN_LOGO} alt="World Gen" widths={[176, 352]} sizes="176px" quality={90} />
+</a>
+
+<style>
+  /* Vive dentro del canvas 1920x1080, así que escala con la presentación. */
+  .worldgen-logo {
+    position: absolute;
+    bottom: 34px;
+    left: 48px;
+    z-index: 20;
+    display: block;
+    width: 176px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+  }
+
+  .worldgen-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .worldgen-logo:hover {
+    opacity: 1;
+  }
+
+  .worldgen-logo:focus-visible {
+    outline: 2px solid #f3c864;
+    outline-offset: 6px;
+  }
+
+  :global(html[data-presentation-mode='mobile']) .worldgen-logo {
+    display: none;
+  }
+</style>

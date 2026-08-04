@@ -5,6 +5,7 @@ import Layout from '../layouts/Layout.astro';
 import PWA from '../components/PWA.astro';
 import InstallPrompt from '../components/InstallPrompt.astro';
 import DesktopSlideHeader from '../components/DesktopSlideHeader.astro';
+import WorldGenLogo from '../components/WorldGenLogo.astro';
 import { SLIDES, type Slide } from '../data/slides';
 import { SlideId } from '../data/slide-ids';
 import {
@@ -244,6 +245,8 @@ function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig | null 
                   ))}
                 </div>
               )}
+
+              <WorldGenLogo />
             </div>
             </div>
 

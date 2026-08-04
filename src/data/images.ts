@@ -24,7 +24,7 @@ import mobileHomeBackground from '../assets/mobile-home/home-background.webp';
 import mobilePlanCard from '../assets/mobile-home/plan-card.webp';
 import mobileProductosCard from '../assets/mobile-home/productos-card.webp';
 import mobileMenuAyniLogo from '../assets/mobile-menu/ayni-logo.webp';
-import mobileMenuWorldgenLogo from '../assets/mobile-menu/worldgen-logo.webp';
+import worldgenLogo from '../assets/worldgen-logo.webp';
 import mobilePricingAyniLogo from '../assets/mobile-pricing/ayni-logo.webp';
 import mobilePricingBackground from '../assets/mobile-pricing/background.webp';
 import mobilePricingCapucci from '../assets/mobile-pricing/capucci.webp';
@@ -97,5 +97,8 @@ export const MOBILE_FIGMA_BACKGROUNDS: Partial<Record<SlideId, ImageMetadata>> =
 
 export const MOBILE_MENU_ASSETS = {
   ayniLogo: mobileMenuAyniLogo,
-  worldgenLogo: mobileMenuWorldgenLogo,
+  worldgenLogo,
 } as const;
+
+/** Logo de World Gen: se muestra en el menú mobile y en todas las slides desktop. */
+export const WORLDGEN_LOGO = worldgenLogo;
