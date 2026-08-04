@@ -1,0 +1,24 @@
+---
+import ProductReveal from '../components/reveal/ProductReveal.astro';
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reveal · demo (componente)</title>
+    <style>
+      html, body { margin: 0; background: #000; color: #fff;
+        font-family: 'Poppins', system-ui, sans-serif; }
+      .spacer { min-height: 90vh; display: grid; place-items: center; text-align: center;
+        color: rgba(249,203,105,.55); letter-spacing: .28em; text-transform: uppercase; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <section class="spacer">Baja para que aparezca ↓</section>
+
+    <ProductReveal product="capucci" />
+
+    <section class="spacer">Resto de la página…</section>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+---
+import { PRODUCTS } from '../../lib/reveal/products';
+
+interface Props {
+  /** id del producto registrado en lib/reveal/products/index.ts */
+  product: string;
+}
+
+const { product } = Astro.props;
+const cfg = PRODUCTS[product];
+if (!cfg) {
+  throw new Error(
+    `<ProductReveal>: producto desconocido "${product}". Regístralo en src/lib/reveal/products/index.ts`,
+  );
+}
+---
+
+<div class="reveal-track" data-reveal={product}>
+  <div class="reveal-pin">
+    <div class="reveal-stage" aria-label={`Animación de ${cfg.title.main}`}>
+      <div class="reveal-title">
+        <h2>{cfg.title.main}</h2>
+        <p>{cfg.title.sub}</p>
+      </div>
+      <div class="reveal-halo"></div>
+      <div class="reveal-product-wrap">
+        <img class="reveal-product" alt={cfg.title.main} />
+      </div>
+      <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { createReveal } from '../../lib/reveal/engine';
+  import { PRODUCTS } from '../../lib/reveal/products';
+
+  document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+    const cfg = PRODUCTS[el.dataset.reveal ?? ''];
+    if (cfg) createReveal(el, cfg);
+  });
+</script>
+
+<!-- Estilos GLOBALES (namespaced con .reveal-*): necesarios porque el motor
+     crea .reveal-ring/.reveal-stem/.reveal-node/.reveal-label en runtime, y el
+     scoping de Astro no alcanza a los elementos creados por JS. -->
+<style is:global>
+  .reveal-track {
+    --reveal-gold: #f9cb69;
+    position: relative;
+  }
+
+  .reveal-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(120% 90% at 50% 42%, #14110b 0%, #0a0805 48%, #000 100%);
+  }
+
+  .reveal-stage {
+    position: relative;
+    width: min(94vw, 1120px);
+    aspect-ratio: 1920 / 1080;
+  }
+
+  .reveal-title {
+    position: absolute;
+    z-index: 5;
+    top: 3%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    opacity: 0;
+  }
+  .reveal-title h2 {
+    margin: 0;
+    color: var(--reveal-gold);
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 48px);
+    line-height: 1.1;
+  }
+  .reveal-title p {
+    margin: 4px 0 0;
+    color: #c4bba8;
+    font-weight: 600;
+    font-size: clamp(12px, 1.4vw, 18px);
+  }
+
+  .reveal-product-wrap {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    top: 55%;
+    width: 26%;
+    transform: translate(-50%, -50%);
+  }
+  .reveal-product {
+    display: block;
+    width: 100%;
+    filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
+    opacity: 0;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .reveal-halo {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 55%;
+    width: 40%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    opacity: 0;
+    background: radial-gradient(circle, rgba(249, 203, 105, 0.22) 0%, rgba(249, 203, 105, 0) 66%);
+  }
+
+  .reveal-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .reveal-ring,
+  .reveal-stem {
+    fill: none;
+    stroke: var(--reveal-gold);
+    stroke-linecap: round;
+  }
+  .reveal-ring {
+    filter: drop-shadow(0 0 5px rgba(249, 203, 105, 0.45));
+  }
+  .reveal-node {
+    fill: var(--reveal-gold);
+    filter: drop-shadow(0 0 4px rgba(249, 203, 105, 0.6));
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .reveal-label {
+    position: absolute;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fcfcfb;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    font-family: 'Montserrat', 'Poppins', sans-serif;
+    font-size: clamp(13px, 1.6vw, 22px);
+    transform: translateY(-50%);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  }
+  .reveal-label.left {
+    flex-direction: row-reverse;
+    transform: translate(-100%, -50%);
+  }
+  .reveal-label .reveal-ico {
+    width: 1.35em;
+    height: 1.35em;
+    opacity: 0;
+    flex: none;
+    color: var(--reveal-gold);
+  }
+  .reveal-label .reveal-txt span {
+    display: inline-block;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+</style>

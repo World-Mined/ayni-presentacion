@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AYNI · Template animación (pinned · anime.js)</title>
+  <style>
+    :root {
+      --gold: #F9CB69;
+      --gold-soft: rgba(249, 203, 105, .55);
+      --gold-faint: rgba(249, 203, 105, .18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .lead,
+    .after {
+      min-height: 90vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--gold-soft);
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      font-size: 12px;
+      padding: 24px;
+    }
+
+    .lead span {
+      animation: bob 1.8s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+      50% {
+        transform: translateY(8px);
+      }
+    }
+
+    /* Onyx: track alto + pin sticky. Aparece/desaparece con el scroll. */
+    .scroll-track {
+      position: relative;
+    }
+
+    /* alto = CONFIG.scroll.trackVH */
+    .pin {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(120% 90% at 50% 42%, #14110b 0%, #0a0805 48%, #000 100%);
+    }
+
+    .stage {
+      position: relative;
+      width: min(94vw, 1120px);
+      aspect-ratio: 1920 / 1080;
+    }
+
+    .titleblock {
+      position: absolute;
+      z-index: 5;
+      top: 3%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      opacity: 0;
+    }
+
+    .titleblock h2 {
+      margin: 0;
+      color: var(--gold);
+      font-weight: 600;
+      font-size: clamp(24px, 3.4vw, 48px);
+      line-height: 1.1;
+    }
+
+    .titleblock p {
+      margin: 4px 0 0;
+      color: #C4BBA8;
+      font-weight: 600;
+      font-size: clamp(12px, 1.4vw, 18px);
+    }
+
+    .product-wrap {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 55%;
+      width: 26%;
+      transform: translate(-50%, -50%);
+    }
+
+    .product {
+      display: block;
+      width: 100%;
+      filter: drop-shadow(0 24px 40px rgba(0, 0, 0, .6));
+      opacity: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .halo {
+      position: absolute;
+      z-index: 1;
+      left: 50%;
+      top: 55%;
+      width: 40%;
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(249, 203, 105, .22) 0%, rgba(249, 203, 105, 0) 66%);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .ring,
+    .stem {
+      fill: none;
+      stroke: var(--gold);
+      stroke-linecap: round;
+    }
+
+    .ring {
+      filter: drop-shadow(0 0 5px rgba(249, 203, 105, .45));
+    }
+
+    .node {
+      fill: var(--gold);
+      filter: drop-shadow(0 0 4px rgba(249, 203, 105, .6));
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .label {
+      position: absolute;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FCFCFB;
+      font-weight: 600;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      font-family: 'Montserrat', 'Poppins', sans-serif;
+      font-size: clamp(13px, 1.6vw, 22px);
+      transform: translateY(-50%);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .7);
+    }
+
+    .label.left {
+      flex-direction: row-reverse;
+      transform: translate(-100%, -50%);
+    }
+
+    .label .ico {
+      width: 1.35em;
+      height: 1.35em;
+      opacity: 0;
+      flex: none;
+      color: var(--gold);
+    }
+
+    .label .txt span {
+      display: inline-block;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .progress {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 40;
+      font-size: 11px;
+      letter-spacing: .1em;
+      color: var(--gold-soft);
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid var(--gold-faint);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+
+<body>
+  <section class="lead"><span>Baja para que aparezca ↓</span></section>
+
+  <div class="scroll-track" id="track">
+    <div class="pin">
+      <div class="stage" id="stage" aria-label="Animación de producto">
+        <div class="titleblock" id="titleblock">
+          <h2 id="title-main">CAPUCCI 360</h2>
+          <p id="title-sub">La fórmula 7 en 1</p>
+        </div>
+        <div class="halo" id="halo"></div>
+        <div class="product-wrap"><img class="product" id="product" alt="Producto" /></div>
+        <svg class="overlay" id="overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+  </div>
+
+  <section class="after">Resto de la página…</section>
+  <div class="progress" id="progress">carga…</div>
+
+  <script type="module">
+    import { createTimeline, animate, stagger } from 'https://esm.sh/animejs@4';
+
+    /* ============================================================================
+       CONFIG — lo único que editas por producto.
+       ==========================================================================*/
+    const CONFIG = {
+      title: { main: 'CAPUCCI 360', sub: 'La fórmula 7 en 1' },
+      frames: { dir: '/anim-demo/frames', prefix: 'frame-', pad: 2, ext: 'webp', count: 47 },
+
+      center: { x: 960, y: 594 },
+      ringRadius: 360,
+      rowsY: [310, 494, 678, 862],
+      iconX: { left: 560, right: 1360 },
+
+      // ═══════════════════════════════════════════════════════════════════
+      //  TIEMPOS CALCADOS DEL VIDEO (ms). Secuencia: ENTRADA → CÍRCULO → RAMAS.
+      //  Lo pensado para tocar es riseFrom (que el producto SUBA o BAJE).
+      // ═══════════════════════════════════════════════════════════════════
+      timing: {
+        // ── 1) ENTRADA — el giro va en 2 FASES (como el video) ──────────────
+        riseFrom: '190%',       // ⬅ SUBE / BAJA:  '190%' = desde ABAJO (sube) · '-190%' = desde ARRIBA (baja).
+        // FASE A: sube al centro MIENTRAS gira (frames 1→centerFrame).
+        riseDur: 700,           // Cuánto tarda en subir al centro girando (llega RÁPIDO). MAYOR → más lento.
+        centerFrame: 24,        // En qué frame llega al centro (1..count). A partir de aquí gira EN EL CENTRO.
+        // FASE B: ya en el centro, termina de girar (frames centerFrame→final).
+        rotateCenterDur: 1500,  // Cuánto dura el giro EN EL CENTRO. MAYOR → gira más lento en el sitio.
+        rotateEnd: 1,           // Hasta dónde gira (1 = frente completo, como el video).
+        // La opacidad del producto va ATADA a la subida: parte de 0 (transparente)
+        // y se vuelve SÓLIDO justo al llegar al centro (usa riseDur, no un fade aparte).
+        titleDur: 500,          // Fundido del título.
+        // Movimiento al centro tipo "POPUP": ease-out-back (pasa un pelín del
+        // centro y regresa). Sube el 1.6 para MÁS rebote · bájalo para menos.
+        curve: (t) => { const s = 1.6; return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2); },
+
+        // ── 2) CÍRCULO — sigue al giro, pero se CIERRA ANTES del final ─────
+        ringStartFrame: 24, // Frame donde EMPIEZA a dibujarse (= centro). MENOR → antes.
+        ringEndFrame: 39,   // Frame donde el círculo se CIERRA. Como los últimos frames
+                            //   (39→47) el producto ya está casi de frente, cerrar aquí
+                            //   hace el círculo MÁS RÁPIDO. Las ramas arrancan en este frame.
+
+        // ── 3) RAMAS — arrancan solas cuando el círculo se cierra (ringEndFrame) ──
+        // El momento se calcula automáticamente a partir de ringEndFrame.
+        labelsStagger: 55,  // Separación entre una rama y la siguiente (más corto = más ágil).
+        labelsOrder: 'sequence', // EN ORDEN como el video (derecha→izquierda), NO random.
+        labelsDur: 220,     // Velocidad de cada rama (crecer + texto). MENOR = más rápido.
+      },
+
+      // ═══ SCROLL: cómo se dispara al bajar (Onyx, sección fija/sticky) ═══
+      scroll: {
+        trackVH: 300,   // Alto de la sección fija (en pantallas). MÁS → hay que scrollear más para recorrerla.
+        showAt: 0.12,   // % del recorrido para que APAREZCA. MENOR → aparece con menos scroll.
+        hideAt: 0.08,   // % para que DESAPAREZCA al volver a subir.
+        //   ⚠ Debe ser MENOR que showAt: el hueco entre ambos es la zona estable
+        //     (evita que parpadee entre aparecer/desaparecer).
+        revRate: 1.9,   // Velocidad de la desaparición. MAYOR → desaparece más rápido.
+      },
+
+      labels: [
+        { name: 'Moringa', side: 'right', row: 0, order: 0, icon: 'leaf' },
+        { name: 'Amalaki', side: 'right', row: 1, order: 1, icon: 'berry' },
+        { name: 'Espirulina', side: 'right', row: 2, order: 2, icon: 'spiral' },
+        { name: 'Nombre del producto', side: 'right', row: 3, order: 3, icon: 'berry' }, // ⚠ placeholder
+        { name: 'Ganoderma', side: 'left', row: 0, order: 4, icon: 'mush' },
+        { name: 'Maca', side: 'left', row: 1, order: 5, icon: 'root' },
+        { name: 'Colágeno', side: 'left', row: 2, order: 6, icon: 'mol' },
+        { name: 'Café', side: 'left', row: 3, order: 7, icon: 'bean' },
+      ],
+    };
+
+    const ICONS = {
+      leaf: '<path d="M4 20c8 0 16-6 16-16C10 4 4 12 4 20zM4 20 14 10" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+      berry: '<circle cx="12" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 6V3M12 3l3 1" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+      spiral: '<path d="M12 3c5 0 7 4 5 8s-8 3-8-1 5-4 5 0" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+      mush: '<path d="M4 11a8 8 0 0116 0z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 11v7a2 2 0 004 0v-7" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+      root: '<path d="M12 3v10M12 13c-3 0-5 3-5 6M12 13c3 0 5 3 5 6" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+      mol: '<circle cx="7" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="11" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 9l5 1M15 12l-3 3" stroke="currentColor" stroke-width="1.4"/>',
+      bean: '<path d="M8 4c6 0 10 4 8 10s-10 6-12 0S4 4 8 4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 6c3 4 3 8 0 12" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    };
+
+    /* ============================================================================
+       MOTOR
+       ==========================================================================*/
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const stage = document.getElementById('stage');
+    const overlay = document.getElementById('overlay');
+    const halo = document.getElementById('halo');
+    const productImg = document.getElementById('product');
+    const titleblock = document.getElementById('titleblock');
+    const track = document.getElementById('track');
+    const progressEl = document.getElementById('progress');
+
+    document.getElementById('title-main').textContent = CONFIG.title.main;
+    document.getElementById('title-sub').textContent = CONFIG.title.sub;
+    track.style.height = CONFIG.scroll.trackVH + 'vh';
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const pct = (v, total) => (v / total * 100) + '%';
+    const frameSrc = (i) => `${CONFIG.frames.dir}/${CONFIG.frames.prefix}${String(i + 1).padStart(CONFIG.frames.pad, '0')}.${CONFIG.frames.ext}`;
+
+    for (let i = 0; i < CONFIG.frames.count; i++) { const im = new Image(); im.src = frameSrc(i); }
+    productImg.src = frameSrc(0);
+
+    // Ring
+    const ring = document.createElementNS(SVGNS, 'circle');
+    ring.setAttribute('class', 'ring');
+    ring.setAttribute('cx', CONFIG.center.x); ring.setAttribute('cy', CONFIG.center.y);
+    ring.setAttribute('r', CONFIG.ringRadius); ring.setAttribute('stroke-width', '2.4');
+    overlay.appendChild(ring);
+    const ringLen = 2 * Math.PI * CONFIG.ringRadius;
+    ring.style.strokeDasharray = ringLen; ring.style.strokeDashoffset = ringLen;
+
+    // Branches
+    const built = CONFIG.labels.map((cfg) => {
+      const rowY = CONFIG.rowsY[cfg.row];
+      const outer = { x: CONFIG.iconX[cfg.side], y: rowY };
+      const dx = outer.x - CONFIG.center.x, dy = outer.y - CONFIG.center.y, d = Math.hypot(dx, dy);
+      const ringPt = { x: CONFIG.center.x + (dx / d) * CONFIG.ringRadius, y: CONFIG.center.y + (dy / d) * CONFIG.ringRadius };
+
+      const stem = document.createElementNS(SVGNS, 'line');
+      stem.setAttribute('class', 'stem');
+      stem.setAttribute('x1', ringPt.x.toFixed(1)); stem.setAttribute('y1', ringPt.y.toFixed(1));
+      stem.setAttribute('x2', outer.x.toFixed(1)); stem.setAttribute('y2', outer.y.toFixed(1));
+      stem.setAttribute('stroke-width', '2');
+      const stemLen = Math.hypot(outer.x - ringPt.x, outer.y - ringPt.y);
+      stem.style.strokeDasharray = stemLen; stem.style.strokeDashoffset = stemLen;
+      overlay.appendChild(stem);
+
+      const node = document.createElementNS(SVGNS, 'circle');
+      node.setAttribute('class', 'node');
+      node.setAttribute('cx', ringPt.x.toFixed(1)); node.setAttribute('cy', ringPt.y.toFixed(1));
+      node.setAttribute('r', '5'); node.style.transform = 'scale(0)';
+      overlay.appendChild(node);
+
+      const label = document.createElement('div');
+      label.className = 'label ' + cfg.side;
+      label.style.left = pct(outer.x, 1920); label.style.top = pct(outer.y, 1080);
+      label.style.marginLeft = cfg.side === 'left' ? '-14px' : '14px';
+      const ico = document.createElementNS(SVGNS, 'svg');
+      ico.setAttribute('class', 'ico'); ico.setAttribute('viewBox', '0 0 24 24');
+      ico.innerHTML = ICONS[cfg.icon] || ICONS.berry;
+      const txt = document.createElement('span'); txt.className = 'txt';
+      [...cfg.name].forEach((ch) => { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; txt.appendChild(s); });
+      label.appendChild(ico); label.appendChild(txt);
+      stage.appendChild(label);
+      return { cfg, stem, stemLen, node, ico, chars: [...txt.children] };
+    });
+
+    /* --- Timeline ÚNICO y CONTINUO: entrada -> círculo -> ramas.
+       Empieza oculto; el scroll lo reproduce entero (o lo revierte entero). --- */
+    const T = CONFIG.timing;
+    const state = { f: 0 };
+    const tl = createTimeline({ autoplay: false });
+
+    // ENTRADA (todo desde 0, seguido)
+    // Título con POPUP: escala con rebote (misma curva ease-out-back del producto).
+    tl.add(titleblock, { opacity: [0, 1], scale: [0.5, 1], duration: T.titleDur, ease: T.curve }, 0);
+    // Opacidad ATADA a la subida: 0 (transparente) → sólido al llegar al centro.
+    tl.add(productImg, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0);
+    tl.add(productImg, { translateY: [T.riseFrom, '0%'], duration: T.riseDur, ease: T.curve }, 0);
+    // Giro en 2 FASES. Índices de frame (0-based):
+    const centerIdx = Math.max(0, Math.min(CONFIG.frames.count - 1, T.centerFrame - 1)); // llega al centro
+    const endIdx = Math.round(T.rotateEnd * (CONFIG.frames.count - 1));                   // frame final
+    const ringFromIdx = Math.max(0, T.ringStartFrame - 1);              // frame donde empieza el círculo
+    const ringToIdx = Math.max(ringFromIdx + 1, T.ringEndFrame - 1);    // frame donde el círculo se CIERRA
+    // El CÍRCULO va SINCRONIZADO al giro: su trazo depende del frame actual del
+    // producto, y se cierra en ringEndFrame (antes de que termine el giro).
+    const setFrame = () => {
+      productImg.src = frameSrc(Math.round(state.f));
+      const cp = clamp((state.f - ringFromIdx) / (ringToIdx - ringFromIdx), 0, 1); // progreso 0..1
+      ring.style.strokeDashoffset = ringLen * (1 - cp);
+      halo.style.opacity = cp;
+    };
+    // FASE A: 0 → centerIdx mientras SUBE (misma duración que la subida).
+    tl.add(state, { f: [0, centerIdx], duration: T.riseDur, ease: 'linear', onUpdate: setFrame }, 0);
+    // FASE B: centerIdx → endIdx, ya en el centro (gira en el sitio).
+    tl.add(state, { f: [centerIdx, endIdx], duration: T.rotateCenterDur, ease: 'linear', onUpdate: setFrame }, T.riseDur);
+
+    // Instante (ms) en que el giro alcanza ringEndFrame → ahí arrancan las ramas.
+    const labelsStart = ringToIdx <= centerIdx
+      ? (ringToIdx / centerIdx) * T.riseDur
+      : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur;
+
+    // RAMAS: orden 'random' (barajado) o 'sequence' (según la lista `labels`).
+    const slots = built.map((_, i) => i);
+    if (T.labelsOrder === 'random') { for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[slots[i], slots[j]] = [slots[j], slots[i]]; } }
+    const LD = T.labelsDur;                     // escala la velocidad de cada rama
+    built.forEach((b, idx) => {
+      const slot = T.labelsOrder === 'random' ? slots[idx] : b.cfg.order;
+      const at = labelsStart + slot * T.labelsStagger;   // arranca al cerrarse el círculo (ringEndFrame)
+      tl.add(b.stem, { strokeDashoffset: [b.stemLen, 0], duration: LD, ease: 'outQuad' }, at);
+      tl.add(b.node, { scale: [0, 1], duration: LD * 0.9, ease: 'outBack' }, at + LD * 0.7);
+      tl.add(b.ico, { opacity: [0, 1], scale: [0.6, 1], duration: LD * 0.85, ease: 'outQuad' }, at + LD * 0.8);
+      const dir = b.cfg.side === 'left' ? 14 : -14;
+      tl.add(b.chars, {
+        opacity: [0, 1], translateX: [dir, 0], duration: LD * 0.95, ease: 'outQuad',
+        delay: stagger(20, { from: b.cfg.side === 'left' ? 'last' : 'first' })
+      }, at + LD * 0.85);
+    });
+    tl.pause(); tl.seek(0);   // estado inicial: OCULTO
+    const DUR = tl.duration;
+
+    /* --- Disparo por scroll: play-through + histéresis (aparece/desaparece entero).
+       Un "driver" manual controla la velocidad de cada dirección de forma fiable
+       (tl.playbackRate no aplica en esta build de anime). --- */
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let shown = false;
+    const driver = { p: 0 };
+    let driveAnim = null;
+    function driveTo(target, duration) {
+      if (driveAnim) driveAnim.pause();
+      driveAnim = animate(driver, {
+        p: target, duration, ease: 'linear',
+        onUpdate: () => tl.seek(DUR * clamp(driver.p, 0, 1))
+      });
+    }
+    function goShow() { if (shown) return; shown = true; driveTo(1, DUR); progressEl.textContent = '▶ apareciendo'; }
+    function goHide() { if (!shown) return; shown = false; driveTo(0, DUR / CONFIG.scroll.revRate); progressEl.textContent = '◀ desapareciendo'; }
+
+    function onScroll() {
+      const rect = track.getBoundingClientRect();
+      const scrollable = track.offsetHeight - window.innerHeight;
+      const p = scrollable > 0 ? clamp(-rect.top / scrollable, 0, 1) : 0;
+      if (p >= CONFIG.scroll.showAt) goShow();
+      else if (p <= CONFIG.scroll.hideAt) goHide();
+    }
+
+    if (reduce.matches) {
+      tl.seek(tl.duration);
+      progressEl.textContent = 'reduced-motion';
+    } else {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      onScroll();
+      progressEl.textContent = 'listo (oculto)';
+    }
+  </script>
+</body>
+
+</html>
