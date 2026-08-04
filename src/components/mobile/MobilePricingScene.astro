@@ -1,0 +1,288 @@
+---
+import { Image } from 'astro:assets';
+import { MOBILE_PRICING_ASSETS } from '../../data/images';
+import { MOBILE_PRICING_CARDS } from '../../data/mobile-scenes';
+---
+
+<div class="mobile-scene mobile-pricing-scene">
+  <Image
+    src={MOBILE_PRICING_ASSETS.background}
+    alt=""
+    class="mobile-pricing-background"
+    widths={[390, 780, 1080]}
+    sizes="100vw"
+    quality={82}
+  />
+  <div class="mobile-pricing-glow" aria-hidden="true"></div>
+
+  <Image
+    src={MOBILE_PRICING_ASSETS.logo}
+    alt="AYNI"
+    class="mobile-pricing-logo"
+    widths={[121, 241]}
+    sizes="31vw"
+    quality={82}
+  />
+
+  <div class="mobile-pricing-heading">
+    <span>DESCUBRE Y CONECTA CON</span>
+    <strong>EL PODER DE LA NATURALEZA</strong>
+  </div>
+
+  <div class="mobile-pricing-products" aria-label="Productos AYNI">
+    <Image
+      src={MOBILE_PRICING_ASSETS.moravi}
+      alt="Moravi 360"
+      class="mobile-pricing-product mobile-pricing-product--moravi"
+      widths={[220, 440, 660]}
+      sizes="48vw"
+      quality={82}
+    />
+    <Image
+      src={MOBILE_PRICING_ASSETS.capucci}
+      alt="Capucci 360"
+      class="mobile-pricing-product mobile-pricing-product--capucci"
+      widths={[220, 440, 660]}
+      sizes="56vw"
+      quality={82}
+    />
+    <Image
+      src={MOBILE_PRICING_ASSETS.reset}
+      alt="Reset 360"
+      class="mobile-pricing-product mobile-pricing-product--reset"
+      widths={[220, 440, 660]}
+      sizes="48vw"
+      quality={82}
+    />
+  </div>
+
+  <div class="mobile-pricing-cards" aria-label="Precios de paquetes AYNI">
+    {MOBILE_PRICING_CARDS.map((card) => (
+      <div class="mobile-pricing-card">
+        <span class="mobile-pricing-pack">{card.pack}</span>
+        <strong class="mobile-pricing-price">{card.price}</strong>
+        <span class="mobile-pricing-points">{card.points}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .mobile-pricing-scene {
+    --mobile-pricing-shift-y: 14cqw;
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    aspect-ratio: 390 / 844;
+    overflow: hidden;
+    background-color: #000000;
+    container-type: inline-size;
+  }
+
+  .mobile-pricing-background {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    object-fit: fill;
+    object-position: center center;
+    pointer-events: none;
+  }
+
+  .mobile-pricing-glow {
+    position: absolute;
+    top: calc(84.5667cqw - var(--mobile-pricing-shift-y));
+    left: calc(50% - 2.51282cqw);
+    z-index: 2;
+    width: 46.2872cqw;
+    height: 24.5641cqw;
+    border-radius: 686.126cqw;
+    opacity: 0.68;
+    background-image: initial;
+    background-color: #f3c86373;
+    filter: blur(7.692308cqw);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .mobile-pricing-logo {
+    position: absolute;
+    top: calc(14.358974cqw - var(--mobile-pricing-shift-y));
+    left: 50%;
+    z-index: 2;
+    display: block;
+    width: 31.025641cqw;
+    height: auto;
+    transform: translateX(-50%);
+  }
+
+  .mobile-pricing-heading {
+    position: absolute;
+    top: calc(60cqw - var(--mobile-pricing-shift-y));
+    left: 6.794872cqw;
+    z-index: 3;
+    display: flex;
+    width: 86.410256cqw;
+    height: 13.333333cqw;
+    flex-direction: column;
+    align-items: stretch;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .mobile-pricing-heading span {
+    height: 5.641026cqw;
+    font-family: 'Inter', sans-serif;
+    font-size: 4.615385cqw;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 5.641026cqw;
+  }
+
+  .mobile-pricing-heading strong {
+    height: 7.692308cqw;
+    color: var(--color-brand-gold);
+    font-family: 'Poppins', sans-serif;
+    font-size: 5.128205cqw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 7.692308cqw;
+  }
+
+  .mobile-pricing-products {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    transform: translateY(calc(0px - var(--mobile-pricing-shift-y)));
+  }
+
+  .mobile-pricing-product {
+    position: absolute;
+    display: block;
+    height: auto;
+    filter: drop-shadow(0 2.564103cqw 4.102564cqw rgba(0, 0, 0, 0.56));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .mobile-pricing-product--moravi {
+    top: 89.230769cqw;
+    left: 0.512821cqw;
+    width: 47.179487cqw;
+    transform: rotate(-7deg) scale(1.04);
+  }
+
+  .mobile-pricing-product--capucci {
+    top: 83.076923cqw;
+    left: 21.538462cqw;
+    z-index: 2;
+    width: 55.641026cqw;
+    transform: scale(1.04);
+  }
+
+  .mobile-pricing-product--reset {
+    top: 89.230769cqw;
+    left: 50cqw;
+    width: 47.179487cqw;
+    transform: rotate(7deg) scale(1.04);
+  }
+
+  .mobile-pricing-cards {
+    position: absolute;
+    top: calc(150.512821cqw - var(--mobile-pricing-shift-y));
+    left: 4.102564cqw;
+    z-index: 4;
+    display: grid;
+    box-sizing: border-box;
+    width: 91.794872cqw;
+    height: 25.641026cqw;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5.128205cqw;
+  }
+
+  .mobile-pricing-card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    box-sizing: border-box;
+    height: 25.641026cqw;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 4.102564cqw;
+    overflow: visible;
+    border: 1px solid #f3c863;
+    border-radius: 2.051282cqw;
+    background: linear-gradient(109.06deg, #f3c863 -25.89%, #000000 18.03%, #000000 81.48%, #f3c863 119.13%);
+    text-align: center;
+  }
+
+  .mobile-pricing-card::before,
+  .mobile-pricing-card::after {
+    position: absolute;
+    left: 50%;
+    z-index: 3;
+    width: 25.128205cqw;
+    height: 2.051282cqw;
+    background:
+      radial-gradient(
+        ellipse 5.641026cqw 0.769231cqw at center,
+        rgba(243, 200, 100, 0.95) 0%,
+        rgba(168, 132, 63, 0.82) 42%,
+        rgba(92, 76, 40, 0.34) 64%,
+        transparent 78%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(87, 71, 38, 0.65) 14%,
+        rgba(243, 200, 100, 0.82) 50%,
+        rgba(92, 76, 40, 0.65) 86%,
+        transparent 100%
+      ) center / 100% 1px no-repeat;
+    filter: drop-shadow(0 0 0.769231cqw rgba(243, 200, 100, 0.78));
+    content: '';
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .mobile-pricing-card::before {
+    top: -1.025641cqw;
+  }
+
+  .mobile-pricing-card::after {
+    bottom: -1.025641cqw;
+  }
+
+  .mobile-pricing-pack,
+  .mobile-pricing-points {
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+  }
+
+  .mobile-pricing-pack {
+    height: 4.358974cqw;
+    font-size: 3.589744cqw;
+    line-height: 4.358974cqw;
+  }
+
+  .mobile-pricing-price {
+    height: 9.230769cqw;
+    color: var(--color-brand-gold);
+    font-family: 'Poppins', sans-serif;
+    font-size: 6.153846cqw;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 9.230769cqw;
+  }
+
+  .mobile-pricing-points {
+    height: 3.846154cqw;
+    font-size: 3.076923cqw;
+    line-height: 3.846154cqw;
+  }
+</style>

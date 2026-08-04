@@ -1,0 +1,99 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  image: ImageMetadata;
+  name: string;
+  isProduct: boolean;
+  isFormula: boolean;
+}
+
+const { image, name, isProduct, isFormula } = Astro.props;
+---
+
+<div class:list={[
+  'mobile-scene',
+  'mobile-image-scene',
+  isProduct && 'mobile-image-scene--product',
+  isFormula && 'mobile-image-scene--formula',
+]}>
+  <Image
+    src={image}
+    alt={name}
+    class:list={['mobile-slide-image', isProduct && 'mobile-slide-image--product']}
+    widths={[390, 780, 1080]}
+    sizes={isProduct ? '125vw' : '100vw'}
+    quality={82}
+  />
+</div>
+
+<style is:global>
+  .mobile-image-scene {
+    display: block;
+    width: 100%;
+  }
+
+  .mobile-slide-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .slide:is([data-slide-id='bonos-1'], [data-slide-id='bonos-2']) .mobile-image-scene {
+    position: relative;
+    left: 50%;
+    width: max(100%, calc(var(--mobile-vh) * 0.5625));
+    max-width: none;
+    transform: translateX(-50%);
+  }
+
+  .slide:is([data-slide-id='bonos-1'], [data-slide-id='bonos-2']) .mobile-slide-image {
+    width: 100%;
+    height: auto;
+    max-width: none;
+  }
+
+  .mobile-image-scene--product {
+    position: relative;
+    left: 50%;
+    display: block;
+    width: max(125vw, 390px, calc((var(--mobile-vh) - 56px) * 0.5625));
+    max-width: none;
+    transform: translateX(-50%);
+  }
+
+  .slide[data-slide-id='reset-360'] .mobile-image-scene--product {
+    left: calc(50% + 8px);
+    width: max(122vw, 390px, calc((var(--mobile-vh) - 50px) * 0.5625));
+    margin-top: -6px;
+    margin-left: 0;
+  }
+
+  .mobile-image-scene--product.mobile-image-scene--formula {
+    width: max(106vw, 390px, calc((var(--mobile-vh) - 112px) * 0.5625));
+    margin-top: 56px;
+  }
+
+  .slide[data-slide-id='moravi-formula'] .mobile-image-scene--formula {
+    left: calc(50% - 7px);
+    width: max(112vw, 390px, calc((var(--mobile-vh) - 65px) * 0.5625));
+    margin-top: 9px;
+    margin-right: 0;
+  }
+
+  .slide[data-slide-id='reset-formula'] .mobile-image-scene--formula {
+    width: max(112vw, 390px, calc((var(--mobile-vh) - 75px) * 0.5625));
+    margin-top: 19px;
+  }
+
+  .mobile-slide-image--product {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: none;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+</style>

@@ -1,0 +1,298 @@
+---
+import { Image } from 'astro:assets';
+import { MOBILE_FIGMA_BACKGROUNDS, MOBILE_PRICING_ASSETS } from '../../data/images';
+import {
+  getMobileComposedScene,
+  type MobileNavigationAction,
+} from '../../data/mobile-scenes';
+import { SlideId } from '../../data/slide-ids';
+import type { Slide } from '../../data/slides';
+import MobileComposedScene from './MobileComposedScene.astro';
+import MobileImageScene from './MobileImageScene.astro';
+import MobilePricingScene from './MobilePricingScene.astro';
+
+interface Props {
+  slide: Slide;
+  backAction: MobileNavigationAction | null;
+  nextAction: MobileNavigationAction | null;
+  priority?: boolean;
+}
+
+const { slide, backAction, nextAction, priority = false } = Astro.props;
+const composedScene = getMobileComposedScene(slide);
+const figmaBackground = MOBILE_FIGMA_BACKGROUNDS[slide.id] || null;
+const isPricingScene = slide.id === SlideId.Pricing;
+const isProductImage = !composedScene && !!slide.header?.activeTab;
+const isFormulaImage = slide.id.endsWith('-formula');
+const backdrop = isPricingScene
+  ? MOBILE_PRICING_ASSETS.background
+  : figmaBackground || composedScene?.background || slide.bgImage;
+---
+
+<div class="mobile-stage">
+  <div class="mobile-backdrop" aria-hidden="true">
+    <Image
+      src={backdrop}
+      alt=""
+      class="mobile-backdrop-img"
+      widths={[390, 780, 1080]}
+      sizes="100vw"
+      quality={82}
+    />
+  </div>
+
+  <div class:list={['mobile-scroll', isProductImage && 'mobile-scroll--product']}>
+    {isPricingScene ? (
+      <MobilePricingScene />
+    ) : composedScene ? (
+      <MobileComposedScene scene={composedScene} slideName={slide.name} priority={priority} />
+    ) : (
+      <MobileImageScene
+        image={figmaBackground || slide.bgImage}
+        name={slide.name}
+        isProduct={isProductImage}
+        isFormula={isFormulaImage}
+      />
+    )}
+  </div>
+
+  <header class="mobile-nav-bar">
+    <button type="button" class="mobile-menu-btn" data-mobile-menu-open aria-label="Abrir menú">
+      <img src="/assets/mobile-topbar/menu-icon.svg" alt="" class="mobile-menu-icon" />
+    </button>
+  </header>
+
+  {slide.id !== SlideId.Home && (
+    <footer class="mobile-footer">
+      {backAction ? (
+        <a href={`#${backAction.target}`} class="mobile-footer-link">
+          <img src="/assets/mobile-arrow-left.svg" alt="" class="mobile-footer-icon" />
+          <span>{backAction.label}</span>
+        </a>
+      ) : slide.id !== SlideId.Pricing ? (
+        <span class="mobile-footer-link mobile-footer-link--hidden">Atrás</span>
+      ) : null}
+
+      {nextAction ? (
+        <a href={`#${nextAction.target}`} class="mobile-footer-link mobile-footer-link--next">
+          <span>{nextAction.label}</span>
+          {slide.id !== SlideId.Pricing && (
+            <img src="/assets/mobile-arrow-right.svg" alt="" class="mobile-footer-icon" />
+          )}
+        </a>
+      ) : (
+        <span class="mobile-footer-link mobile-footer-link--hidden mobile-footer-link--next">Siguiente</span>
+      )}
+    </footer>
+  )}
+</div>
+
+<style is:global>
+  .mobile-stage {
+    --mobile-footer-height: clamp(52px, 14vw, 56px);
+    display: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background-color: #000000;
+    max-width: 100%;
+    overscroll-behavior-x: none;
+  }
+
+  html[data-presentation-mode='mobile'] .slide-backdrop,
+  html[data-presentation-mode='mobile'] .slide-frame {
+    display: none;
+  }
+
+  html[data-presentation-mode='mobile'] .mobile-stage {
+    display: block;
+  }
+
+  html[data-presentation-mode='mobile'] .slide-container,
+  html[data-presentation-mode='mobile'] .slide-content-wrapper,
+  html[data-presentation-mode='mobile'] .slide,
+  html[data-presentation-mode='mobile'] .mobile-stage {
+    width: var(--mobile-vw, 100%);
+    max-width: 100%;
+    height: var(--mobile-vh, 100dvh);
+    overflow-x: clip;
+  }
+
+  .mobile-backdrop {
+    position: absolute;
+    inset: 0;
+  }
+
+  .mobile-backdrop-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(18px) brightness(0.22) saturate(0.72);
+    transform: scale(1.14);
+    opacity: 0.92;
+  }
+
+  .slide[data-slide-id='home'] .mobile-backdrop-img,
+  .slide[data-slide-id='productos'] .mobile-backdrop-img {
+    filter: none;
+    transform: none;
+    opacity: 1;
+    object-position: center center;
+  }
+
+  .slide[data-slide-id='home'] .mobile-backdrop,
+  .slide[data-slide-id='productos'] .mobile-backdrop {
+    display: none;
+  }
+
+  .mobile-scroll {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow-y: auto;
+    overflow-x: clip;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-color: var(--color-brand-gold) rgba(0, 0, 0, 0.72);
+    scrollbar-width: thin;
+    padding-top: 0;
+    padding-bottom: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
+  }
+
+  .mobile-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .mobile-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.72);
+  }
+
+  .mobile-scroll::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(0, 0, 0, 0.72);
+    border-radius: 999px;
+    background: var(--color-brand-gold);
+  }
+
+  .slide[data-slide-id='home'] .mobile-scroll,
+  .slide[data-slide-id='precios'] .mobile-scroll {
+    padding-bottom: 0;
+  }
+
+  .mobile-nav-bar {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 5;
+    display: flex;
+    width: 100%;
+    height: 56px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 16px;
+    background: #000000;
+    line-height: 1;
+  }
+
+  .mobile-menu-btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--color-brand-gold);
+    font: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .mobile-menu-icon {
+    display: block;
+    width: 40px;
+    height: 40px;
+  }
+
+  .mobile-scene {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .slide:is([data-slide-id='bonos-1'], [data-slide-id='bonos-2']) .mobile-scroll {
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: clip;
+    overscroll-behavior-y: contain;
+    padding-bottom: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
+  }
+
+  .slide[data-slide-id='bonos-2'] .mobile-scroll {
+    padding-top: 40px;
+  }
+
+  .mobile-scroll--product {
+    overflow-y: auto;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  .slide[data-slide-id='precios'] .mobile-footer-link {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .mobile-footer {
+    box-sizing: border-box;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: var(--mobile-vw, 100%);
+    max-width: 100%;
+    height: calc(var(--mobile-footer-height) + env(safe-area-inset-bottom));
+    padding: 0 clamp(12px, 4vw, 16px) env(safe-area-inset-bottom);
+    border-top: 1px solid rgba(243, 200, 100, 0.16);
+    background: #000000;
+  }
+
+  .mobile-footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: clamp(6px, 1.8vw, 8px);
+    color: var(--color-brand-gold);
+    font-size: clamp(17px, 4.6vw, 20px);
+    font-weight: 400;
+    line-height: 24px;
+    text-decoration: none;
+  }
+
+  .mobile-footer-link--next {
+    margin-left: auto;
+  }
+
+  .mobile-footer-link--hidden {
+    visibility: hidden;
+  }
+
+  .mobile-footer-icon {
+    width: clamp(20px, 5.6vw, 24px);
+    height: clamp(20px, 5.6vw, 24px);
+    object-fit: contain;
+  }
+</style>

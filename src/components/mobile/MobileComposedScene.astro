@@ -1,0 +1,122 @@
+---
+import { Image } from 'astro:assets';
+import type { MobileComposedSceneConfig } from '../../data/mobile-scenes';
+import { toMobileCqw } from '../../data/mobile-scenes';
+
+interface Props {
+  scene: MobileComposedSceneConfig;
+  slideName: string;
+  priority?: boolean;
+}
+
+const { scene, slideName, priority = false } = Astro.props;
+---
+
+<div class:list={['mobile-scene', 'mobile-composed-scene', `mobile-composed-scene--${scene.id}`]}>
+  <Image
+    src={scene.background}
+    alt={slideName}
+    class="mobile-composed-scene-bg"
+    widths={[390, 780, 1080]}
+    sizes="100vw"
+    quality={82}
+    priority={priority}
+  />
+
+  <div class="mobile-composed-stack" style={`--mobile-stack-top: ${toMobileCqw(scene.stackTop)};`}>
+    {scene.cards.map((card) => (
+      card.linkTo ? (
+        <a href={`#${card.linkTo}`} class="mobile-composed-card" aria-label={card.name}>
+          <Image
+            src={card.image}
+            alt={card.name}
+            class="mobile-composed-card-image"
+            widths={[358, 716]}
+            sizes="92vw"
+            quality={82}
+          />
+        </a>
+      ) : (
+        <div class="mobile-composed-card mobile-composed-card--static" aria-label={card.name}>
+          <Image
+            src={card.image}
+            alt={card.name}
+            class="mobile-composed-card-image"
+            widths={[358, 716]}
+            sizes="92vw"
+            quality={82}
+          />
+        </div>
+      )
+    ))}
+  </div>
+</div>
+
+<style>
+  .mobile-composed-scene {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 390 / 844;
+    min-height: var(--mobile-vh);
+    margin: 0 auto;
+    overflow: hidden;
+    background: #000000;
+    container-type: inline-size;
+  }
+
+  .mobile-composed-scene--productos {
+    aspect-ratio: 390 / 788;
+    min-height: calc(var(--mobile-vh) - var(--mobile-footer-height) - env(safe-area-inset-bottom));
+  }
+
+  .mobile-composed-scene-bg {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .mobile-composed-stack {
+    position: absolute;
+    top: var(--mobile-stack-top);
+    left: 4.102564cqw;
+    z-index: 2;
+    display: flex;
+    width: 91.794872cqw;
+    flex-direction: column;
+    gap: 4.102564cqw;
+  }
+
+  .mobile-composed-scene--home .mobile-composed-stack {
+    top: max(var(--mobile-stack-top), calc(50% - 38.717949cqw));
+  }
+
+  .mobile-composed-scene--productos .mobile-composed-stack {
+    top: max(var(--mobile-stack-top), calc(50% - 34.358974cqw));
+  }
+
+  .mobile-composed-card,
+  .mobile-composed-card--static {
+    display: block;
+    width: 100%;
+    aspect-ratio: 358 / 161;
+    overflow: hidden;
+    background: transparent;
+    line-height: 0;
+  }
+
+  .mobile-composed-card--static {
+    pointer-events: none;
+  }
+
+  .mobile-composed-card-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+</style>
