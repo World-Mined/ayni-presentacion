@@ -1,6 +1,6 @@
 import { createMobileNavigationController } from './mobile-navigation';
 import { createNutritionController } from './nutrition';
-import { createRoutingController, type RoutingController } from './routing';
+import { createRoutingController } from './routing';
 import { createViewportController } from './viewport';
 
 export function initPresentation() {
@@ -9,17 +9,12 @@ export function initPresentation() {
   if (!wrapper) return;
 
   const nutrition = createNutritionController();
-  let routing: RoutingController;
-
-  const mobileNavigation = createMobileNavigationController({
-    root,
-    getActiveSlide: () => routing?.getActiveSlide() || null,
-  });
+  const mobileNavigation = createMobileNavigationController({ root });
   const viewport = createViewportController({
     root,
     closeMobileMenu: () => mobileNavigation.setOpen(false),
   });
-  routing = createRoutingController({
+  const routing = createRoutingController({
     root,
     closeMobileMenu: () => mobileNavigation.setOpen(false),
     closeNutritionPanels: nutrition.closeAll,
@@ -32,9 +27,10 @@ export function initPresentation() {
   viewport.init();
   routing.init();
 
+  // Orden de prioridad: lo que esté abierto encima consume la tecla primero.
   window.addEventListener('keydown', (event) => {
-    if (nutrition.handleEscape(event)) return;
-    if (mobileNavigation.handleEscape(event)) return;
+    if (nutrition.handleKeydown(event)) return;
+    if (mobileNavigation.handleKeydown(event)) return;
     routing.handleKeydown(event);
   });
 }

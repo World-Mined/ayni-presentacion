@@ -1,3 +1,5 @@
+import { getActiveSlide } from './active-slide';
+
 interface RoutingControllerOptions {
   root: HTMLElement;
   closeMobileMenu: () => void;
@@ -8,7 +10,6 @@ interface RoutingControllerOptions {
 
 export interface RoutingController {
   init: () => void;
-  getActiveSlide: () => HTMLElement | null;
   handleKeydown: (event: KeyboardEvent) => void;
 }
 
@@ -19,12 +20,6 @@ export function createRoutingController({
   resizePresentation,
   positionDesktopSlide,
 }: RoutingControllerOptions): RoutingController {
-  let activeSlideId = 'home';
-
-  function getActiveSlide() {
-    return document.getElementById(`slide-${activeSlideId}`);
-  }
-
   function route() {
     const targetId = window.location.hash.substring(1) || 'home';
     const targetSlide = document.getElementById(`slide-${targetId}`);
@@ -37,7 +32,6 @@ export function createRoutingController({
 
     targetSlide.classList.add('active');
     targetSlide.setAttribute('aria-hidden', 'false');
-    activeSlideId = targetId;
     closeMobileMenu();
     closeNutritionPanels();
 
@@ -90,5 +84,5 @@ export function createRoutingController({
     route();
   }
 
-  return { init, getActiveSlide, handleKeydown };
+  return { init, handleKeydown };
 }

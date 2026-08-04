@@ -20,6 +20,12 @@ export interface NutritionFacts {
 }
 
 /**
+ * Pide al panel que recalcule su paginación. Lo emite quien lo abre y lo escucha
+ * el propio panel, que necesita el alto ya resuelto para repartir las filas.
+ */
+export const NUTRITION_LAYOUT_EVENT = 'nutrition:layout';
+
+/**
  * Dónde se ancla el panel nutricional:
  * - 'viewport': pegado al borde derecho de la pantalla, a lo alto de toda la ventana.
  * - 'image': pegado al borde derecho de la imagen 16:9, respetando el letterbox.

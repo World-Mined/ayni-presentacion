@@ -1,0 +1,36 @@
+---
+// Iconos de Material Symbols. El relleno usa currentColor porque el `color` sí
+// se hereda a través del límite del componente, mientras que los estilos
+// scopeados del padre no alcanzarían a este SVG.
+const PATHS = {
+  close:
+    'm256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z',
+  'arrow-forward': 'M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z',
+} as const;
+
+interface Props {
+  name: keyof typeof PATHS;
+  /** Alto y ancho del icono; admite cualquier medida CSS, incluido clamp(). */
+  size?: string;
+}
+
+const { name, size = '24px' } = Astro.props;
+---
+
+<svg
+  class="icon"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 -960 960 960"
+  fill="currentColor"
+  style={`width:${size};height:${size}`}
+  aria-hidden="true"
+>
+  <path d={PATHS[name]} />
+</svg>
+
+<style>
+  .icon {
+    display: block;
+    flex: none;
+  }
+</style>

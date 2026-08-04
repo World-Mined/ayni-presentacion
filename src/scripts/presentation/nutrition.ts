@@ -1,7 +1,10 @@
+import { NUTRITION_LAYOUT_EVENT } from '../../data/nutrition';
+
 export interface NutritionController {
   init: () => void;
   closeAll: () => void;
-  handleEscape: (event: KeyboardEvent) => boolean;
+  /** Devuelve true cuando el panel consume la tecla y nadie más debe verla. */
+  handleKeydown: (event: KeyboardEvent) => boolean;
 }
 
 export function createNutritionController(): NutritionController {
@@ -12,7 +15,7 @@ export function createNutritionController(): NutritionController {
     panel?.setAttribute('aria-hidden', String(!isOpen));
 
     if (isOpen) {
-      document.dispatchEvent(new CustomEvent('nutrition:layout'));
+      document.dispatchEvent(new CustomEvent(NUTRITION_LAYOUT_EVENT));
     }
   }
 
@@ -49,12 +52,17 @@ export function createNutritionController(): NutritionController {
     setOpen(openSlide, false);
   }
 
-  function handleEscape(event: KeyboardEvent) {
+  function handleKeydown(event: KeyboardEvent) {
     const openSlide = document.querySelector('.slide.nutrition-open');
-    if (!openSlide || event.key !== 'Escape') return false;
+    if (!openSlide) return false;
 
-    event.preventDefault();
-    setOpen(openSlide, false);
+    // Con el panel abierto ninguna tecla llega al router: Escape lo cierra y el
+    // resto se descarta, para no cambiar de slide por detrás de la tabla.
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(openSlide, false);
+    }
+
     return true;
   }
 
@@ -63,5 +71,5 @@ export function createNutritionController(): NutritionController {
     document.addEventListener('click', handleOutsideClick, true);
   }
 
-  return { init, closeAll, handleEscape };
+  return { init, closeAll, handleKeydown };
 }

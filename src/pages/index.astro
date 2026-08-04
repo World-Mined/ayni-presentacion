@@ -6,6 +6,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
 import DesktopSlideHeader from '../components/DesktopSlideHeader.astro';
 import NutritionSidebar from '../components/NutritionSidebar.astro';
 import WorldGenLogo from '../components/WorldGenLogo.astro';
+import Icon from '../components/Icon.astro';
 import MobileMenu from '../components/mobile/MobileMenu.astro';
 import MobileStage from '../components/mobile/MobileStage.astro';
 import { SLIDES } from '../data/slides';
@@ -108,18 +109,14 @@ import { getMobileBackAction, getMobileNextAction } from '../data/mobile-scenes'
               {ingredientsLink && (
                 <a href={`#${ingredientsLink}`} class="slide-pill slide-pill--ingredients">
                   <span>Ver ingredientes</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
-                    <path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" />
-                  </svg>
+                  <Icon name="arrow-forward" />
                 </a>
               )}
 
               {nutritionFacts && (
                 <button type="button" class="slide-pill slide-pill--nutrition" data-nutrition-open>
                   <span>Ver tabla nutricional</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
-                    <path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" />
-                  </svg>
+                  <Icon name="arrow-forward" />
                 </button>
               )}
 
@@ -200,13 +197,6 @@ import { getMobileBackAction, getMobileNextAction } from '../data/mobile-scenes'
     text-decoration: underline;
     text-transform: uppercase;
     white-space: nowrap;
-  }
-
-  .slide-pill svg {
-    width: 24px;
-    height: 24px;
-    flex: none;
-    fill: var(--color-brand-gold);
   }
 
   .slide-pill--ingredients {

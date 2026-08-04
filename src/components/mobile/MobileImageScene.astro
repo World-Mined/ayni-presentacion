@@ -54,37 +54,68 @@ const { image, name, isProduct, isFormula } = Astro.props;
     max-width: none;
   }
 
-  .mobile-image-scene--product {
+  /*
+   * Cada escena de producto se encuadra con dos valores:
+   *   --scene-offset: cuánto se desplaza en vertical.
+   *   --scene-min-width: ancho mínimo que exige el encuadre horizontal.
+   * El ancho final se deriva del offset, así la imagen siempre llega al borde
+   * inferior y no queda franja negra por debajo.
+   *
+   * Doble clase a propósito: estas escenas se desbordan del viewport y deben
+   * ganarle al `max-width: 100%` de `.mobile-scene`, que vive en otro componente
+   * y por tanto en una hoja cuyo orden no controlamos.
+   */
+  .mobile-scene.mobile-image-scene--product {
+    --scene-offset: 0px;
+    --scene-min-width: 125vw;
+
     position: relative;
     left: 50%;
     display: block;
-    width: max(125vw, 390px, calc((var(--mobile-vh) - 56px) * 0.5625));
+    width: max(
+      var(--scene-min-width),
+      100vw,
+      calc((var(--mobile-vh) - var(--scene-offset)) * 0.5625)
+    );
     max-width: none;
+    margin-top: var(--scene-offset);
     transform: translateX(-50%);
   }
 
   .slide[data-slide-id='reset-360'] .mobile-image-scene--product {
+    --scene-offset: -6px;
+    --scene-min-width: 122vw;
+
     left: calc(50% + 8px);
-    width: max(122vw, 390px, calc((var(--mobile-vh) - 50px) * 0.5625));
-    margin-top: -6px;
     margin-left: 0;
   }
 
-  .mobile-image-scene--product.mobile-image-scene--formula {
-    width: max(106vw, 390px, calc((var(--mobile-vh) - 112px) * 0.5625));
-    margin-top: 56px;
+  .mobile-scene.mobile-image-scene--product.mobile-image-scene--formula {
+    --scene-offset: 56px;
+    --scene-min-width: 106vw;
   }
 
   .slide[data-slide-id='moravi-formula'] .mobile-image-scene--formula {
+    --scene-offset: 9px;
+    --scene-min-width: 112vw;
+
     left: calc(50% - 7px);
-    width: max(112vw, 390px, calc((var(--mobile-vh) - 65px) * 0.5625));
-    margin-top: 9px;
     margin-right: 0;
   }
 
   .slide[data-slide-id='reset-formula'] .mobile-image-scene--formula {
-    width: max(112vw, 390px, calc((var(--mobile-vh) - 75px) * 0.5625));
-    margin-top: 19px;
+    --scene-offset: 19px;
+    --scene-min-width: 112vw;
+  }
+
+  @media (max-width: 430px) and (max-height: 700px) {
+    .mobile-scene.mobile-image-scene--product,
+    .slide[data-slide-id='reset-360'] .mobile-image-scene--product,
+    .mobile-scene.mobile-image-scene--product.mobile-image-scene--formula,
+    .slide[data-slide-id='moravi-formula'] .mobile-image-scene--formula,
+    .slide[data-slide-id='reset-formula'] .mobile-image-scene--formula {
+      --scene-min-width: 100vw;
+    }
   }
 
   .mobile-slide-image--product {

@@ -1,5 +1,7 @@
 ---
-import { NUTRITION_DISCLAIMER, type NutritionFacts, type NutrientRow } from '../data/nutrition';
+import Icon from './Icon.astro';
+import NutritionTable from './NutritionTable.astro';
+import type { NutritionFacts } from '../data/nutrition';
 
 interface Props {
   facts: NutritionFacts;
@@ -7,8 +9,6 @@ interface Props {
 }
 
 const { facts, anchor } = Astro.props;
-
-const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutrition-row--${row.variant}`];
 ---
 
 <div class="nutrition-layer" data-nutrition-anchor={anchor}>
@@ -23,57 +23,10 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
   aria-hidden="true"
 >
   <button type="button" class="nutrition-close-icon" data-nutrition-close aria-label="Cerrar tabla nutricional">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
-      <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-    </svg>
+    <Icon name="close" size="18px" />
   </button>
 
-  <div class="nutrition-body">
-    <div class="nutrition-header">
-      <div class="nutrition-title-row">
-        <span class="nutrition-decorator" aria-hidden="true"></span>
-        <h2 class="nutrition-title">Información nutricional</h2>
-      </div>
-      <div class="nutrition-divider" aria-hidden="true"></div>
-    </div>
-
-    <div class="nutrition-serving">
-      <div class="nutrition-serving-line">
-        <span class="nutrition-serving-label">Porción:</span>
-        <span class="nutrition-serving-value">{facts.servingSize}</span>
-      </div>
-      <div class="nutrition-serving-line">
-        <span class="nutrition-serving-label">Porciones por envase:</span>
-        <span class="nutrition-serving-value">{facts.servingsPerContainer}</span>
-      </div>
-    </div>
-
-    <div class="nutrition-table-head">
-      <span class="nutrition-cell-name">Nutriente</span>
-      <span class="nutrition-cell-value">Por 100g</span>
-      <span class="nutrition-cell-value">{facts.servingColumnLabel}</span>
-      <span class="nutrition-cell-value">%VD*</span>
-    </div>
-
-    <div class="nutrition-rows" data-nutrition-rows>
-      <div class:list={rowClass(facts.energyRow)} data-nutrition-pinned>
-        <span class="nutrition-cell-name">{facts.energyRow.name}</span>
-        <span class="nutrition-cell-value">{facts.energyRow.per100g}</span>
-        <span class="nutrition-cell-value">{facts.energyRow.perServing}</span>
-        <span class="nutrition-cell-value">{facts.energyRow.vd}</span>
-      </div>
-      {facts.rows.map((row) => (
-        <div class:list={rowClass(row)}>
-          <span class="nutrition-cell-name">{row.name}</span>
-          <span class="nutrition-cell-value">{row.per100g}</span>
-          <span class="nutrition-cell-value">{row.perServing}</span>
-          <span class="nutrition-cell-value">{row.vd}</span>
-        </div>
-      ))}
-    </div>
-
-    <p class="nutrition-disclaimer">{NUTRITION_DISCLAIMER}</p>
-  </div>
+  <NutritionTable facts={facts} layout="panel" />
 
   <div class="nutrition-pager" data-nutrition-pager hidden></div>
 
@@ -85,8 +38,17 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
 </div>
 
 <script>
-  // La tabla se pagina midiendo el alto real disponible, así aprovecha toda la
-  // altura del panel y admite cualquier cantidad de nutrientes sin scroll.
+  import { NUTRITION_LAYOUT_EVENT } from '../data/nutrition';
+
+  /*
+   * La tabla se pagina midiendo el alto real disponible, así aprovecha toda la
+   * altura del panel y admite cualquier cantidad de nutrientes sin scroll.
+   *
+   * El reparto se hace en dos fases porque estimar no alcanza: mostrar el
+   * paginador le quita alto a la lista, y las unidades de contenedor de la
+   * tipografía se resuelven después del primer layout. La segunda fase renderiza
+   * cada página y empuja filas hasta que ninguna desborda de verdad.
+   */
   function paginate(panel: HTMLElement) {
     const list = panel.querySelector<HTMLElement>('[data-nutrition-rows]');
     const pager = panel.querySelector<HTMLElement>('[data-nutrition-pager]');
@@ -96,11 +58,19 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     const rows = [...list.querySelectorAll<HTMLElement>('.nutrition-row')].filter((r) => r !== pinned);
     if (!rows.length) return;
 
-    // Con todas las filas visibles el contenedor da su alto disponible real.
     rows.forEach((row) => row.removeAttribute('hidden'));
-    const available = list.clientHeight - (pinned?.offsetHeight ?? 0);
+
+    /*
+     * Si el paginador aún no se mostró, la lista todavía ocupa el alto que él va
+     * a reclamar. Descontarlo por adelantado evita repartir contra un espacio
+     * que desaparece, que es lo que fragmentaba la tabla en páginas de dos filas.
+     */
+    const PAGER_RESERVE = 52;
+    const available =
+      list.clientHeight - (pinned?.offsetHeight ?? 0) - (pager.hidden ? PAGER_RESERVE : 0);
     if (available <= 0) return;
 
+    // Fase 1: reparto estimado a partir de las alturas medidas.
     let page = 0;
     let used = 0;
     rows.forEach((row) => {
@@ -113,42 +83,96 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
       used += height;
     });
 
-    const pageCount = page + 1;
+    let pageCount = page + 1;
+    panel.dataset.pageCount = String(pageCount);
+    renderPager(panel, pager, pageCount);
+
+    // Fase 2: verificación contra el render real.
+    pageCount = balancePages(panel, list, rows, pageCount);
+
     const current = Math.min(Number(panel.dataset.page ?? 0), pageCount - 1);
     panel.dataset.page = String(current);
     panel.dataset.pageCount = String(pageCount);
-
-    if (pageCount > 1 && pager.childElementCount !== pageCount) {
-      // Los estilos del componente están scopeados por atributo, así que los
-      // botones creados a mano deben heredarlo del panel.
-      const scope = [...panel.attributes]
-        .map((attr) => attr.name)
-        .find((name) => name.startsWith('data-astro-cid-'));
-
-      pager.replaceChildren(
-        ...Array.from({ length: pageCount }, (_, index) => {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'nutrition-pager-btn';
-          button.dataset.nutritionPage = String(index);
-          button.setAttribute('aria-label', `Página ${index + 1}`);
-          button.textContent = String(index + 1);
-          if (scope) button.setAttribute(scope, '');
-          return button;
-        })
-      );
-    }
-    if (pageCount <= 1) pager.replaceChildren();
-    pager.hidden = pageCount <= 1;
+    renderPager(panel, pager, pageCount);
 
     showPage(panel, current);
   }
 
-  function showPage(panel: HTMLElement, index: number) {
-    panel.dataset.page = String(index);
+  /** Empuja filas a la página siguiente hasta que ninguna desborde al renderizarse. */
+  function balancePages(
+    panel: HTMLElement,
+    list: HTMLElement,
+    rows: HTMLElement[],
+    pageCount: number
+  ) {
+    // Cota: cada iteración mueve una fila, así que no puede haber más pasadas
+    // que filas. Evita cualquier bucle infinito si una fila sola no cabe.
+    for (let guard = 0; guard < rows.length; guard += 1) {
+      let overflowed = false;
+
+      for (let index = 0; index < pageCount; index += 1) {
+        applyPage(panel, index);
+        if (list.scrollHeight <= list.clientHeight) continue;
+
+        const inPage = rows.filter((row) => row.dataset.page === String(index));
+        // Una sola fila que no entra no se puede partir: se deja como está.
+        if (inPage.length < 2) continue;
+
+        rows.forEach((row) => {
+          const rowPage = Number(row.dataset.page);
+          if (rowPage > index) row.dataset.page = String(rowPage + 1);
+        });
+        inPage[inPage.length - 1].dataset.page = String(index + 1);
+        pageCount += 1;
+        overflowed = true;
+        break;
+      }
+
+      if (!overflowed) break;
+    }
+
+    return pageCount;
+  }
+
+  function renderPager(panel: HTMLElement, pager: HTMLElement, pageCount: number) {
+    if (pageCount <= 1) {
+      pager.replaceChildren();
+      pager.hidden = true;
+      return;
+    }
+
+    pager.hidden = false;
+    if (pager.childElementCount === pageCount) return;
+
+    // Los estilos del componente están scopeados por atributo, así que los
+    // botones creados a mano deben heredarlo del panel.
+    const scope = [...panel.attributes]
+      .map((attr) => attr.name)
+      .find((name) => name.startsWith('data-astro-cid-'));
+
+    pager.replaceChildren(
+      ...Array.from({ length: pageCount }, (_, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'nutrition-pager-btn';
+        button.dataset.nutritionPage = String(index);
+        button.setAttribute('aria-label', `Página ${index + 1}`);
+        button.textContent = String(index + 1);
+        if (scope) button.setAttribute(scope, '');
+        return button;
+      })
+    );
+  }
+
+  function applyPage(panel: HTMLElement, index: number) {
     panel.querySelectorAll<HTMLElement>('.nutrition-row[data-page]').forEach((row) => {
       row.toggleAttribute('hidden', row.dataset.page !== String(index));
     });
+  }
+
+  function showPage(panel: HTMLElement, index: number) {
+    panel.dataset.page = String(index);
+    applyPage(panel, index);
     panel.querySelectorAll<HTMLElement>('.nutrition-pager-btn').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.nutritionPage === String(index));
     });
@@ -168,26 +192,50 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     if (button && panel) showPage(panel, Number(button.dataset.nutritionPage));
   });
 
-  // El alto del panel depende de la escala de la presentación, que index.astro
-  // recalcula en cada resize y antes de abrir la tabla.
-  document.addEventListener('nutrition:layout', paginateAll);
-  window.addEventListener('resize', paginateAll);
+  document.addEventListener(NUTRITION_LAYOUT_EVENT, paginateAll);
+
+  /*
+   * La tipografía se dimensiona con unidades de contenedor (cqi), así que su
+   * valor final solo existe una vez que el dock tiene ancho. Observarlo evita
+   * paginar contra medidas viejas: un listener de `resize` corre antes de que
+   * el contenedor resuelva, y dejaba la página desbordada.
+   */
+  const observer = new ResizeObserver(() => paginateAll());
+  document.querySelectorAll('.nutrition-dock').forEach((dock) => observer.observe(dock));
+
+  /*
+   * El observador no siempre alcanza: al redimensionar la ventana entrega una
+   * medida intermedia y no vuelve a emitir, dejando la página desbordada. El
+   * `resize` de la ventana llega después y cierra ese hueco.
+   */
+  let resizeTimer: number;
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(paginateAll, 120);
+  });
+
   requestAnimationFrame(paginateAll);
 </script>
 
 <style>
   .nutrition-layer {
-    /* Tipografía en el espacio de diseño 1920x1080, para que se lea al mismo
-       tamaño aparente que los textos incrustados en la imagen de la slide. */
-    /* Proporciones del diseño original; solo la tipografía sube un ~30%
-       respecto a Figma para que se lea mejor en proyección. */
-    --nut-width: 560px;
-    --nut-fs-title: 20px;
-    --nut-fs-label: 15px;
-    --nut-fs-head: 13px;
-    --nut-fs-row: 12px;
-    --nut-fs-energy: 14px;
-    --nut-fs-note: 12px;
+    /* Ancho real en pantalla: proporcional al viewport, acotado para no invadir
+       la slide en monitores anchos ni ahogar la tabla en los angostos. */
+    --nut-width: clamp(430px, 30vw, 580px);
+
+    /*
+     * La tipografía se mide contra el ancho del propio panel (cqi), no contra el
+     * viewport: lo que define si el texto "se ve grande" es su proporción con la
+     * caja que lo contiene. Así el panel se ve igual en cualquier pantalla.
+     * Los máximos son los tamaños de referencia (14/16/20), que se alcanzan
+     * cuando el panel ronda los 500px.
+     */
+    --nut-fs-title: clamp(16px, 4cqi, 20px);
+    --nut-fs-label: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-head: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-row: clamp(11px, 2.8cqi, 14px);
+    --nut-fs-energy: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-note: clamp(10px, 2.4cqi, 12px);
 
     position: absolute;
     z-index: 41;
@@ -213,26 +261,31 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     visibility: visible;
   }
 
-  /* El dock aplica la escala de la presentación (estática) y recorta el
-     deslizamiento de entrada; el panel solo anima su translate. */
+  /*
+   * El dock NO escala con la presentación: este panel es interfaz anclada al
+   * viewport, no parte del arte de la slide, igual que `.desktop-slide-header`.
+   * Escalarlo hacía que la tipografía se viera más chica en pantallas altas,
+   * porque el lienzo interno crecía mientras el texto seguía fijo.
+   * Solo recorta el deslizamiento de entrada.
+   */
   .nutrition-dock {
     position: absolute;
     width: var(--nut-width);
     overflow: hidden;
-    transform-origin: top right;
-    transform: scale(var(--slide-frame-scale, 1));
+    /* Referencia para las unidades cqi de la tipografía. */
+    container-type: inline-size;
   }
 
   [data-nutrition-anchor='viewport'] .nutrition-dock {
     top: 0;
     right: 0;
-    height: calc(100% / var(--slide-frame-scale, 1));
+    height: 100%;
   }
 
   [data-nutrition-anchor='image'] .nutrition-dock {
     top: calc(50% - var(--slide-rendered-height) / 2);
     right: calc(50% - var(--slide-rendered-width) / 2);
-    height: calc(var(--slide-rendered-height) / var(--slide-frame-scale, 1));
+    height: var(--slide-rendered-height);
   }
 
   .nutrition-sidebar {
@@ -263,213 +316,6 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     visibility: visible;
   }
 
-  .nutrition-body {
-    display: flex;
-    width: 100%;
-    min-height: 0;
-    flex: 1;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* Header */
-
-  .nutrition-header {
-    display: flex;
-    width: 100%;
-    flex: none;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .nutrition-title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .nutrition-decorator {
-    width: 4px;
-    height: 22px;
-    flex: none;
-    border-radius: 2px;
-    background: var(--color-brand-gold-highlight);
-  }
-
-  .nutrition-title {
-    margin: 0;
-    color: var(--color-brand-gold-highlight);
-    font-size: var(--nut-fs-title);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .nutrition-divider {
-    width: 100%;
-    border-top: 1px solid var(--color-brand-gold-highlight);
-  }
-
-  /* Serving info */
-
-  .nutrition-serving {
-    display: flex;
-    width: 100%;
-    flex: none;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .nutrition-serving-line {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    padding: 4px 0;
-  }
-
-  .nutrition-serving-label {
-    color: #a1a1ab;
-    font-size: var(--nut-fs-label);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .nutrition-serving-value {
-    color: #f5f5f7;
-    font-size: var(--nut-fs-label);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  /* Table */
-
-  .nutrition-table-head,
-  .nutrition-row {
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-    align-items: center;
-    padding: 16px 12px;
-    gap: 8px;
-  }
-
-  .nutrition-table-head {
-    align-items: flex-start;
-    flex: none;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  .nutrition-table-head .nutrition-cell-name {
-    color: #a1a1ab;
-    font-size: var(--nut-fs-head);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .nutrition-table-head .nutrition-cell-value {
-    color: #a1a1ab;
-    font-size: var(--nut-fs-head);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .nutrition-rows {
-    display: flex;
-    width: 100%;
-    min-height: 0;
-    flex: 1;
-    flex-direction: column;
-    /* Moravi y Reset no entran completos en 1080px: la barra queda siempre
-       visible para que se note que la lista continúa. */
-    overflow-y: auto;
-    scrollbar-color: var(--color-brand-gold-muted) rgba(255, 255, 255, 0.06);
-    scrollbar-width: thin;
-  }
-
-  .nutrition-rows::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .nutrition-rows::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .nutrition-rows::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--color-brand-gold-muted);
-  }
-
-  .nutrition-row {
-    flex: none;
-  }
-
-  .nutrition-row[hidden] {
-    display: none;
-  }
-
-  .nutrition-row {
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .nutrition-cell-name {
-    width: 122px;
-    flex: none;
-    color: #ffffff;
-    font-size: var(--nut-fs-row);
-    font-weight: 400;
-    line-height: 1.25;
-    /* Los valores traen "\n" para partir kcal/kj en dos líneas */
-    white-space: pre-line;
-  }
-
-  .nutrition-cell-value {
-    flex: 1;
-    color: #ffffff;
-    font-size: var(--nut-fs-row);
-    font-weight: 400;
-    line-height: 1.25;
-    text-align: right;
-    white-space: pre-line;
-  }
-
-  .nutrition-cell-value:last-child {
-    font-weight: 600;
-  }
-
-  .nutrition-row--group .nutrition-cell-name {
-    font-weight: 600;
-  }
-
-  .nutrition-row--sub {
-    padding-left: 16px;
-  }
-
-  .nutrition-row--sub .nutrition-cell-name {
-    width: 118px;
-  }
-
-  .nutrition-row--energy .nutrition-cell-name {
-    color: var(--color-brand-gold-muted);
-    font-size: var(--nut-fs-energy);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .nutrition-row--energy .nutrition-cell-value {
-    font-size: var(--nut-fs-energy);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .nutrition-disclaimer {
-    flex: none;
-    margin: 8px 0 0;
-    color: #71717a;
-    font-size: var(--nut-fs-note);
-    font-weight: 400;
-    line-height: 1.4;
-  }
 
   /* Pager */
 
@@ -525,18 +371,13 @@ const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutriti
     padding: 0;
     border: none;
     background: transparent;
+    color: #ffffff;
     cursor: pointer;
+    transition: color 0.2s;
   }
 
-  .nutrition-close-icon svg {
-    width: 18px;
-    height: 18px;
-    fill: #ffffff;
-    transition: fill 0.2s;
-  }
-
-  .nutrition-close-icon:hover svg {
-    fill: var(--color-brand-gold-highlight);
+  .nutrition-close-icon:hover {
+    color: var(--color-brand-gold-highlight);
   }
 
   .nutrition-footer {

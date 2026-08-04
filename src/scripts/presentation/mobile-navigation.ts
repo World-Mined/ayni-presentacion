@@ -1,17 +1,18 @@
+import { getActiveSlide } from './active-slide';
+
 interface MobileNavigationControllerOptions {
   root: HTMLElement;
-  getActiveSlide: () => HTMLElement | null;
 }
 
 export interface MobileNavigationController {
   init: () => void;
   setOpen: (isOpen: boolean) => void;
-  handleEscape: (event: KeyboardEvent) => boolean;
+  /** Devuelve true cuando el menú consume la tecla y nadie más debe verla. */
+  handleKeydown: (event: KeyboardEvent) => boolean;
 }
 
 export function createMobileNavigationController({
   root,
-  getActiveSlide,
 }: MobileNavigationControllerOptions): MobileNavigationController {
   const overlay = document.getElementById('mobile-menu-overlay');
   let touchStartX = 0;
@@ -64,10 +65,16 @@ export function createMobileNavigationController({
     handleSwipe(touch.screenX - touchStartX, touch.screenY - touchStartY);
   }
 
-  function handleEscape(event: KeyboardEvent) {
-    if (!root.classList.contains('mobile-menu-open') || event.key !== 'Escape') return false;
-    event.preventDefault();
-    setOpen(false);
+  function handleKeydown(event: KeyboardEvent) {
+    if (!root.classList.contains('mobile-menu-open')) return false;
+
+    // Mismo criterio que el panel nutricional: con el menú abierto el router no
+    // debe recibir teclas de navegación.
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+    }
+
     return true;
   }
 
@@ -77,5 +84,5 @@ export function createMobileNavigationController({
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
   }
 
-  return { init, setOpen, handleEscape };
+  return { init, setOpen, handleKeydown };
 }
