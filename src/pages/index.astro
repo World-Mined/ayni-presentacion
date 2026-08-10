@@ -11,9 +11,11 @@ import MobileMenu from '../components/mobile/MobileMenu.astro';
 import MobileStage from '../components/mobile/MobileStage.astro';
 import { SLIDES } from '../data/slides';
 import { SlideId } from '../data/slide-ids';
-import { NUTRITION_FACTS, NUTRITION_SIDEBAR_ANCHOR } from '../data/nutrition';
-import { getMobileBackAction, getMobileNextAction } from '../data/mobile-scenes';
+import { NUTRITION_FACTS } from '../data/nutrition';
+import { getMobileBackAction, getMobileNextAction } from '../lib/mobile-scenes';
+import type { NutritionSidebarAnchor } from '../types/nutrition';
 
+const NUTRITION_SIDEBAR_ANCHOR: NutritionSidebarAnchor = 'viewport';
 ---
 
 <Layout title="AYNI - El Retorno Sagrado de la Energía">

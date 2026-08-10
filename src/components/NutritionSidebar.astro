@@ -1,17 +1,17 @@
 ---
 import Icon from './Icon.astro';
 import NutritionTable from './NutritionTable.astro';
-import type { NutritionFacts } from '../data/nutrition';
+import type { NutritionFacts, NutritionSidebarAnchor } from '../types/nutrition';
 
 interface Props {
   facts: NutritionFacts;
-  anchor: 'viewport' | 'image';
+  anchor: NutritionSidebarAnchor;
 }
 
 const { facts, anchor } = Astro.props;
 ---
 
-<div class="nutrition-layer" data-nutrition-anchor={anchor}>
+<div class="nutrition-layer" data-nutrition-layer data-nutrition-anchor={anchor}>
   <div class="nutrition-backdrop" aria-hidden="true"></div>
   <div class="nutrition-dock">
 <aside
@@ -19,6 +19,7 @@ const { facts, anchor } = Astro.props;
   data-nutrition-panel
   data-page="0"
   role="dialog"
+  aria-modal="true"
   aria-label="Información nutricional"
   aria-hidden="true"
 >
@@ -38,16 +39,12 @@ const { facts, anchor } = Astro.props;
 </div>
 
 <script>
-  import { NUTRITION_LAYOUT_EVENT } from '../data/nutrition';
+  import { NUTRITION_LAYOUT_EVENT } from '../scripts/presentation/nutrition-events';
 
   /*
-   * La tabla se pagina midiendo el alto real disponible, así aprovecha toda la
-   * altura del panel y admite cualquier cantidad de nutrientes sin scroll.
-   *
-   * El reparto se hace en dos fases porque estimar no alcanza: mostrar el
-   * paginador le quita alto a la lista, y las unidades de contenedor de la
-   * tipografía se resuelven después del primer layout. La segunda fase renderiza
-   * cada página y empuja filas hasta que ninguna desborda de verdad.
+   * La primera pasada reparte filas con las alturas medidas. La segunda comprueba
+   * el render real porque mostrar el paginador y resolver las unidades de
+   * contenedor cambia el espacio disponible.
    */
   function paginate(panel: HTMLElement) {
     const list = panel.querySelector<HTMLElement>('[data-nutrition-rows]');
@@ -60,17 +57,12 @@ const { facts, anchor } = Astro.props;
 
     rows.forEach((row) => row.removeAttribute('hidden'));
 
-    /*
-     * Si el paginador aún no se mostró, la lista todavía ocupa el alto que él va
-     * a reclamar. Descontarlo por adelantado evita repartir contra un espacio
-     * que desaparece, que es lo que fragmentaba la tabla en páginas de dos filas.
-     */
-    const PAGER_RESERVE = 52;
-    const available =
-      list.clientHeight - (pinned?.offsetHeight ?? 0) - (pager.hidden ? PAGER_RESERVE : 0);
+    const reserve = pager.hidden
+      ? parseFloat(getComputedStyle(panel).getPropertyValue('--nut-pager-reserve')) || 0
+      : 0;
+    const available = list.clientHeight - (pinned?.offsetHeight ?? 0) - reserve;
     if (available <= 0) return;
 
-    // Fase 1: reparto estimado a partir de las alturas medidas.
     let page = 0;
     let used = 0;
     rows.forEach((row) => {
@@ -87,7 +79,6 @@ const { facts, anchor } = Astro.props;
     panel.dataset.pageCount = String(pageCount);
     renderPager(panel, pager, pageCount);
 
-    // Fase 2: verificación contra el render real.
     pageCount = balancePages(panel, list, rows, pageCount);
 
     const current = Math.min(Number(panel.dataset.page ?? 0), pageCount - 1);
@@ -98,15 +89,12 @@ const { facts, anchor } = Astro.props;
     showPage(panel, current);
   }
 
-  /** Empuja filas a la página siguiente hasta que ninguna desborde al renderizarse. */
   function balancePages(
     panel: HTMLElement,
     list: HTMLElement,
     rows: HTMLElement[],
     pageCount: number
   ) {
-    // Cota: cada iteración mueve una fila, así que no puede haber más pasadas
-    // que filas. Evita cualquier bucle infinito si una fila sola no cabe.
     for (let guard = 0; guard < rows.length; guard += 1) {
       let overflowed = false;
 
@@ -115,7 +103,6 @@ const { facts, anchor } = Astro.props;
         if (list.scrollHeight <= list.clientHeight) continue;
 
         const inPage = rows.filter((row) => row.dataset.page === String(index));
-        // Una sola fila que no entra no se puede partir: se deja como está.
         if (inPage.length < 2) continue;
 
         rows.forEach((row) => {
@@ -144,8 +131,7 @@ const { facts, anchor } = Astro.props;
     pager.hidden = false;
     if (pager.childElementCount === pageCount) return;
 
-    // Los estilos del componente están scopeados por atributo, así que los
-    // botones creados a mano deben heredarlo del panel.
+    // Astro no aplica el scope del componente a elementos creados en runtime.
     const scope = [...panel.attributes]
       .map((attr) => attr.name)
       .find((name) => name.startsWith('data-astro-cid-'));
@@ -195,19 +181,13 @@ const { facts, anchor } = Astro.props;
   document.addEventListener(NUTRITION_LAYOUT_EVENT, paginateAll);
 
   /*
-   * La tipografía se dimensiona con unidades de contenedor (cqi), así que su
-   * valor final solo existe una vez que el dock tiene ancho. Observarlo evita
-   * paginar contra medidas viejas: un listener de `resize` corre antes de que
-   * el contenedor resuelva, y dejaba la página desbordada.
+   * El observer reacciona al ancho resuelto del dock; el resize con debounce
+   * corrige medidas intermedias que algunos redimensionamientos no vuelven a
+   * notificar. Ambos son necesarios para evitar páginas desbordadas.
    */
   const observer = new ResizeObserver(() => paginateAll());
   document.querySelectorAll('.nutrition-dock').forEach((dock) => observer.observe(dock));
 
-  /*
-   * El observador no siempre alcanza: al redimensionar la ventana entrega una
-   * medida intermedia y no vuelve a emitir, dejando la página desbordada. El
-   * `resize` de la ventana llega después y cierra ese hueco.
-   */
   let resizeTimer: number;
   window.addEventListener('resize', () => {
     window.clearTimeout(resizeTimer);
@@ -219,16 +199,14 @@ const { facts, anchor } = Astro.props;
 
 <style>
   .nutrition-layer {
-    /* Ancho real en pantalla: proporcional al viewport, acotado para no invadir
-       la slide en monitores anchos ni ahogar la tabla en los angostos. */
     --nut-width: clamp(430px, 30vw, 580px);
+    --nut-panel-transition-duration: 0.28s;
 
     /*
-     * La tipografía se mide contra el ancho del propio panel (cqi), no contra el
-     * viewport: lo que define si el texto "se ve grande" es su proporción con la
-     * caja que lo contiene. Así el panel se ve igual en cualquier pantalla.
-     * Los máximos son los tamaños de referencia (14/16/20), que se alcanzan
-     * cuando el panel ronda los 500px.
+     * La tipografía se mide en `cqi`, contra el ancho del propio panel y no el
+     * del viewport: lo que decide si el texto "se ve grande" es su proporción
+     * con la caja que lo contiene. Los máximos son los tamaños de referencia del
+     * diseño, y se alcanzan cuando el panel ronda los 500px.
      */
     --nut-fs-title: clamp(16px, 4cqi, 20px);
     --nut-fs-label: clamp(12px, 3.2cqi, 16px);
@@ -252,27 +230,26 @@ const { facts, anchor } = Astro.props;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     opacity: 0;
-    transition: opacity 0.28s ease, visibility 0.28s;
+    transition:
+      opacity var(--nut-panel-transition-duration) ease,
+      visibility var(--nut-panel-transition-duration);
     visibility: hidden;
   }
 
   :global(.slide.nutrition-open) .nutrition-backdrop {
     opacity: 1;
+    pointer-events: auto;
     visibility: visible;
   }
 
   /*
-   * El dock NO escala con la presentación: este panel es interfaz anclada al
-   * viewport, no parte del arte de la slide, igual que `.desktop-slide-header`.
-   * Escalarlo hacía que la tipografía se viera más chica en pantallas altas,
-   * porque el lienzo interno crecía mientras el texto seguía fijo.
-   * Solo recorta el deslizamiento de entrada.
+   * El dock es interfaz anclada al viewport, no arte de la slide. Escalarlo con
+   * la presentación altera la proporción del texto y ya provocó tablas ilegibles.
    */
   .nutrition-dock {
     position: absolute;
     width: var(--nut-width);
     overflow: hidden;
-    /* Referencia para las unidades cqi de la tipografía. */
     container-type: inline-size;
   }
 
@@ -305,9 +282,13 @@ const { facts, anchor } = Astro.props;
     box-shadow: -18px 0 48px rgba(0, 0, 0, 0.55);
     font-family: 'Montserrat', sans-serif;
     gap: 20px;
+    /* Alto del paginador más el gap que reclamará al mostrarse. */
+    --nut-pager-reserve: 52px;
     pointer-events: auto;
     transform: translateX(100%);
-    transition: transform 0.28s ease, visibility 0.28s;
+    transition:
+      transform var(--nut-panel-transition-duration) ease,
+      visibility var(--nut-panel-transition-duration);
     visibility: hidden;
   }
 
@@ -316,8 +297,11 @@ const { facts, anchor } = Astro.props;
     visibility: visible;
   }
 
-
-  /* Pager */
+  @media (prefers-reduced-motion: reduce) {
+    .nutrition-layer {
+      --nut-panel-transition-duration: 0s;
+    }
+  }
 
   .nutrition-pager {
     display: flex;
@@ -356,8 +340,6 @@ const { facts, anchor } = Astro.props;
   .nutrition-pager[hidden] {
     display: none;
   }
-
-  /* Close controls */
 
   .nutrition-close-icon {
     position: absolute;

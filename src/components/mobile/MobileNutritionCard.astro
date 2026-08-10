@@ -1,6 +1,6 @@
 ---
 import NutritionTable from '../NutritionTable.astro';
-import type { NutritionFacts } from '../../data/nutrition';
+import type { NutritionFacts } from '../../types/nutrition';
 
 interface Props {
   facts: NutritionFacts;
@@ -23,7 +23,6 @@ const { facts } = Astro.props;
     --nut-fs-row: 11px;
     --nut-fs-energy: 12px;
     --nut-fs-note: 10px;
-    --nut-name-width: 108px;
     --nut-row-padding: 10px 10px;
     --nut-row-gap: 8px;
     --nut-sub-indent: 7px;

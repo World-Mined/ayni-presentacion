@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
-import type { MobileComposedSceneConfig } from '../../data/mobile-scenes';
-import { toMobileCqw } from '../../data/mobile-scenes';
+import { toMobileCqw } from '../../lib/mobile-scenes';
+import type { MobileComposedSceneConfig } from '../../types/mobile-scenes';
 
 interface Props {
   scene: MobileComposedSceneConfig;

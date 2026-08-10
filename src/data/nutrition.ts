@@ -1,36 +1,5 @@
+import type { NutritionFacts } from '../types/nutrition';
 import { SlideId } from './slide-ids';
-
-export interface NutrientRow {
-  name: string;
-  per100g: string;
-  perServing: string;
-  vd: string;
-  /** 'energy' = fila dorada destacada, 'group' = macronutriente, 'sub' = desglose indentado */
-  variant?: 'energy' | 'group' | 'sub';
-}
-
-export interface NutritionFacts {
-  servingSize: string;
-  servingsPerContainer: string;
-  servingColumnLabel: string;
-  /** Fila fija: se repite arriba en todas las páginas. */
-  energyRow: NutrientRow;
-  /** Lista completa; el panel la pagina según el alto disponible. */
-  rows: NutrientRow[];
-}
-
-/**
- * Pide al panel que recalcule su paginación. Lo emite quien lo abre y lo escucha
- * el propio panel, que necesita el alto ya resuelto para repartir las filas.
- */
-export const NUTRITION_LAYOUT_EVENT = 'nutrition:layout';
-
-/**
- * Dónde se ancla el panel nutricional:
- * - 'viewport': pegado al borde derecho de la pantalla, a lo alto de toda la ventana.
- * - 'image': pegado al borde derecho de la imagen 16:9, respetando el letterbox.
- */
-export const NUTRITION_SIDEBAR_ANCHOR: 'viewport' | 'image' = 'viewport';
 
 export const NUTRITION_DISCLAIMER =
   '*% VD: Valores Diarios basados en una dieta de 2000 kcal (8380 kJ). Sus valores diarios pueden ser mayores o menores dependiendo de sus necesidades calóricas.';

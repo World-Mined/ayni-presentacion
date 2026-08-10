@@ -1,45 +1,20 @@
-import type { ImageMetadata } from 'astro';
 import {
   MOBILE_HOME_BACKGROUND,
   MOBILE_HOME_CARD_IMAGES,
   MOBILE_PRODUCTS_BACKGROUND,
   MOBILE_PRODUCTS_CARD_IMAGES,
-} from './images';
-import { SlideId } from './slide-ids';
-import type { Slide } from './slides';
+} from '../data/images';
+import { SlideId } from '../data/slide-ids';
+import type { Slide } from '../data/slides';
+import type {
+  MobileComposedSceneConfig,
+  MobileNavigationAction,
+} from '../types/mobile-scenes';
 
-export interface MobileNavigationAction {
-  target: SlideId;
-  label: string;
-}
+/** Ancho del lienzo de diseño mobile; las medidas de Figma están tomadas sobre él. */
+const MOBILE_DESIGN_WIDTH = 390;
 
-export interface MobileComposedSceneCard {
-  name: string;
-  image: ImageMetadata;
-  linkTo?: SlideId;
-  disabled?: boolean;
-}
-
-export interface MobileComposedSceneConfig {
-  id: SlideId.Home | SlideId.Products;
-  background: ImageMetadata;
-  stackTop: number;
-  cards: MobileComposedSceneCard[];
-}
-
-export const MOBILE_PRICING_CARDS = [
-  {
-    pack: '05 DOYPACK',
-    price: 'S/.450.00',
-    points: '60 PUNTOS',
-  },
-  {
-    pack: '08 DOYPACK',
-    price: 'S/.720.00',
-    points: '100 PUNTOS',
-  },
-] as const;
-
+/** Desplazamiento vertical de la pila de tarjetas, en px de ese mismo lienzo. */
 const MOBILE_COMPOSED_SCENE_STACKS = {
   [SlideId.Home]: 271,
   [SlideId.Products]: 260,
@@ -112,6 +87,7 @@ export function getMobileComposedScene(slide: Slide): MobileComposedSceneConfig 
   return null;
 }
 
+/** Convierte un px del diseño mobile a `cqw`, para que escale con el contenedor. */
 export function toMobileCqw(value: number) {
-  return `${(value / 390) * 100}cqw`;
+  return `${(value / MOBILE_DESIGN_WIDTH) * 100}cqw`;
 }

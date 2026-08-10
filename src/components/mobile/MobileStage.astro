@@ -1,10 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import { MOBILE_FIGMA_BACKGROUNDS, MOBILE_PRICING_ASSETS } from '../../data/images';
-import {
-  getMobileComposedScene,
-  type MobileNavigationAction,
-} from '../../data/mobile-scenes';
+import { getMobileComposedScene } from '../../lib/mobile-scenes';
+import type { MobileNavigationAction } from '../../types/mobile-scenes';
 import { SlideId } from '../../data/slide-ids';
 import type { Slide } from '../../data/slides';
 import MobileComposedScene from './MobileComposedScene.astro';
