@@ -1,0 +1,398 @@
+---
+import Icon from './Icon.astro';
+import NutritionTable from './NutritionTable.astro';
+import type { NutritionFacts, NutritionSidebarAnchor } from '../types/nutrition';
+
+interface Props {
+  facts: NutritionFacts;
+  anchor: NutritionSidebarAnchor;
+}
+
+const { facts, anchor } = Astro.props;
+---
+
+<div class="nutrition-layer" data-nutrition-layer data-nutrition-anchor={anchor}>
+  <div class="nutrition-backdrop" aria-hidden="true"></div>
+  <div class="nutrition-dock">
+<aside
+  class="nutrition-sidebar"
+  data-nutrition-panel
+  data-page="0"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Información nutricional"
+  aria-hidden="true"
+>
+  <button type="button" class="nutrition-close-icon" data-nutrition-close aria-label="Cerrar tabla nutricional">
+    <Icon name="close" size="18px" />
+  </button>
+
+  <NutritionTable facts={facts} layout="panel" />
+
+  <div class="nutrition-pager" data-nutrition-pager hidden></div>
+
+  <div class="nutrition-footer">
+    <button type="button" class="nutrition-close-text" data-nutrition-close>Cerrar tabla</button>
+  </div>
+</aside>
+  </div>
+</div>
+
+<script>
+  import { NUTRITION_LAYOUT_EVENT } from '../scripts/presentation/nutrition-events';
+
+  /*
+   * La primera pasada reparte filas con las alturas medidas. La segunda comprueba
+   * el render real porque mostrar el paginador y resolver las unidades de
+   * contenedor cambia el espacio disponible.
+   */
+  function paginate(panel: HTMLElement) {
+    const list = panel.querySelector<HTMLElement>('[data-nutrition-rows]');
+    const pager = panel.querySelector<HTMLElement>('[data-nutrition-pager]');
+    if (!list || !pager) return;
+
+    const pinned = list.querySelector<HTMLElement>('[data-nutrition-pinned]');
+    const rows = [...list.querySelectorAll<HTMLElement>('.nutrition-row')].filter((r) => r !== pinned);
+    if (!rows.length) return;
+
+    rows.forEach((row) => row.removeAttribute('hidden'));
+
+    const reserve = pager.hidden
+      ? parseFloat(getComputedStyle(panel).getPropertyValue('--nut-pager-reserve')) || 0
+      : 0;
+    const available = list.clientHeight - (pinned?.offsetHeight ?? 0) - reserve;
+    if (available <= 0) return;
+
+    let page = 0;
+    let used = 0;
+    rows.forEach((row) => {
+      const height = row.offsetHeight;
+      if (used > 0 && used + height > available) {
+        page += 1;
+        used = 0;
+      }
+      row.dataset.page = String(page);
+      used += height;
+    });
+
+    let pageCount = page + 1;
+    panel.dataset.pageCount = String(pageCount);
+    renderPager(panel, pager, pageCount);
+
+    pageCount = balancePages(panel, list, rows, pageCount);
+
+    const current = Math.min(Number(panel.dataset.page ?? 0), pageCount - 1);
+    panel.dataset.page = String(current);
+    panel.dataset.pageCount = String(pageCount);
+    renderPager(panel, pager, pageCount);
+
+    showPage(panel, current);
+  }
+
+  function balancePages(
+    panel: HTMLElement,
+    list: HTMLElement,
+    rows: HTMLElement[],
+    pageCount: number
+  ) {
+    for (let guard = 0; guard < rows.length; guard += 1) {
+      let overflowed = false;
+
+      for (let index = 0; index < pageCount; index += 1) {
+        applyPage(panel, index);
+        if (list.scrollHeight <= list.clientHeight) continue;
+
+        const inPage = rows.filter((row) => row.dataset.page === String(index));
+        if (inPage.length < 2) continue;
+
+        rows.forEach((row) => {
+          const rowPage = Number(row.dataset.page);
+          if (rowPage > index) row.dataset.page = String(rowPage + 1);
+        });
+        inPage[inPage.length - 1].dataset.page = String(index + 1);
+        pageCount += 1;
+        overflowed = true;
+        break;
+      }
+
+      if (!overflowed) break;
+    }
+
+    return pageCount;
+  }
+
+  function renderPager(panel: HTMLElement, pager: HTMLElement, pageCount: number) {
+    if (pageCount <= 1) {
+      pager.replaceChildren();
+      pager.hidden = true;
+      return;
+    }
+
+    pager.hidden = false;
+    if (pager.childElementCount === pageCount) return;
+
+    // Astro no aplica el scope del componente a elementos creados en runtime.
+    const scope = [...panel.attributes]
+      .map((attr) => attr.name)
+      .find((name) => name.startsWith('data-astro-cid-'));
+
+    pager.replaceChildren(
+      ...Array.from({ length: pageCount }, (_, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'nutrition-pager-btn';
+        button.dataset.nutritionPage = String(index);
+        button.setAttribute('aria-label', `Página ${index + 1}`);
+        button.textContent = String(index + 1);
+        if (scope) button.setAttribute(scope, '');
+        return button;
+      })
+    );
+  }
+
+  function applyPage(panel: HTMLElement, index: number) {
+    panel.querySelectorAll<HTMLElement>('.nutrition-row[data-page]').forEach((row) => {
+      row.toggleAttribute('hidden', row.dataset.page !== String(index));
+    });
+  }
+
+  function showPage(panel: HTMLElement, index: number) {
+    panel.dataset.page = String(index);
+    applyPage(panel, index);
+    panel.querySelectorAll<HTMLElement>('.nutrition-pager-btn').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.nutritionPage === String(index));
+    });
+    const list = panel.querySelector<HTMLElement>('[data-nutrition-rows]');
+    if (list) list.scrollTop = 0;
+  }
+
+  function paginateAll() {
+    document.querySelectorAll<HTMLElement>('[data-nutrition-panel]').forEach(paginate);
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLElement>('.nutrition-pager-btn');
+    const panel = button?.closest<HTMLElement>('[data-nutrition-panel]');
+    if (button && panel) showPage(panel, Number(button.dataset.nutritionPage));
+  });
+
+  document.addEventListener(NUTRITION_LAYOUT_EVENT, paginateAll);
+
+  /*
+   * El observer reacciona al ancho resuelto del dock; el resize con debounce
+   * corrige medidas intermedias que algunos redimensionamientos no vuelven a
+   * notificar. Ambos son necesarios para evitar páginas desbordadas.
+   */
+  const observer = new ResizeObserver(() => paginateAll());
+  document.querySelectorAll('.nutrition-dock').forEach((dock) => observer.observe(dock));
+
+  let resizeTimer: number;
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(paginateAll, 120);
+  });
+
+  requestAnimationFrame(paginateAll);
+</script>
+
+<style>
+  .nutrition-layer {
+    --nut-width: clamp(430px, 30vw, 580px);
+    --nut-panel-transition-duration: 0.28s;
+
+    /*
+     * La tipografía se mide en `cqi`, contra el ancho del propio panel y no el
+     * del viewport: lo que decide si el texto "se ve grande" es su proporción
+     * con la caja que lo contiene. Los máximos son los tamaños de referencia del
+     * diseño, y se alcanzan cuando el panel ronda los 500px.
+     */
+    --nut-fs-title: clamp(16px, 4cqi, 20px);
+    --nut-fs-label: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-head: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-row: clamp(11px, 2.8cqi, 14px);
+    --nut-fs-energy: clamp(12px, 3.2cqi, 16px);
+    --nut-fs-note: clamp(10px, 2.4cqi, 12px);
+
+    position: absolute;
+    z-index: 41;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :global(html[data-presentation-mode='mobile']) .nutrition-layer {
+    display: none;
+  }
+
+  .nutrition-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition:
+      opacity var(--nut-panel-transition-duration) ease,
+      visibility var(--nut-panel-transition-duration);
+    visibility: hidden;
+  }
+
+  :global(.slide.nutrition-open) .nutrition-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  /*
+   * El dock es interfaz anclada al viewport, no arte de la slide. Escalarlo con
+   * la presentación altera la proporción del texto y ya provocó tablas ilegibles.
+   */
+  .nutrition-dock {
+    position: absolute;
+    width: var(--nut-width);
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  [data-nutrition-anchor='viewport'] .nutrition-dock {
+    top: 0;
+    right: 0;
+    height: 100%;
+  }
+
+  [data-nutrition-anchor='image'] .nutrition-dock {
+    top: calc(50% - var(--slide-rendered-height) / 2);
+    right: calc(50% - var(--slide-rendered-width) / 2);
+    height: var(--slide-rendered-height);
+  }
+
+  .nutrition-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 40px 20px 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px 0 0 8px;
+    background: #151619;
+    box-shadow: -18px 0 48px rgba(0, 0, 0, 0.55);
+    font-family: 'Montserrat', sans-serif;
+    gap: 20px;
+    /* Alto del paginador más el gap que reclamará al mostrarse. */
+    --nut-pager-reserve: 52px;
+    pointer-events: auto;
+    transform: translateX(100%);
+    transition:
+      transform var(--nut-panel-transition-duration) ease,
+      visibility var(--nut-panel-transition-duration);
+    visibility: hidden;
+  }
+
+  :global(.slide.nutrition-open) .nutrition-sidebar {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nutrition-layer {
+      --nut-panel-transition-duration: 0s;
+    }
+  }
+
+  .nutrition-pager {
+    display: flex;
+    flex: none;
+    align-items: center;
+    align-self: center;
+    gap: 12px;
+  }
+
+  .nutrition-pager-btn {
+    display: flex;
+    width: 38px;
+    height: 32px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: transparent;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--nut-fs-label);
+    font-weight: 400;
+    line-height: 1.2;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+
+  .nutrition-pager-btn.is-active {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 600;
+  }
+
+  .nutrition-pager[hidden] {
+    display: none;
+  }
+
+  .nutrition-close-icon {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .nutrition-close-icon:hover {
+    color: var(--color-brand-gold-highlight);
+  }
+
+  .nutrition-footer {
+    display: flex;
+    width: 100%;
+    flex: none;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .nutrition-close-text {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--nut-fs-label);
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: underline;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nutrition-close-text:hover {
+    color: var(--color-brand-gold-highlight);
+  }
+
+  .nutrition-close-icon:focus-visible,
+  .nutrition-close-text:focus-visible,
+  .nutrition-pager-btn:focus-visible {
+    outline: 2px solid var(--color-brand-gold-highlight);
+    outline-offset: 3px;
+  }
+</style>

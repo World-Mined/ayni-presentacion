@@ -1,0 +1,37 @@
+---
+import NutritionTable from '../NutritionTable.astro';
+import type { NutritionFacts } from '../../types/nutrition';
+
+interface Props {
+  facts: NutritionFacts;
+}
+
+const { facts } = Astro.props;
+---
+
+<section class="mobile-nutrition-card" aria-label="Información nutricional">
+  <NutritionTable facts={facts} layout="flow" />
+</section>
+
+<style>
+  /* En mobile la tabla no es un panel: vive dentro del scroll de la slide,
+     debajo de la imagen, con todos los nutrientes a la vista. */
+  .mobile-nutrition-card {
+    --nut-fs-title: 15px;
+    --nut-fs-label: 13px;
+    --nut-fs-head: 10px;
+    --nut-fs-row: 11px;
+    --nut-fs-energy: 12px;
+    --nut-fs-note: 10px;
+    --nut-row-padding: 10px 10px;
+    --nut-row-gap: 8px;
+    --nut-sub-indent: 7px;
+
+    box-sizing: border-box;
+    margin: 16px 12px 24px;
+    padding: 20px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: #151619;
+  }
+</style>

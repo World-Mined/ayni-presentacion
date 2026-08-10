@@ -1,24 +1,38 @@
 ---
 ---
 
+<style>
+  .brand-gold-border {
+    border-color: var(--color-brand-gold);
+  }
+
+  .brand-gold-text {
+    color: var(--color-brand-gold);
+  }
+
+  .brand-gold-background {
+    background-color: var(--color-brand-gold);
+  }
+</style>
+
 <!-- PWA Update Toast Notification -->
 <div 
   id="pwa-update-toast" 
-  class="fixed bottom-6 right-6 z-[9999] hidden max-w-sm rounded-xl border border-[#f3c864] bg-black/90 p-4 shadow-[0px_0px_30px_0px_rgba(243,200,100,0.3)] backdrop-blur-md transition-all duration-300 translate-y-10 opacity-0"
+  class="brand-gold-border fixed bottom-6 right-6 z-[9999] hidden max-w-sm rounded-xl border bg-black/90 p-4 shadow-[0px_0px_30px_0px_rgba(243,200,100,0.3)] backdrop-blur-md transition-all duration-300 translate-y-10 opacity-0"
 >
   <div class="flex items-start gap-3">
-    <div class="flex-shrink-0 text-[#f3c864] mt-0.5">
+    <div class="brand-gold-text flex-shrink-0 mt-0.5">
       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5M7 16H4m0 0v3m0-3h3m1.879-11.879a3 3 0 11-4.243 4.243m16.97 0a3 3 0 11-4.243-4.243M12 18a6 6 0 100-12 6 6 0 000 12z" />
       </svg>
     </div>
     <div class="flex-grow">
-      <h3 class="text-sm font-semibold text-[#f3c864]">Nueva versión disponible</h3>
+      <h3 class="brand-gold-text text-sm font-semibold">Nueva versión disponible</h3>
       <p class="mt-1 text-xs text-gray-300">Hay una nueva versión de la presentación. Haz clic abajo para actualizar al instante.</p>
       <div class="mt-3 flex gap-2">
         <button 
           id="pwa-update-btn" 
-          class="rounded-lg bg-[#f3c864] px-3 py-1.5 text-xs font-bold text-black shadow-md hover:bg-white hover:text-black transition-colors"
+          class="brand-gold-background rounded-lg px-3 py-1.5 text-xs font-bold text-black shadow-md hover:bg-white hover:text-black transition-colors"
         >
           Actualizar ahora
         </button>

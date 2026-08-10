@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import type { SlideHeader } from '../data/slides';
 import { SlideId } from '../data/slide-ids';
 
@@ -14,15 +15,11 @@ const { header } = Astro.props;
     {header.showClose && (
       (header.disableClose || !header.closeTo) ? (
         <div class="header-btn close-btn disabled" title="Cerrar deshabilitado">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" class="material-close-icon" aria-hidden="true">
-            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-          </svg>
+          <Icon name="close" size="clamp(18px, 1.25vw, 22px)" />
         </div>
       ) : (
         <a href={`#${header.closeTo}`} class="header-btn close-btn" title="Cerrar" aria-label="Cerrar">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" class="material-close-icon" aria-hidden="true">
-            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
-          </svg>
+          <Icon name="close" size="clamp(18px, 1.25vw, 22px)" />
         </a>
       )
     )}
@@ -113,29 +110,22 @@ const { header } = Astro.props;
     border-radius: 50%;
     background-color: rgba(0, 0, 0, 0.68);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
-    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+    /* El icono hereda este color; su tamaño lo fija la prop `size`. */
+    color: #ffffff;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s, color 0.2s;
   }
 
-  .header-btn img,
-  .header-btn svg {
+  .header-btn img {
     width: clamp(18px, 1.25vw, 22px);
     height: clamp(18px, 1.25vw, 22px);
     pointer-events: none;
   }
 
-  .material-close-icon {
-    fill: #ffffff;
-    transition: fill 0.2s;
-  }
-
   .header-btn:hover {
     border-color: rgba(243, 200, 100, 0.8);
     background-color: rgba(243, 200, 100, 0.12);
+    color: var(--color-brand-gold);
     transform: scale(1.05);
-  }
-
-  .header-btn:hover .material-close-icon {
-    fill: #f3c864;
   }
 
   .header-btn:active {
@@ -144,7 +134,7 @@ const { header } = Astro.props;
 
   .header-btn:focus-visible,
   .tab-pill:focus-visible {
-    outline: 2px solid #f3c864;
+    outline: 2px solid var(--color-brand-gold);
     outline-offset: 3px;
   }
 
@@ -167,7 +157,7 @@ const { header } = Astro.props;
     display: flex;
     align-items: center;
     padding: 2px;
-    border: 1px solid #f3c864;
+    border: 1px solid var(--color-brand-gold);
     border-radius: 100px;
     background-color: rgba(0, 0, 0, 0.58);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(243, 200, 100, 0.1);
@@ -190,13 +180,13 @@ const { header } = Astro.props;
   }
 
   .tab-pill:hover {
-    color: #f3c864;
+    color: var(--color-brand-gold);
     background-color: rgba(243, 200, 100, 0.1);
   }
 
   .tab-pill.active {
     color: #000000;
-    background-color: #f3c864;
+    background-color: var(--color-brand-gold);
     box-shadow: 0 2px 10px rgba(243, 200, 100, 0.4);
     font-weight: 700;
   }

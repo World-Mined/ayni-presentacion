@@ -2,6 +2,23 @@
 ---
 
 <style>
+  .brand-gold-text {
+    color: var(--color-brand-gold);
+  }
+
+  .brand-gold-background {
+    background-color: var(--color-brand-gold);
+  }
+
+  .install-button {
+    border-color: var(--color-brand-gold);
+    color: var(--color-brand-gold);
+  }
+
+  .install-button:hover {
+    background-color: var(--color-brand-gold);
+  }
+
   @media (max-width: 1024px) {
     .fixed.top-6.right-6.z-\[9998\].flex.flex-col.gap-3.pointer-events-none {
       display: none !important;
@@ -29,7 +46,7 @@
   <!-- Install App Button (Hidden by default, shown when installable) -->
   <button
     id="pwa-install-btn"
-    class="hidden flex items-center gap-2 rounded-full border border-[#f3c864] bg-black/90 px-5 py-2.5 text-xs font-bold text-[#f3c864] shadow-[0_0_20px_rgba(243,200,100,0.2)] hover:shadow-[0_0_30px_rgba(243,200,100,0.4)] backdrop-blur-md pointer-events-auto hover:bg-[#f3c864] hover:text-black transition-all duration-300"
+    class="install-button hidden flex items-center gap-2 rounded-full border bg-black/90 px-5 py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(243,200,100,0.2)] hover:shadow-[0_0_30px_rgba(243,200,100,0.4)] backdrop-blur-md pointer-events-auto hover:text-black transition-all duration-300"
   >
     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -45,7 +62,7 @@
 >
   <div class="w-full max-w-sm rounded-2xl border border-gray-800 bg-[#121212] p-6 shadow-2xl">
     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-      <h3 class="text-base font-bold text-[#f3c864]">Instalar en tu iPhone/iPad</h3>
+      <h3 class="brand-gold-text text-base font-bold">Instalar en tu iPhone/iPad</h3>
       <button id="close-ios-modal-btn" class="text-gray-400 hover:text-white">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -61,7 +78,7 @@
           Pulsa el botón de <strong>Compartir</strong> en la barra inferior de Safari:
           <div class="mt-1.5 flex justify-center">
             <!-- iOS Safari Share Icon -->
-            <svg class="h-6 w-6 text-[#f3c864]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="brand-gold-text h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" y1="2" x2="12" y2="15" />
@@ -79,7 +96,7 @@
     </div>
     <button 
       id="close-ios-modal-btn-confirm" 
-      class="mt-6 w-full rounded-xl bg-[#f3c864] py-3 text-sm font-bold text-black hover:bg-white transition-colors"
+      class="brand-gold-background mt-6 w-full rounded-xl py-3 text-sm font-bold text-black hover:bg-white transition-colors"
     >
       Entendido
     </button>

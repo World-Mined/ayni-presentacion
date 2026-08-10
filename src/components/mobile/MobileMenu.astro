@@ -1,0 +1,254 @@
+---
+import { Image } from 'astro:assets';
+import { MOBILE_MENU_ASSETS } from '../../data/images';
+---
+
+<div id="mobile-menu-overlay" class="mobile-menu-overlay" hidden>
+  <div class="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Menu de navegacion">
+    <div class="mobile-menu-content">
+      <div class="mobile-menu-header">
+        <Image
+          src={MOBILE_MENU_ASSETS.ayniLogo}
+          alt="AYNI"
+          class="mobile-menu-brand"
+          widths={[92, 184]}
+          sizes="92px"
+          quality={82}
+        />
+        <button type="button" class="mobile-menu-close" data-mobile-menu-close aria-label="Cerrar menú">
+          <img src="/assets/mobile-topbar/close-icon.svg" alt="" />
+        </button>
+      </div>
+
+      <nav class="mobile-menu-nav" aria-label="Secciones mobile">
+        <a href="#home" class="mobile-menu-link" data-mobile-menu-link>Inicio</a>
+        <a href="#productos" class="mobile-menu-link" data-mobile-menu-link>Qué es AYNI</a>
+        <a href="#bonos-1" class="mobile-menu-link" data-mobile-menu-link>Bonos</a>
+        <div class="mobile-menu-divider" aria-hidden="true"></div>
+        <div class="mobile-menu-section-label">Productos</div>
+        <a href="#capucci-360" class="mobile-menu-link" data-mobile-menu-link>Capucci 360</a>
+        <a href="#moravi-360" class="mobile-menu-link" data-mobile-menu-link>Moravi 360</a>
+        <a href="#reset-360" class="mobile-menu-link" data-mobile-menu-link>Reset 360</a>
+        <div class="mobile-menu-divider" aria-hidden="true"></div>
+        <a
+          href="https://worldgen.vip/"
+          class="mobile-menu-worldgen"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-mobile-menu-link
+          aria-label="Visitar el sitio web de World GEN"
+        >
+          <Image
+            src={MOBILE_MENU_ASSETS.worldgenLogo}
+            alt="World GEN"
+            class="mobile-menu-worldgen-logo"
+            widths={[168, 336]}
+            sizes="168px"
+            quality={82}
+          />
+        </a>
+      </nav>
+    </div>
+
+    <button type="button" class="mobile-menu-dismiss" data-mobile-menu-close>
+      Cerrar
+    </button>
+  </div>
+</div>
+
+<style is:global>
+  .mobile-menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: none;
+    width: var(--mobile-vw, 100%);
+    max-width: 100%;
+    height: var(--mobile-vh, 100dvh);
+    overflow-x: clip;
+  }
+
+  html[data-presentation-mode='mobile'].mobile-menu-open .mobile-menu-overlay {
+    display: flex;
+  }
+
+  .mobile-menu-panel {
+    --mobile-menu-gutter: clamp(12px, 4vw, 16px);
+    --mobile-menu-font-size: clamp(17px, 4.6vw, 20px);
+    --mobile-menu-icon-size: clamp(20px, 5.6vw, 24px);
+    --mobile-menu-header-height: clamp(52px, 14vw, 56px);
+    position: relative;
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0 0 max(16px, env(safe-area-inset-bottom));
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  }
+
+  .mobile-menu-content {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mobile-menu-header {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--mobile-menu-header-height);
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 var(--mobile-menu-header-height);
+    overflow: hidden;
+    padding: 0 var(--mobile-menu-gutter);
+    background: #000000;
+  }
+
+  .mobile-menu-brand {
+    display: block;
+    width: clamp(82px, 22vw, 92px);
+    height: auto;
+    max-height: 27px;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .mobile-menu-close,
+  .mobile-menu-dismiss {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--color-brand-gold);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .mobile-menu-close {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin-right: -10px;
+    padding: 0;
+  }
+
+  .mobile-menu-close img {
+    width: var(--mobile-menu-icon-size);
+    height: var(--mobile-menu-icon-size);
+  }
+
+  .mobile-menu-nav {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: clamp(2px, 0.5vw, 4px);
+    margin: 0;
+    padding: clamp(12px, 2.4dvh, 24px) 0 clamp(8px, 1.6dvh, 16px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    list-style: none;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-menu-divider {
+    height: 1px;
+    margin: 0 var(--mobile-menu-gutter);
+    background: rgba(243, 200, 100, 0.25);
+  }
+
+  .mobile-menu-section-label {
+    display: flex;
+    min-height: 44px;
+    height: 44px;
+    align-items: center;
+    padding: 0 var(--mobile-menu-gutter);
+    color: #ffffff;
+    font-size: var(--mobile-menu-font-size);
+    font-weight: 700;
+  }
+
+  .mobile-menu-link {
+    display: flex;
+    min-height: 44px;
+    height: 44px;
+    align-items: center;
+    padding: 0 var(--mobile-menu-gutter);
+    color: var(--color-brand-gold);
+    font-size: var(--mobile-menu-font-size);
+    font-weight: 400;
+    text-decoration: none;
+  }
+
+  .mobile-menu-worldgen {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    margin: 4px var(--mobile-menu-gutter) 0 0;
+    padding: 4px 0;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .mobile-menu-worldgen:hover,
+  .mobile-menu-worldgen:focus-visible {
+    opacity: 0.82;
+    transform: translateX(2px);
+  }
+
+  .mobile-menu-worldgen:focus-visible {
+    outline: 1px solid var(--color-brand-gold);
+    outline-offset: 4px;
+  }
+
+  .mobile-menu-worldgen-logo {
+    display: block;
+    width: clamp(145px, 41vw, 168px);
+    height: auto;
+  }
+
+  .mobile-menu-dismiss {
+    display: flex;
+    min-height: 44px;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 var(--mobile-menu-gutter);
+    font-size: var(--mobile-menu-font-size);
+    font-weight: 400;
+  }
+
+  @media (max-height: 760px) {
+    .mobile-menu-nav {
+      gap: 2px;
+      padding-top: 12px;
+      padding-bottom: 8px;
+    }
+
+    .mobile-menu-worldgen {
+      margin-top: 0;
+    }
+  }
+
+  @media (max-width: 430px) and (max-height: 700px) {
+    .mobile-menu-panel {
+      --mobile-menu-font-size: clamp(16px, 4.1vw, 17px);
+    }
+
+    .mobile-menu-worldgen-logo {
+      width: clamp(132px, 37vw, 148px);
+    }
+  }
+</style>

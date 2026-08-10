@@ -1,0 +1,297 @@
+---
+import { NUTRITION_DISCLAIMER } from '../data/nutrition';
+import type { NutritionFacts, NutrientRow } from '../types/nutrition';
+
+interface Props {
+  facts: NutritionFacts;
+  /**
+   * 'panel' llena el alto disponible y deja que el script pagine las filas.
+   * 'flow' crece con su contenido: se usa donde la tabla va dentro del scroll.
+   */
+  layout?: 'panel' | 'flow';
+}
+
+const { facts, layout = 'panel' } = Astro.props;
+
+const rowClass = (row: NutrientRow) => ['nutrition-row', row.variant && `nutrition-row--${row.variant}`];
+---
+
+<div class:list={['nutrition-table', `nutrition-table--${layout}`]}>
+  <div class="nutrition-header">
+    <div class="nutrition-title-row">
+      <span class="nutrition-decorator" aria-hidden="true"></span>
+      <h2 class="nutrition-title">Información nutricional</h2>
+    </div>
+    <div class="nutrition-divider" aria-hidden="true"></div>
+  </div>
+
+  <div class="nutrition-serving">
+    <div class="nutrition-serving-line">
+      <span class="nutrition-serving-label">Porción:</span>
+      <span class="nutrition-serving-value">{facts.servingSize}</span>
+    </div>
+    <div class="nutrition-serving-line">
+      <span class="nutrition-serving-label">Porciones por envase:</span>
+      <span class="nutrition-serving-value">{facts.servingsPerContainer}</span>
+    </div>
+  </div>
+
+  <div class="nutrition-table-head">
+    <span class="nutrition-cell-name">Nutriente</span>
+    <span class="nutrition-cell-value">Por 100g</span>
+    <span class="nutrition-cell-value">{facts.servingColumnLabel}</span>
+    <span class="nutrition-cell-value">%VD*</span>
+  </div>
+
+  <div class="nutrition-rows" data-nutrition-rows>
+    <div class:list={rowClass(facts.energyRow)} data-nutrition-pinned>
+      <span class="nutrition-cell-name">{facts.energyRow.name}</span>
+      <span class="nutrition-cell-value">{facts.energyRow.per100g}</span>
+      <span class="nutrition-cell-value">{facts.energyRow.perServing}</span>
+      <span class="nutrition-cell-value">{facts.energyRow.vd}</span>
+    </div>
+    {facts.rows.map((row) => (
+      <div class:list={rowClass(row)}>
+        <span class="nutrition-cell-name">{row.name}</span>
+        <span class="nutrition-cell-value">{row.per100g}</span>
+        <span class="nutrition-cell-value">{row.perServing}</span>
+        <span class="nutrition-cell-value">{row.vd}</span>
+      </div>
+    ))}
+  </div>
+
+  <p class="nutrition-disclaimer">{NUTRITION_DISCLAIMER}</p>
+</div>
+
+<style>
+  /*
+   * La escala se lee con fallback en cada uso, no se declara aquí: si se
+   * declarara en `.nutrition-table`, ganaría siempre sobre lo que defina el
+   * contenedor, porque una custom property del propio elemento pisa la heredada.
+   * Los valores por defecto son los del panel de escritorio.
+   */
+  .nutrition-table {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    /* Ajustado: cada punto que gane el bloque fijo son filas más por página. */
+    gap: 12px;
+  }
+
+  .nutrition-table--panel {
+    min-height: 0;
+    flex: 1;
+  }
+
+  /* Header */
+
+  .nutrition-header {
+    display: flex;
+    width: 100%;
+    flex: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nutrition-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nutrition-decorator {
+    width: 4px;
+    height: 22px;
+    flex: none;
+    border-radius: 2px;
+    background: var(--color-brand-gold-highlight);
+  }
+
+  .nutrition-title {
+    margin: 0;
+    color: var(--color-brand-gold-highlight);
+    font-size: var(--nut-fs-title, 20px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .nutrition-divider {
+    width: 100%;
+    border-top: 1px solid var(--color-brand-gold-highlight);
+  }
+
+  /* Serving info */
+
+  .nutrition-serving {
+    display: flex;
+    width: 100%;
+    flex: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nutrition-serving-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 1px 0;
+  }
+
+  .nutrition-serving-label {
+    color: #a1a1ab;
+    font-size: var(--nut-fs-label, 16px);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .nutrition-serving-value {
+    color: #f5f5f7;
+    font-size: var(--nut-fs-label, 16px);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  /* Table */
+
+  /*
+   * Grid y no flex: garantiza que encabezado y filas compartan exactamente las
+   * mismas columnas, y permite repartirlas según lo que cada una necesita —
+   * "Por 100g" aloja valores como "6185.7 mg" mientras %VD nunca pasa de "100%".
+   * Con tres columnas iguales, las cifras largas quedaban casi pegadas.
+   */
+  .nutrition-table-head,
+  .nutrition-row {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    /*
+     * Las tres columnas de cifras nunca bajan de `min-content`: como los valores
+     * no se parten (`white-space: pre`), una columna más angosta que su texto lo
+     * derramaba sobre la vecina y las cifras se solapaban. La primera columna sí
+     * puede encogerse y envolver, porque los nombres sí admiten dos líneas.
+     */
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(min-content, 1.15fr)
+      minmax(min-content, 1fr)
+      minmax(min-content, 0.6fr);
+    padding: var(--nut-row-padding, 11px 12px);
+    gap: var(--nut-row-gap, 16px);
+  }
+
+  .nutrition-table-head {
+    /* Centrado y no flex-start: la columna de porción ocupa dos líneas y dejaba
+       las otras tres etiquetas colgando del borde superior. */
+    align-items: center;
+    flex: none;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .nutrition-table-head .nutrition-cell-name,
+  .nutrition-table-head .nutrition-cell-value {
+    color: #a1a1ab;
+    font-size: var(--nut-fs-head, 16px);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .nutrition-rows {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .nutrition-table--panel .nutrition-rows {
+    min-height: 0;
+    /*
+     * No crece, solo se encoge: con `flex: 1` la caja se estiraba hasta el fondo
+     * aunque la página tuviera pocas filas, y el hueco quedaba entre la última
+     * fila y el descargo. Así el sobrante se va abajo, junto a los controles.
+     */
+    flex: 0 1 auto;
+    /* Red de seguridad si el alto no alcanza; la barra queda siempre visible. */
+    overflow-y: auto;
+    scrollbar-color: var(--color-brand-gold-muted) rgba(255, 255, 255, 0.06);
+    scrollbar-width: thin;
+  }
+
+  .nutrition-rows::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .nutrition-rows::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .nutrition-rows::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--color-brand-gold-muted);
+  }
+
+  .nutrition-row {
+    flex: none;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .nutrition-row[hidden] {
+    display: none;
+  }
+
+  .nutrition-cell-name {
+    color: #ffffff;
+    font-size: var(--nut-fs-row, 14px);
+    font-weight: 400;
+    line-height: 1.25;
+    /* Los valores traen "\n" para partir kcal/kj en dos líneas */
+    white-space: pre-line;
+  }
+
+  .nutrition-cell-value {
+    color: #ffffff;
+    font-size: var(--nut-fs-row, 14px);
+    font-weight: 400;
+    line-height: 1.25;
+    text-align: right;
+    /* `pre` y no `pre-line`: respeta el salto explícito de kcal/kj pero impide
+       que un valor como "6185.7 mg" se parta y duplique el alto de la fila. */
+    white-space: pre;
+  }
+
+  .nutrition-cell-value:last-child {
+    font-weight: 600;
+  }
+
+  .nutrition-row--group .nutrition-cell-name {
+    font-weight: 600;
+  }
+
+  /* Se indenta el texto, no la fila: mover la fila desplazaba su grilla entera
+     y desalineaba las cifras respecto al resto de la tabla. */
+  .nutrition-row--sub .nutrition-cell-name {
+    padding-left: var(--nut-sub-indent, 16px);
+  }
+
+  .nutrition-row--energy .nutrition-cell-name,
+  .nutrition-row--energy .nutrition-cell-value {
+    font-size: var(--nut-fs-energy, 16px);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .nutrition-row--energy .nutrition-cell-name {
+    color: var(--color-brand-gold-muted);
+  }
+
+  .nutrition-disclaimer {
+    flex: none;
+    margin: 8px 0 0;
+    color: #71717a;
+    font-size: var(--nut-fs-note, 12px);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+</style>
