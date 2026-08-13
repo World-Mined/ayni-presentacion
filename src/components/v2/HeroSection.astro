@@ -1,0 +1,85 @@
+---
+import { SECTION_IDS } from '../../data/v2';
+---
+
+<section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI">
+  <video class="video-hero__media" autoplay muted loop playsinline preload="metadata" data-home-video>
+    <source src="/media/ayni-home.mp4" type="video/mp4" />
+  </video>
+  <div class="video-hero__shade" aria-hidden="true"></div>
+  <div class="video-hero__controls">
+    <button class="video-hero__btn" type="button" aria-label="Pausar video" data-play-toggle>
+      <svg class="icon-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>
+      <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="video-hero__btn" type="button" aria-label="Activar sonido" aria-pressed="false" data-sound-toggle>
+      <svg class="sound-on" aria-hidden="true" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z"/><path d="M15 9.5a4 4 0 0 1 0 5M17.5 7a7.5 7.5 0 0 1 0 10"/></svg>
+      <svg class="sound-off" aria-hidden="true" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z"/><path d="m16 10 5 5m0-5-5 5"/></svg>
+    </button>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.video-hero').forEach((hero) => {
+    const video = hero.querySelector<HTMLVideoElement>('[data-home-video]');
+    const soundToggle = hero.querySelector<HTMLButtonElement>('[data-sound-toggle]');
+    const playToggle = hero.querySelector<HTMLButtonElement>('[data-play-toggle]');
+    if (!video || !soundToggle || !playToggle) return;
+
+    video.controls = false;
+    video.muted = true;
+
+    // WCAG 2.2.2: todo movimiento automático de más de cinco segundos necesita
+    // una forma de pararlo. El estado se lee del propio elemento, no de una
+    // variable aparte, para que siga siendo correcto si el navegador pausa por
+    // su cuenta (batería baja, pestaña en segundo plano, políticas de autoplay).
+    const syncPlayToggle = () => {
+      playToggle.dataset.playing = String(!video.paused);
+      playToggle.setAttribute('aria-label', video.paused ? 'Reproducir video' : 'Pausar video');
+    };
+    video.addEventListener('play', syncPlayToggle);
+    video.addEventListener('pause', syncPlayToggle);
+
+    // Quien pide menos movimiento arranca con el video quieto en su primer
+    // fotograma, no sin video: la portada conserva su composición.
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reducedMotion.matches) video.removeAttribute('autoplay');
+    else void video.play().catch(() => {});
+    syncPlayToggle();
+
+    playToggle.addEventListener('click', () => {
+      if (video.paused) void video.play().catch(() => {});
+      else video.pause();
+    });
+
+    soundToggle.addEventListener('click', () => {
+      video.muted = !video.muted;
+      soundToggle.dataset.soundEnabled = String(!video.muted);
+      soundToggle.setAttribute('aria-pressed', String(!video.muted));
+      soundToggle.setAttribute('aria-label', video.muted ? 'Activar sonido' : 'Silenciar video');
+    });
+  });
+</script>
+
+<style>
+  .video-hero { position:relative;width:100%;aspect-ratio:3/2;min-height:520px;max-height:calc(100svh - 104px);overflow:hidden;background:#111; }
+  .video-hero__media { display:block;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none; }
+  .video-hero__shade { position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.17));pointer-events:none; }
+  .video-hero__controls { position:absolute;right:40px;top:50%;display:grid;gap:12px;transform:translateY(-50%); }
+  .video-hero__btn { display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:50%;background:rgba(82,82,78,.78);color:#f3f1ea;backdrop-filter:blur(5px);cursor:pointer; }
+  .video-hero__btn svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .video-hero__btn:focus-visible { outline:2px solid #f9cb69;outline-offset:3px; }
+  /* Cada icono muestra la acción que ejecuta el botón, no el estado actual:
+     reproduciendo → pausa. El estado lo escribe el script como data-*. Las
+     cuatro reglas van explícitas y el estado siempre gana por especificidad;
+     apoyarse en el orden de declaración aquí se rompe en cuanto se reordena. */
+  .video-hero__btn .icon-play { display:block;fill:currentColor;stroke:none; }
+  .video-hero__btn .icon-pause { display:none; }
+  .video-hero__btn[data-playing='true'] .icon-play { display:none; }
+  .video-hero__btn[data-playing='true'] .icon-pause { display:block; }
+  .video-hero__btn .sound-on { display:none; }
+  .video-hero__btn .sound-off { display:block; }
+  .video-hero__btn[data-sound-enabled='true'] .sound-on { display:block; }
+  .video-hero__btn[data-sound-enabled='true'] .sound-off { display:none; }
+  @media(max-width:767px){.video-hero{aspect-ratio:4/5;min-height:520px;max-height:calc(100svh - 64px)}.video-hero__controls{right:18px}}
+</style>

@@ -1,0 +1,54 @@
+---
+import ayniLogo from '../../assets/v2/ayni-logo.webp';
+import footerPattern from '../../assets/v2/home-background.webp';
+import { SECTION_IDS } from '../../data/v2';
+---
+
+<footer id={SECTION_IDS.ambassadors} class="home-footer" style={`--footer-pattern:url(${footerPattern.src})`}>
+  <span id={SECTION_IDS.tools} class="home-footer__anchor" aria-hidden="true"></span>
+  <div class="home-footer__grid">
+    <div class="home-footer__brand">
+      <img src={ayniLogo.src} width="176" height="47" alt="AYNI" />
+    </div>
+    <div>
+      <h2>Servicios</h2>
+      <a href={`#${SECTION_IDS.products}`}>Productos</a>
+      <a href={`#${SECTION_IDS.pickup}`}>Puntos de recojo</a>
+    </div>
+    <div class="home-footer__legal">
+      <h2>Legal</h2>
+      <span>Términos y condiciones del servicio de AYNI</span>
+      <span>Políticas de reembolso</span>
+      <span>Políticas de tratamiento de datos personales</span>
+      <span>Políticas de cookies</span>
+      <span>Código de ética y buenas prácticas comerciales</span>
+    </div>
+    <div>
+      <h2>Libro de reclamaciones</h2>
+      <span class="home-footer__book" aria-hidden="true">▰</span>
+      <span>FAQ'S</span>
+      <span class="home-footer__seal">ISO<br />9001</span>
+    </div>
+  </div>
+  <div class="home-footer__bottom">
+    <p>Copyright © AYNI 2026 - Todos los derechos reservados.</p>
+    <div aria-label="Redes sociales"><span>f</span><span>in</span><span>◎</span><span>▶</span></div>
+  </div>
+</footer>
+
+<style>
+  .home-footer { position:relative;min-height:390px;padding:62px clamp(28px,5.5vw,80px) 20px;overflow:hidden;background:#070707;color:#726e65;font-family:Poppins,sans-serif;isolation:isolate; }
+  .home-footer__anchor { position:absolute;inset:0 auto auto 0; }
+  .home-footer::before { content:"";position:absolute;z-index:-1;inset:0;background-image:linear-gradient(rgba(0,0,0,.8),rgba(0,0,0,.88)),var(--footer-pattern);background-position:center bottom;background-size:cover;opacity:.56; }
+  .home-footer__grid { display:grid;grid-template-columns:1fr .65fr 1.55fr .8fr;gap:44px;width:min(100%,1280px);margin-inline:auto; }
+  .home-footer__brand img { width:min(100%,176px);height:auto; }
+  .home-footer h2 { margin:0 0 20px;color:#b1a58d;font-size:16px;font-weight:600; }
+  .home-footer a,.home-footer span { display:block;margin-bottom:10px;color:#726e65;font-size:13px;line-height:1.35;text-decoration:none; }
+  .home-footer__book { color:#eee!important;font-size:25px!important; }
+  .home-footer__seal { display:grid!important;width:58px;height:58px;place-items:center;margin-top:18px;border:2px solid #ddd;border-radius:50%;color:#ddd!important;font-size:11px!important;text-align:center; }
+  .home-footer__bottom { display:flex;align-items:end;justify-content:space-between;width:min(100%,1280px);margin:55px auto 0; }
+  .home-footer__bottom p { margin:0;font-size:11px; }
+  .home-footer__bottom div { display:flex;gap:22px;align-items:center; }
+  .home-footer__bottom div span { margin:0;color:#eee;font-weight:600; }
+  @media(max-width:767px){.home-footer{padding:48px 24px 24px}.home-footer__grid{grid-template-columns:1fr 1fr;gap:36px 24px}.home-footer__brand,.home-footer__legal{grid-column:1/-1}.home-footer__bottom{display:grid;gap:25px;margin-top:42px}}
+</style>
