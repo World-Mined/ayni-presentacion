@@ -22,3 +22,13 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# local tooling
+.playwright-cli/
+.playwright-mcp/
+.claude/
+output/
+
+# Video sources. Too large for the repository: see public/media/README.md for
+# how to obtain them. The site degrades to the poster frame without them.
+public/media/*.mp4

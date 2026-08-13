@@ -2,40 +2,40 @@
 interface Props {
   title?: string;
   description?: string;
+  variant?: 'website' | 'presentation';
 }
 
-const { 
-  title = "AYNI - El Retorno Sagrado de la Energía", 
-  description = "Descubre y conecta con el poder de la naturaleza. Presentación oficial de AYNI, productos, bonos y plan de compensación."
+const {
+  title = 'AYNI - El Retorno Sagrado de la Energía',
+  description = 'Descubre y conecta con el poder de la naturaleza junto a AYNI.',
+  variant = 'presentation',
 } = Astro.props;
+const viewport = variant === 'website'
+  ? 'width=device-width, initial-scale=1.0, viewport-fit=cover'
+  : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
 ---
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-layout={variant}>
   <head>
     <script is:inline>
       (() => {
+        if (document.documentElement.dataset.layout !== 'presentation') return;
         const mobileBreakpoint = 1024;
         const tabletBreakpoint = 1440;
-        const isTouchDevice = navigator.maxTouchPoints > 0
-          || window.matchMedia('(pointer: coarse)').matches;
+        const isTouchDevice = navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
         const isPortrait = window.innerHeight >= window.innerWidth;
-        const isMobile = window.innerWidth <= mobileBreakpoint
-          || (isTouchDevice && isPortrait && window.innerWidth <= tabletBreakpoint);
-
+        const isMobile = window.innerWidth <= mobileBreakpoint || (isTouchDevice && isPortrait && window.innerWidth <= tabletBreakpoint);
         document.documentElement.dataset.presentationMode = isMobile ? 'mobile' : 'desktop';
       })();
     </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content={viewport} />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    
-    <!-- SEO and Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
@@ -44,54 +44,24 @@ const {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content="/og-image.png" />
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- iOS PWA Capabilities -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Manrope:wght@400;500;600;700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="AYNI" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    
-    <!-- iOS Startup Splash Screens (Landscape Locked) -->
-    <!-- iPhone 15 Pro Max, 14 Pro Max -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" />
-    <!-- iPhone 15 Pro, 15, 14 Pro -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" />
-    <!-- iPhone 14 Plus, 13 Pro Max -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" />
-    <!-- iPhone 13 Pro, 13, 12 Pro -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" />
-    <!-- iPhone 11 Pro Max, XS Max -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" />
-    <!-- iPhone 11, XR -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
-    <!-- iPad Pro 12.9" -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
-    <!-- iPad Pro 11" -->
-    <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
 
-    <!-- PWA Service Worker Registration -->
     <script>
       import { registerSW } from 'virtual:pwa-register';
-
       if (import.meta.env.DEV) {
-        // Remove workers left behind by an older local PWA build. Otherwise
-        // localhost can keep rendering stale HTML and assets during development.
-        const hadActiveWorker = 'serviceWorker' in navigator
-          && Boolean(navigator.serviceWorker.controller);
+        const hadActiveWorker = 'serviceWorker' in navigator && Boolean(navigator.serviceWorker.controller);
         const unregisterWorkers = 'serviceWorker' in navigator
-          ? navigator.serviceWorker.getRegistrations().then((registrations) =>
-              Promise.all(registrations.map((registration) => registration.unregister()))
-            )
+          ? navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
           : Promise.resolve([]);
         const clearCaches = 'caches' in window
           ? caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
           : Promise.resolve([]);
-
         void Promise.all([unregisterWorkers, clearCaches]).then(() => {
           const cleanupKey = 'ayni-dev-pwa-cleanup-v2';
           if (hadActiveWorker && sessionStorage.getItem(cleanupKey) !== 'done') {
@@ -100,24 +70,20 @@ const {
           }
         });
       } else {
-        // Production activates new builds immediately. Keep the event as a
-        // fallback for browsers that still report a waiting worker.
+        // Producción activa cada build nueva de inmediato. Antes se emitían
+        // además `pwa-update-available` y `pwa-offline-ready`, que escuchaba
+        // PWA.astro para mostrar un aviso; ese componente ya no se monta, así
+        // que los eventos no tenían destinatario. Si se recupera esa UI, hay
+        // que volver a emitirlos aquí.
         const updateSW = registerSW({
           immediate: true,
           onNeedRefresh() {
             void updateSW(true);
-            window.dispatchEvent(new CustomEvent('pwa-update-available', {
-              detail: { updateSW }
-            }));
-          },
-          onOfflineReady() {
-            console.log('App ready to work offline!');
-            window.dispatchEvent(new CustomEvent('pwa-offline-ready'));
           },
         });
       }
     </script>
-    
+
     <style is:global>
       :root {
         --color-brand-gold: #f3c864;
@@ -128,69 +94,50 @@ const {
         --slide-frame-scale: 1;
       }
 
-      html, body {
+      /* Reset base, sin distinguir variante. Vive aquí y no en una hoja
+         aparte porque toda página servida por este layout lo necesita, la
+         importe o no: `offline.astro` no carga v2.css, y sin esto caía al
+         `margin: 8px` del navegador con un marco blanco alrededor. */
+      html,
+      body {
         margin: 0;
         padding: 0;
+        max-width: 100%;
+        background: #000;
+        color: #fff;
+      }
+
+      html[data-layout='presentation'],
+      html[data-layout='presentation'] body {
         width: 100%;
         height: 100%;
-        background-color: #000000;
-        color: #ffffff;
-        font-family: 'Montserrat', sans-serif;
         overflow: hidden;
-        max-width: 100%;
         overscroll-behavior-x: none;
+        font-family: 'Montserrat', sans-serif;
         user-select: none;
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
-      
-      /* Slide base stylesheet */
-      .slide-container {
+
+      html[data-layout='presentation'] .slide-container {
         position: relative;
         width: 100%;
         max-width: 100%;
         height: 100dvh;
         overflow: hidden;
-        background-color: #000;
+        background: #000;
       }
-
-      html[data-presentation-mode='mobile'],
-      html[data-presentation-mode='mobile'] body {
+      html[data-layout='presentation'][data-presentation-mode='mobile'],
+      html[data-layout='presentation'][data-presentation-mode='mobile'] body {
         width: var(--mobile-vw, 100%);
         max-width: 100%;
         height: var(--mobile-vh, 100dvh);
         overflow-x: clip;
       }
-
-      /* Slide viewport logic (locks aspect ratio to 16:9 like a standard presentation) */
-      .slide-content-wrapper {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #000000;
-      }
-      
-      /* Smooth transitions between slides */
-      .slide {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1;
-      }
-      
-      .slide.active {
-        opacity: 1;
-        pointer-events: auto;
-        z-index: 10;
-      }
+      html[data-layout='presentation'] .slide-content-wrapper { position:absolute;inset:0;width:100%;height:100%;background:#000; }
+      html[data-layout='presentation'] .slide { position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;transition:opacity .5s cubic-bezier(.4,0,.2,1);z-index:1; }
+      html[data-layout='presentation'] .slide.active { opacity:1;pointer-events:auto;z-index:10; }
     </style>
   </head>
-  <body>
-    <slot />
-  </body>
+  <body><slot /></body>
 </html>
