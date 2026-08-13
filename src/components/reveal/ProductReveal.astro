@@ -1,9 +1,10 @@
 ---
 import { PRODUCTS } from '../../lib/reveal/products';
+import type { ProductId } from '../../lib/reveal/products';
 
 interface Props {
   /** id del producto registrado en lib/reveal/products/index.ts */
-  product: string;
+  product: ProductId;
 }
 
 const { product } = Astro.props;
@@ -24,7 +25,15 @@ if (!cfg) {
       </div>
       <div class="reveal-halo"></div>
       <div class="reveal-product-wrap">
-        <img class="reveal-product" alt={cfg.title.main} />
+        <img
+          class="reveal-product"
+          src={`${cfg.frames.dir}/frame-01.webp`}
+          alt={cfg.title.main}
+          width="700"
+          height="700"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
       <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -35,10 +44,32 @@ if (!cfg) {
   import { createReveal } from '../../lib/reveal/engine';
   import { PRODUCTS } from '../../lib/reveal/products';
 
-  document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
-    const cfg = PRODUCTS[el.dataset.reveal ?? ''];
-    if (cfg) createReveal(el, cfg);
+  const cleanups = new Map<HTMLElement, () => void>();
+  const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const el = entry.target as HTMLElement;
+      if (!entry.isIntersecting || cleanups.has(el)) return;
+      const product = el.dataset.reveal as keyof typeof PRODUCTS;
+      const cfg = PRODUCTS[product];
+      if (!cfg) return;
+      cleanups.set(el, createReveal(el, cfg));
+      observer.unobserve(el);
+    });
+  }, { rootMargin: '85% 0px 85%' });
+
+  roots.forEach((el) => {
+    if (!el.dataset.revealObserved) {
+      el.dataset.revealObserved = 'true';
+      observer.observe(el);
+    }
   });
+
+  window.addEventListener('pagehide', () => {
+    observer.disconnect();
+    cleanups.forEach((cleanup) => cleanup());
+    cleanups.clear();
+  }, { once: true });
 </script>
 
 <!-- Estilos GLOBALES (namespaced con .reveal-*): necesarios porque el motor
@@ -100,11 +131,14 @@ if (!cfg) {
   .reveal-product {
     display: block;
     width: 100%;
+    height: auto;
     filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
-    opacity: 0;
+    opacity: 1;
     user-select: none;
     -webkit-user-drag: none;
   }
+
+  .reveal-initialized .reveal-product { opacity: 0; }
 
   .reveal-halo {
     position: absolute;
@@ -173,5 +207,14 @@ if (!cfg) {
     display: inline-block;
     opacity: 0;
     will-change: transform, opacity;
+  }
+
+  @media (max-width: 767px) {
+    .reveal-pin { top: var(--header-height, 72px); height: calc(100svh - var(--header-height, 72px)); }
+    .reveal-stage { width: 98vw; }
+    .reveal-product-wrap { width: 34%; }
+    .reveal-label { gap: 5px; font-size: clamp(9px, 2.7vw, 12px); }
+    .reveal-label .reveal-ico { width: 1.1em; height: 1.1em; }
+    .reveal-title { top: 10%; }
   }
 </style>

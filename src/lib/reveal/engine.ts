@@ -30,7 +30,7 @@ function resolve(config: RevealConfig): ResolvedConfig {
  * `root` debe contener .reveal-stage con .reveal-title / .reveal-halo /
  * .reveal-product / .reveal-overlay (ver ProductReveal.astro).
  */
-export function createReveal(root: HTMLElement, config: RevealConfig): void {
+export function createReveal(root: HTMLElement, config: RevealConfig): () => void {
   const C = resolve(config);
   const T = C.timing;
   const G = C.geometry;
@@ -40,9 +40,10 @@ export function createReveal(root: HTMLElement, config: RevealConfig): void {
   const halo = root.querySelector<HTMLElement>('.reveal-halo');
   const productImg = root.querySelector<HTMLImageElement>('.reveal-product');
   const titleblock = root.querySelector<HTMLElement>('.reveal-title');
-  if (!stage || !overlay || !halo || !productImg || !titleblock) return;
+  if (!stage || !overlay || !halo || !productImg || !titleblock) return () => {};
 
   root.style.height = `${C.scroll.trackVH}vh`;
+  root.classList.add('reveal-initialized');
 
   const frameSrc = (i: number) =>
     `${C.frames.dir}/${C.frames.prefix}${String(i + 1).padStart(C.frames.pad, '0')}.${C.frames.ext}`;
@@ -190,7 +191,10 @@ export function createReveal(root: HTMLElement, config: RevealConfig): void {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
     tl.seek(DUR); // accesibilidad: estado final sin movimiento
-    return;
+    return () => {
+      tl.pause();
+      root.classList.remove('reveal-initialized');
+    };
   }
 
   let shown = false;
@@ -219,4 +223,12 @@ export function createReveal(root: HTMLElement, config: RevealConfig): void {
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   onScroll();
+
+  return () => {
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', onScroll);
+    driveAnim?.pause();
+    tl.pause();
+    root.classList.remove('reveal-initialized');
+  };
 }
