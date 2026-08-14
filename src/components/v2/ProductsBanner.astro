@@ -1,0 +1,182 @@
+---
+import { Image, getImage } from 'astro:assets';
+import banner from '../../assets/v2/products-banner.webp';
+import bannerPortrait from '../../assets/v2/products-jungle.webp';
+import plank from '../../assets/v2/products-plank.webp';
+import { PRODUCT_LINE } from '../../data/v2';
+
+// Art direction real, no el mismo archivo reescalado: en vertical el diseño
+// usa un encuadre más cerrado de la misma foto. Los dos tienen la misma
+// proporción (2.4), así que `object-fit:cover` recortaría igual y el cambio
+// que se busca —acercar el motivo -- solo se consigue cambiando de archivo.
+// `<Image>` no hace art direction, de ahí el `<picture>` a mano con getImage.
+const sceneWide = await getImage({ src: banner, widths: [768, 1280, 1920], format: 'webp', quality: 72 });
+const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1170], format: 'webp', quality: 72 });
+---
+
+<section class="products-banner" aria-labelledby="products-banner-title">
+  <div class="products-banner__scene" aria-hidden="true">
+    <picture>
+      <source media="(max-width: 767px)" srcset={scenePortrait.srcSet.attribute} sizes="100vw" />
+      <img
+        src={sceneWide.src}
+        srcset={sceneWide.srcSet.attribute}
+        sizes="100vw"
+        alt=""
+        width={banner.width}
+        height={banner.height}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
+  </div>
+  <div class="products-banner__gradient" aria-hidden="true"></div>
+  <div class="products-banner__plank" aria-hidden="true">
+    <Image src={plank} alt="" loading="eager" widths={[768, 1280, 2000]} sizes="100vw" />
+  </div>
+
+  <div class="products-banner__content">
+    <h1 id="products-banner-title">El ciclo infinito de la reciprocidad</h1>
+    <!-- Las tres bolsas son una sola composición: el alt del grupo la nombra
+         entera y cada imagen aporta el suyo, para que un lector de pantalla
+         no las lea como tres ilustraciones sueltas sin relación. -->
+    <div class="products-banner__packs" role="group" aria-label="Línea AYNI 360">
+      {PRODUCT_LINE.map((product) => (
+        <div class="products-banner__pack">
+          <div class="products-banner__pack-art">
+            <Image
+              src={product.src}
+              alt={product.alt}
+              loading="eager"
+              widths={[260, 460, 920]}
+              sizes="(max-width: 767px) 43vw, min(35.6vw, 456px)"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* El banner es un escalado proporcional del marco de 1440×846: todas las
+     medidas van en vw con el mismo divisor (846/1440 = 58.75vw de alto,
+     80/1440 = 5.556vw de padding…) y se congelan con clamp al llegar a 1440,
+     así la composición —altura del título, solape de las bolsas, apoyo sobre
+     la mesa— se mantiene idéntica en cualquier ancho intermedio. */
+  .products-banner {
+    /* La mesa va estirada en vertical (~1.2× su alto original, con `fill`)
+       para ensanchar la cara superior y que las bolsas tengan dónde apoyarse.
+       Medido sobre el asset: la cara superior iluminada ocupa del 0 al 29.5%
+       de su alto y ahí abajo empieza el canto frontal, en sombra.
+       El asiento se deriva de ese alto en vez de fijarse en píxeles, así las
+       bolsas se quedan en el mismo punto de la cara por mucho que se estire
+       la mesa. El factor coloca la base sólida de la bolsa —que está al 92%
+       del PNG, el 8% restante es sombra de contacto— al 57% de la cara: con
+       madera por detrás Y por delante, que es lo que hace leer "apoyado".
+       Al 22% quedaba rozando el canto trasero y parecía flotar. */
+    --plank-h:clamp(96px,13.75vw,198px);
+    --pack-seat:calc(var(--plank-h) * .777);
+    position:relative;display:flex;width:100%;min-height:clamp(560px,58.75vw,846px);padding-inline:clamp(24px,5.556vw,80px);overflow:hidden;background:#000;box-shadow:inset -2px -2px 4px rgba(177,165,141,.2);isolation:isolate;
+  }
+  /* Línea dorada que separa el header del banner: en Figma es un SVG de
+     1280×1 con degradado transparente → #F9CB69 → transparente. */
+  .products-banner::before { content:"";position:absolute;z-index:3;top:0;left:50%;width:min(100%,1280px);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#f9cb69 50%,transparent); }
+  .products-banner__scene { position:absolute;z-index:0;inset:0; }
+  .products-banner__scene :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+  .products-banner__gradient { position:absolute;z-index:1;top:0;right:0;left:0;height:clamp(210px,21.597vw,311px);background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,rgba(0,0,0,0) 69.212%);pointer-events:none; }
+  .products-banner__plank { position:absolute;z-index:2;right:0;bottom:0;left:0;height:var(--plank-h); }
+  /* `fill` y no `cover`: la deformación vertical es intencionada y así el
+     canto frontal se queda en el mismo 33% sea cual sea el ancho. Con `cover`
+     la madera se recortaba por arriba en pantallas anchas y el apoyo bailaba. */
+  .products-banner__plank :global(img) { display:block;width:100%;height:100%;object-fit:fill; }
+  /* Sin `flex:1`: en un contenedor flex en fila, `flex-basis:0` gana al
+     `width` y por encima de 1440px el contenido se estiraba a todo el ancho,
+     con él las bolsas (627px a 1920) y su aire transparente las dejaba
+     flotando sobre la mesa. `margin-inline:auto` centra la columna. */
+  .products-banner__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);margin-inline:auto;flex-direction:column;align-items:center;justify-content:flex-end;gap:clamp(48px,8.333vw,120px);padding:clamp(40px,5.556vw,80px) 0 var(--pack-seat); }
+  .products-banner h1 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;line-height:1.209;letter-spacing:0;text-align:center;text-transform:uppercase; }
+  .products-banner__packs { display:flex;width:100%;align-items:flex-end;justify-content:center; }
+  /* Dos cajas por bolsa, y la separación es deliberada:
+     `__pack` es la ZONA SENSIBLE. Mide el paso completo entre bolsas (292 de
+     1280) sin márgenes, así las tres particionan la fila sin huecos ni
+     solapes y el relevo ocurre justo en el punto medio entre dos bolsas.
+     Nunca se transforma. Antes la escala del hover se aplicaba a esta misma
+     caja, así que la bolsa activa agrandaba su propia zona un 4% y encima se
+     ponía por delante con z-index: al pasar a la vecina seguías dentro del
+     área de la anterior y el hover no se soltaba hasta salir de ese margen.
+     `__pack-art` es la caja VISIBLE: el arte ocupa el 19.4%–80.6% horizontal
+     y el 7.5%–94.4% vertical del cuadrado de 1080, y el resto del PNG es
+     transparente. Al recortarla a eso, su borde inferior ES la base de la
+     bolsa y el asiento sobre la mesa se controla directo. Esta es la que
+     escala. */
+  .products-banner__pack { position:relative;z-index:1;width:22.813%;aspect-ratio:292/396.2; }
+  /* `pointer-events:none` es la otra mitad del arreglo. El PNG mide 456px y
+     sobresale 88px por cada lado de la caja del arte —todo transparente—,
+     pero el hit-testing no mira el alfa: esos 88px capturaban el ratón igual.
+     Las imágenes de bolsas contiguas se solapaban 164px, así que la frontera
+     real caía donde empezaba el PNG vecino y no en el punto medio. Dejando
+     solo `__pack` como diana, el relevo es exacto y no depende del z-index. */
+  .products-banner__pack-art { position:absolute;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
+  /* `left` sí resuelve el porcentaje contra el ancho, pero `top` lo haría
+     contra el alto de la caja —que aquí es 1.42× el ancho— y dejaba la bolsa
+     14px más arriba de la cuenta, flotando sobre la mesa. Anclar por `bottom`
+     evita el problema: es el desplome de la sombra bajo la base, 5.6% del
+     cuadrado, expresado sobre el alto de la caja del arte. */
+  .products-banner__pack-art :global(img) { position:absolute;bottom:-6.44%;left:-31.7%;display:block;width:163.4%;height:auto;max-width:none; }
+
+  @media(hover:hover){
+    /* El contenedor ocupa los 1280px de la fila, pero el grupo de bolsas solo
+       876: quedan ~200px muertos a cada lado, a la misma altura que ellas.
+       Con `:hover` a secas, entrar por ahí encogía las tres sin destacar
+       ninguna. `:has()` ata la regla a que haya una bolsa realmente activa.
+       Si el navegador no soporta `:has()` descarta solo esta regla: las
+       vecinas no se encogen y el resto del efecto sigue igual. */
+    .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack-art { transform:scale(.98); }
+    /* La condición `:has()` se repite a propósito en vez de dejar solo
+       `.pack:hover .pack-art`: `:has()` hereda la especificidad de su
+       argumento, así que la regla de encoger pesa (0,4,0) y le ganaba a la de
+       destacar (0,3,0) — la bolsa activa se encogía con las demás. Repetirla
+       la sube a (0,5,0) y el resultado deja de depender del orden.
+       La escala nace en el borde inferior, que es justo donde la bolsa toca
+       la madera: crece hacia arriba y la base no se despega de la mesa. */
+    .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack:hover .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
+  }
+
+  @media(min-width:768px) and (max-width:1023px){
+    .products-banner { min-height:clamp(520px,60vw,600px); }
+    .products-banner__content { gap:clamp(32px,5vw,56px); }
+  }
+
+  /* Vertical: el marco de Figma es 390×563 y, igual que en escritorio, todo se
+     expresa en vw sobre ese divisor (563/390 = 144.36vw de alto, 106/390 =
+     27.18vw de mesa…) para que la composición escale entera de 320 a 767px. */
+  @media(max-width:767px){
+    /* Los `clamp` topan la escala en el equivalente a un viewport de 480px.
+       El marco de Figma es de 390 y sin tope el `144.36vw` llegaba a 1107px de
+       alto en el límite del breakpoint (767): a partir de un móvil grande la
+       composición deja de crecer y solo se recentra. */
+    .products-banner { --plank-h:clamp(87px,27.18vw,130px);min-height:clamp(462px,144.36vw,693px);padding-inline:20px;box-shadow:none; }
+    /* Aquí la mesa NO va deformada: el diseño la agranda a 921px —2.36× el
+       ancho del viewport— y deja que el propio viewport la recorte por los
+       lados. A ese ancho su alto natural es 921/8.73 = 105.5 ≈ 106, así que
+       `fill` no la estira; solo se ve más cerca, con la veta más grande. */
+    .products-banner__plank :global(img) { width:236.15%;margin-left:-68.08%; }
+    .products-banner__gradient { height:79.74vw; }
+    .products-banner__content { gap:clamp(111px,34.87vw,167px);justify-content:flex-end;padding-top:clamp(24px,8vw,44px); }
+    /* En vertical el titular cambia de familia y de escala respecto a
+       escritorio: Poppins SemiBold 32/38 en vez de Montserrat Bold 48/58. */
+    .products-banner h1 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb;text-wrap:balance; }
+    /* Las bolsas ocupan casi todo el ancho del marco, así que la fila se sale
+       del padding lateral del banner en vez de quedarse dentro. El `min` es el
+       mismo tope de 480px+padding: en móviles anchos deja de crecer y el
+       `margin-inline:auto` la recentra sin perder el desbordamiento. */
+    .products-banner__packs { width:min(calc(100% + 40px),520px);margin-inline:auto; }
+    /* El paso (116) es menor que el arte (121.8): en vertical las bolsas sí se
+       solapan, y por eso el `inset` del arte es negativo. Las zonas siguen
+       siendo contiguas, aunque aquí no haya hover que dependa de ellas. */
+    .products-banner__pack { width:29.74%;aspect-ratio:116/172.9; }
+    .products-banner__pack-art { inset:0 -2.5%; }
+  }
+</style>

@@ -4,14 +4,11 @@ import aboutBackground from '../../assets/v2/about-background.webp';
 import aboutEarth from '../../assets/v2/about-earth.webp';
 import aboutGradient from '../../assets/v2/about-gradient.webp';
 import aboutTree from '../../assets/v2/about-tree.webp';
-import capucci from '../../assets/v2/products-capucci-shadow.webp';
 import productsJungle from '../../assets/v2/products-jungle-ayni.webp';
-import moravi from '../../assets/v2/products-moravi-shadow.webp';
 import productsBgBlur from '../../assets/v2/products-bg-blur.svg';
 import productsPlank from '../../assets/v2/products-plank.webp';
-import reset from '../../assets/v2/products-reset-shadow.webp';
 import productsShade from '../../assets/v2/products-shade.webp';
-import { SECTION_IDS } from '../../data/v2';
+import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../data/v2';
 import MotionCta from './MotionCta.astro';
 import PickupMap from './PickupMap.astro';
 ---
@@ -73,14 +70,14 @@ import PickupMap from './PickupMap.astro';
       <Image src={productsPlank} alt="" loading="lazy" widths={[768, 1280, 1920]} sizes="100vw" />
     </div>
     <div class="home-band__products" aria-label="Moravi 360, Capucci 360 y Reset 360">
-      <Image src={moravi} alt="Moravi 360" loading="lazy" widths={[220, 360, 520]} sizes="(max-width:767px) 35vw, 21vw" />
-      <Image src={capucci} alt="Capucci 360" loading="lazy" widths={[220, 360, 520]} sizes="(max-width:767px) 35vw, 21vw" />
-      <Image src={reset} alt="Reset 360" loading="lazy" widths={[220, 360, 520]} sizes="(max-width:767px) 35vw, 21vw" />
+      {PRODUCT_LINE.map((product) => (
+        <Image src={product.src} alt={product.alt} loading="lazy" widths={[220, 360, 520]} sizes="(max-width:767px) 35vw, 21vw" />
+      ))}
     </div>
     <div class="home-band__content home-band__content--right">
       <h2 id="products-title">El ciclo infinito<br />de la reciprocidad</h2>
       <p>Tres fórmulas maestras diseñadas para acompañar cada ritmo de tu vida: <strong>energía para tu mente, protección para tu cuerpo y ligereza para tu interior.</strong></p>
-      <MotionCta class="home-band__cta" href={`#${SECTION_IDS.products}`}>
+      <MotionCta class="home-band__cta" href={ROUTES.products}>
         <span class="products-cta-label">Conocer más aquí</span>
         <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </MotionCta>
@@ -93,7 +90,7 @@ import PickupMap from './PickupMap.astro';
     <div class="home-band__content home-band__content--pickup">
       <h2 id="pickup-title">¿Dónde recoger<br />mi producto?</h2>
       <p>Descubre nuestros puntos de recojo autorizados y <strong>empieza a vivir</strong> el equilibrio natural.</p>
-      <MotionCta class="home-band__cta" href="#pickup-map">
+      <MotionCta class="home-band__cta" href={ROUTES.pickup}>
         <span>Ver mapa de puntos</span>
         <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </MotionCta>
@@ -231,12 +228,13 @@ import PickupMap from './PickupMap.astro';
     .home-band--products h2 { font-size:clamp(28px,7.7vw,34px);line-height:1.2; }
     .home-band--products p { font-size:clamp(15px,4.1vw,17px);line-height:1.5; }
     .home-band--products :global(.home-band__cta) { margin-top:0; }
-    .home-band--pickup { display:flex;min-height:clamp(780px,205vw,920px);padding:clamp(58px,16vw,82px) 0 20px;flex-direction:column;align-items:center;justify-content:flex-start;overflow:visible; }
-    .home-band__pickup-layout { display:flex;width:100%;height:auto;flex-direction:column;align-items:center; }
-    .home-band--pickup .home-band__content--pickup { width:min(85.385vw,480px);padding:0;margin:0;align-items:center;background:none;text-align:center; }
-    .home-band--pickup h2 { max-width:100%;font-size:clamp(30px,8.205vw,38px);line-height:1.19; }
-    .home-band--pickup p { max-width:100%;font-size:clamp(16px,4.615vw,20px);line-height:1.445; }
-    .home-band__pickup-map { width:min(76vw,330px);margin-top:clamp(38px,11vw,58px); }
+    .home-band--pickup { display:block;min-height:0;padding:40px 16px;overflow:hidden; }
+    .home-band__pickup-layout { display:flex;width:min(100%,358px);height:auto;margin-inline:auto;flex-direction:column;align-items:flex-start; }
+    .home-band--pickup .home-band__content--pickup { display:block;width:100%;padding:0;margin:0;background:none;text-align:left; }
+    .home-band--pickup h2 { width:min(100%,266px);max-width:none;margin:0 0 16px;font-size:32px;line-height:38px; }
+    .home-band--pickup p { width:100%;max-width:none;margin:0;font-size:18px;line-height:26px; }
+    .home-band--pickup :global(.home-band__cta) { display:none; }
+    .home-band__pickup-map { width:calc(100% - 2px);max-width:356px;margin:40px auto 0;filter:none; }
   }
 </style>
 

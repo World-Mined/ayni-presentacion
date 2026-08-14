@@ -1,0 +1,189 @@
+---
+import { Image } from 'astro:assets';
+import infoIcon from '../../assets/v2/pickup-locations-info.svg';
+import { PICKUP_COUNTRIES, PICKUP_COUNTRY_ORDER } from '../../data/pickup-locations';
+
+const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country]);
+---
+
+<section class="pickup-locations" aria-labelledby="pickup-locations-title" data-pickup-locations>
+  <div class="pickup-locations__glow" aria-hidden="true"></div>
+  <div class="pickup-locations__layout">
+    <div class="pickup-locations__sidebar">
+      <h1 id="pickup-locations-title">Puntos de recojo</h1>
+
+      <div class="pickup-tabs" role="tablist" aria-label="Selecciona un país">
+        {countries.map((country, index) => (
+          <button
+            id={`pickup-tab-${country.id}`}
+            class:list={['pickup-tabs__tab', { 'is-active': index === 0 }]}
+            type="button"
+            role="tab"
+            aria-selected={index === 0 ? 'true' : 'false'}
+            aria-controls={`pickup-panel-${country.id}`}
+            tabindex={index === 0 ? 0 : -1}
+            data-pickup-tab={country.id}
+          >
+            {country.label}
+          </button>
+        ))}
+      </div>
+
+      {countries.map((country, index) => (
+        <div
+          id={`pickup-list-${country.id}`}
+          class="pickup-locations__list"
+          data-pickup-list={country.id}
+          hidden={index !== 0}
+        >
+          {country.locations.map((location, locationIndex) => (
+            <article class:list={['pickup-card', { 'pickup-card--featured': locationIndex === 0 }]}>
+              <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
+              <div class="pickup-card__copy">
+                <h2>{location.name}</h2>
+                <p>{location.address}</p>
+                <p>{location.schedule[0]}</p>
+                <p>{location.schedule[1]}</p>
+              </div>
+            </article>
+          ))}
+
+          {country.auxiliaryContent && (
+            <article class="pickup-card pickup-card--delivery">
+              <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
+              <div class="pickup-card__copy">
+                <h2>{country.auxiliaryContent.title}</h2>
+                <p>{country.auxiliaryContent.description}</p>
+                <span class="pickup-card__action" aria-disabled="true">
+                  {country.auxiliaryContent.actionLabel}
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </span>
+              </div>
+            </article>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <div class="pickup-locations__maps">
+      {countries.map((country, index) => (
+        <div
+          id={`pickup-panel-${country.id}`}
+          class:list={['pickup-map-panel', `pickup-map-panel--${country.id}`]}
+          role="tabpanel"
+          aria-labelledby={`pickup-tab-${country.id}`}
+          tabindex="0"
+          data-pickup-panel={country.id}
+          hidden={index !== 0}
+        >
+          <Image class="pickup-map-panel__base" src={country.mapBase} alt="" loading={index === 0 ? 'eager' : 'lazy'} />
+          <Image
+            class="pickup-map-panel__art"
+            src={country.map}
+            alt={country.mapAlt}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            widths={[640, 960, 1024]}
+            sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 58vw, 846px"
+          />
+          {!country.mapAvailable && (
+            <div class="pickup-map-panel__unavailable">
+              <p>Ubicación<br />no disponible</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-pickup-locations]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pickup-tab]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-panel]'));
+    const lists = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-list]'));
+
+    const selectCountry = (country: string, moveFocus = false) => {
+      tabs.forEach((tab) => {
+        const selected = tab.dataset.pickupTab === country;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected && moveFocus) tab.focus();
+      });
+      panels.forEach((panel) => { panel.hidden = panel.dataset.pickupPanel !== country; });
+      lists.forEach((list) => { list.hidden = list.dataset.pickupList !== country; });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectCountry(tab.dataset.pickupTab ?? 'peru'));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex = index;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        selectCountry(tabs[nextIndex].dataset.pickupTab ?? 'peru', true);
+      });
+    });
+  });
+</script>
+
+<style>
+  .pickup-locations { position:relative;min-height:1040px;padding:40px clamp(32px,5.556vw,80px);overflow:hidden;background:#000;color:#c4bba8;font-family:Poppins,sans-serif;isolation:isolate; }
+  .pickup-locations__glow { position:absolute;z-index:-1;top:0;left:50%;width:min(88.889vw,1280px);height:211px;transform:translateX(-50%);background:radial-gradient(ellipse 43% 142% at 47.2% -98.6%,rgba(249,203,105,1) 0%,rgba(206,168,86,.75) 25%,rgba(163,133,68,.5) 50%,rgba(77,62,30,0) 100%);pointer-events:none; }
+  .pickup-locations__layout { display:grid;width:min(100%,1280px);height:960px;margin-inline:auto;grid-template-columns:410px minmax(0,846px);gap:24px; }
+  .pickup-locations__sidebar { display:grid;min-width:0;height:960px;grid-template-rows:44px 60px minmax(0,816px); }
+  .pickup-locations h1 { margin:0;color:#f9cb69;font-size:36px;font-weight:600;line-height:44px;letter-spacing:0; }
+  .pickup-tabs { display:grid;height:60px;grid-template-columns:1fr 1fr;align-items:end; }
+  .pickup-tabs__tab { position:relative;display:grid;height:36px;place-items:center;padding:0;border:0;background:transparent;color:#c4bba8;font:400 16px/24px Poppins,sans-serif;cursor:pointer; }
+  .pickup-tabs__tab::after { content:"";position:absolute;right:0;bottom:0;left:0;height:2px;background:transparent; }
+  .pickup-tabs__tab.is-active { color:#f9cb69;font-weight:600; }
+  .pickup-tabs__tab.is-active::after { background:#f9cb69; }
+  .pickup-locations__list { min-height:0;padding:24px 16px 0 0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:rgba(196,187,168,.5) transparent;scrollbar-width:thin; }
+  .pickup-locations__list[hidden],.pickup-map-panel[hidden] { display:none; }
+  .pickup-card { display:grid;width:100%;min-height:168px;margin-bottom:12px;padding:24px;grid-template-columns:24px minmax(0,1fr);gap:16px;border:.5px solid transparent;border-radius:12px;background:rgba(67,54,26,.08); }
+  .pickup-card--featured { border-color:#f9cb69;background:rgba(67,54,26,.2); }
+  .pickup-card__icon { display:block;width:24px;height:24px;margin-top:1px; }
+  .pickup-card__copy { min-width:0; }
+  .pickup-card h2 { margin:0 0 8px;color:#ae8e4a;font-size:18px;font-weight:600;line-height:26px;letter-spacing:0; }
+  .pickup-card p { margin:0;color:#c4bba8;font-size:16px;font-weight:300;line-height:24px; }
+  .pickup-card--delivery { min-height:202px;margin-bottom:0;background:rgba(67,54,26,.2); }
+  .pickup-card__action { position:relative;display:inline-flex;height:48px;align-items:center;justify-content:center;gap:0;margin-top:24px;padding:12px 16px;border:.75px solid #b1a58d;border-radius:60px;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,.6)),linear-gradient(188deg,rgba(135,116,79,.2),rgba(43,43,43,.14));color:#987c40;font-size:16px;line-height:24px; }
+  .pickup-card__action svg { width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .pickup-locations__maps { min-width:0;padding-top:104px; }
+  .pickup-map-panel { position:relative;width:100%;height:856px;overflow:hidden;border-radius:24px;background:#050505; }
+  .pickup-map-panel :global(.pickup-map-panel__base) { position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover; }
+  .pickup-map-panel :global(.pickup-map-panel__art) { position:absolute;display:block;max-width:none;object-fit:cover; }
+  .pickup-map-panel--peru :global(.pickup-map-panel__art) { bottom:0;left:0;width:113.475%;height:auto; }
+  .pickup-map-panel--bolivia :global(.pickup-map-panel__art) { top:0;right:0;width:224.35%;height:auto;opacity:.14; }
+  .pickup-map-panel--bolivia::after { content:"";position:absolute;z-index:1;inset:0;border-radius:inherit;background:rgba(0,0,0,.92); }
+  .pickup-map-panel__unavailable { position:absolute;z-index:2;inset:0;display:grid;place-items:center;text-align:center; }
+  .pickup-map-panel__unavailable p { margin:0;color:#fff;font-size:28px;font-weight:600;line-height:33px; }
+
+  @media(max-width:1100px){
+    .pickup-locations { min-height:auto;padding:40px clamp(24px,4vw,40px) 56px; }
+    .pickup-locations__layout { height:auto;grid-template-columns:minmax(280px,36vw) minmax(0,1fr);gap:20px; }
+    .pickup-locations__sidebar { height:min(960px,calc(100vh - 144px));min-height:720px;grid-template-rows:44px 60px minmax(0,1fr); }
+    .pickup-locations__maps { padding-top:104px; }
+    .pickup-map-panel { height:auto;aspect-ratio:846/856; }
+    .pickup-card { padding:20px 16px;gap:12px; }
+    .pickup-card p { font-size:14px;line-height:21px; }
+  }
+
+  @media(max-width:767px){
+    .pickup-locations { padding:32px 20px 56px; }
+    .pickup-locations__glow { width:160vw;height:170px; }
+    .pickup-locations__layout { display:block;width:100%; }
+    .pickup-locations__sidebar { display:block;width:100%;height:auto;min-height:0; }
+    .pickup-locations h1 { font-size:32px;line-height:38px; }
+    .pickup-tabs { height:68px;margin-top:8px; }
+    .pickup-locations__list { padding:24px 0 0;overflow:visible; }
+    .pickup-card { min-height:0;padding:20px;margin-bottom:12px; }
+    .pickup-card--delivery { min-height:0; }
+    .pickup-locations__maps { padding-top:24px; }
+    .pickup-map-panel { min-height:360px;aspect-ratio:390/420;border-radius:18px; }
+    .pickup-map-panel__unavailable p { font-size:24px;line-height:30px; }
+  }
+</style>

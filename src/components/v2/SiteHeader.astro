@@ -1,22 +1,34 @@
 ---
 import ayniLogo from '../../assets/v2/ayni-logo.webp';
-import { SECTION_IDS } from '../../data/v2';
+import { ROUTES, SECTION_IDS } from '../../data/v2';
+
+export type SiteNavigationItem = 'home' | 'products' | 'pickup';
+
+interface Props {
+  active?: SiteNavigationItem;
+}
+
+const { active = 'home' } = Astro.props;
+// Solo la home tiene las secciones en la propia página; desde las rutas
+// propias (productos, puntos de recojo) los anclajes tienen que volver a `/`.
+const onLanding = active === 'home';
+const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.home}#${section}`;
 ---
 
 <header class="site-header" data-site-header>
   <div class="site-header__top">
     <div class="site-header__top-inner">
       <span class="site-header__balance" aria-hidden="true"></span>
-      <a class="brand" href={`#${SECTION_IDS.home}`} aria-label="AYNI, ir al inicio">
+      <a class="brand" href={sectionHref(SECTION_IDS.home)} aria-label="AYNI, ir al inicio">
         <img src={ayniLogo.src} width="112" height="30" alt="AYNI" />
       </a>
 
       <div class="site-header__actions">
-        <a href={`#${SECTION_IDS.ambassadors}`}>
+        <a href={sectionHref(SECTION_IDS.ambassadors)}>
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>
           <span>Quiero ser embajador</span>
         </a>
-        <a href={`#${SECTION_IDS.tools}`}>
+        <a href={sectionHref(SECTION_IDS.tools)}>
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14.7 6.3 3-3a4.2 4.2 0 0 1-5.5 5.5l-7.8 7.8a2.1 2.1 0 0 0 3 3l7.8-7.8a4.2 4.2 0 0 0 5.5-5.5l-3 3"/></svg>
           <span>Herramientas</span>
         </a>
@@ -32,15 +44,17 @@ import { SECTION_IDS } from '../../data/v2';
   </div>
 
   <nav id="site-navigation" class="site-nav" aria-label="Navegación principal" data-site-nav>
-    <!-- `aria-current="location"`, no `page`: estos enlaces no llevan a otra
-         página, señalan dónde estás dentro de esta. El estado inicial va en el
-         HTML para que no parpadee antes de que corra el observador. -->
-    <a class="is-active" href={`#${SECTION_IDS.home}`} aria-current="location" data-nav-link>Home</a>
-    <a href={`#${SECTION_IDS.products}`} data-nav-link>Productos</a>
-    <a href={`#${SECTION_IDS.pickup}`} data-nav-link>Puntos de recojo</a>
+    <!-- Home usa `aria-current="location"` y no `page` porque desde la propia
+         home es un ancla dentro de la página, no un destino aparte; Productos
+         y Puntos de recojo sí son páginas y llevan `page`. El estado lo fija
+         el servidor desde `active`: las tres entradas del nav son destinos, no
+         secciones que haya que detectar al vuelo mientras se hace scroll. -->
+    <a class:list={{ 'is-active': active === 'home' }} href={sectionHref(SECTION_IDS.home)} aria-current={active === 'home' ? 'location' : undefined} data-nav-link>Home</a>
+    <a class:list={{ 'is-active': active === 'products' }} href={ROUTES.products} aria-current={active === 'products' ? 'page' : undefined} data-nav-link>Productos</a>
+    <a class:list={{ 'is-active': active === 'pickup' }} href={ROUTES.pickup} aria-current={active === 'pickup' ? 'page' : undefined} data-nav-link>Puntos de recojo</a>
     <div class="site-nav__mobile-actions">
-      <a href={`#${SECTION_IDS.ambassadors}`} data-nav-link>Quiero ser embajador</a>
-      <a href={`#${SECTION_IDS.tools}`} data-nav-link>Herramientas</a>
+      <a href={sectionHref(SECTION_IDS.ambassadors)} data-nav-link>Quiero ser embajador</a>
+      <a href={sectionHref(SECTION_IDS.tools)} data-nav-link>Herramientas</a>
     </div>
   </nav>
 </header>
@@ -75,60 +89,6 @@ import { SECTION_IDS } from '../../data/v2';
     window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
       if (event.matches) closeMenu();
     });
-
-    // Marca en el nav la sección que se está viendo. Se observa cada sección y
-    // gana la más cercana al borde superior de las visibles, en vez de fiarse
-    // del scroll: así da igual la altura de cada banda y no hay que recalcular
-    // posiciones al redimensionar.
-    const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'));
-    const byId = new Map<string, HTMLAnchorElement>();
-    const sections: HTMLElement[] = [];
-
-    links.forEach((link) => {
-      const id = link.getAttribute('href')?.slice(1);
-      if (!id || byId.has(id)) return;
-      const section = document.getElementById(id);
-      if (!section) return;
-      byId.set(id, link);
-      sections.push(section);
-    });
-
-    if (sections.length > 0) {
-      const visible = new Set<string>();
-
-      const setActive = (id: string | null) => {
-        links.forEach((link) => {
-          const isActive = link.getAttribute('href') === `#${id}`;
-          link.classList.toggle('is-active', isActive);
-          if (isActive) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
-        });
-      };
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) visible.add(entry.target.id);
-            else visible.delete(entry.target.id);
-          });
-          // La primera visible en orden de documento es justo la que cruza la
-          // línea del header, porque el recorte de arriba empieza ahí. Se
-          // recorre `sections` y no `visible` para respetar ese orden: un Set
-          // conserva el de inserción, que es el de los cruces y se invierte al
-          // subir. Si no hay ninguna —las bandas sin enlace en el nav— se
-          // mantiene la última marcada en vez de apagarlas todas.
-          const current = sections.find((section) => visible.has(section.id));
-          if (current) setActive(current.id);
-        },
-        // Solo se recorta por arriba, la altura real del header pegajoso: con
-        // eso la detección no depende de lo alta que sea cada banda ni de la
-        // ventana. Un recorte inferior en porcentaje deja una franja tan
-        // estrecha en ventanas bajas que se salta secciones enteras.
-        { rootMargin: `-${header.offsetHeight}px 0px 0px 0px` },
-      );
-
-      sections.forEach((section) => observer.observe(section));
-    }
   }
 </script>
 

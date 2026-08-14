@@ -1,0 +1,19 @@
+---
+import HomeFooter from '../components/v2/HomeFooter.astro';
+import ProductsBanner from '../components/v2/ProductsBanner.astro';
+import SiteHeader from '../components/v2/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import '../styles/v2.css';
+---
+
+<Layout
+  variant="website"
+  title="Productos — AYNI"
+  description="Moravi 360, Capucci 360 y Reset 360: tres fórmulas maestras de superalimentos para acompañar cada ritmo de tu vida."
+>
+  <SiteHeader active="products" />
+  <main class="v2-page">
+    <ProductsBanner />
+  </main>
+  <HomeFooter />
+</Layout>
