@@ -1,10 +1,15 @@
 ---
 import ayniLogo from '../../assets/v2/ayni-logo.webp';
-import footerPattern from '../../assets/v2/home-background.webp';
-import { SECTION_IDS } from '../../data/v2';
+import footerBackgroundDesktop from '../../assets/v2/footer-background-desktop.png';
+import footerBackgroundMobile from '../../assets/v2/footer-background-mobile.png';
+import { ROUTES, SECTION_IDS } from '../../data/v2';
 ---
 
-<footer id={SECTION_IDS.ambassadors} class="home-footer" style={`--footer-pattern:url(${footerPattern.src})`}>
+<footer
+  id={SECTION_IDS.ambassadors}
+  class="home-footer"
+  style={`--footer-pattern-desktop:url(${footerBackgroundDesktop.src});--footer-pattern-mobile:url(${footerBackgroundMobile.src})`}
+>
   <span id={SECTION_IDS.tools} class="home-footer__anchor" aria-hidden="true"></span>
   <div class="home-footer__grid">
     <div class="home-footer__brand">
@@ -12,8 +17,8 @@ import { SECTION_IDS } from '../../data/v2';
     </div>
     <div>
       <h2>Servicios</h2>
-      <a href={`#${SECTION_IDS.products}`}>Productos</a>
-      <a href={`#${SECTION_IDS.pickup}`}>Puntos de recojo</a>
+      <a href={ROUTES.products}>Productos</a>
+      <a href={ROUTES.pickup}>Puntos de recojo</a>
     </div>
     <div class="home-footer__legal">
       <h2>Legal</h2>
@@ -39,16 +44,16 @@ import { SECTION_IDS } from '../../data/v2';
 <style>
   .home-footer { position:relative;min-height:390px;padding:62px clamp(28px,5.5vw,80px) 20px;overflow:hidden;background:#070707;color:#726e65;font-family:Poppins,sans-serif;isolation:isolate; }
   .home-footer__anchor { position:absolute;inset:0 auto auto 0; }
-  .home-footer::before { content:"";position:absolute;z-index:-1;inset:0;background-image:linear-gradient(rgba(0,0,0,.8),rgba(0,0,0,.88)),var(--footer-pattern);background-position:center bottom;background-size:cover;opacity:.56; }
-  .home-footer__grid { display:grid;grid-template-columns:1fr .65fr 1.55fr .8fr;gap:44px;width:min(100%,1280px);margin-inline:auto; }
+  .home-footer::before { content:"";position:absolute;z-index:0;inset:0;background-image:var(--footer-pattern-desktop);background-position:center;background-size:cover;pointer-events:none; }
+  .home-footer__grid { position:relative;z-index:1;display:grid;grid-template-columns:1fr .65fr 1.55fr .8fr;gap:44px;width:min(100%,1280px);margin-inline:auto; }
   .home-footer__brand img { width:min(100%,176px);height:auto; }
   .home-footer h2 { margin:0 0 20px;color:#b1a58d;font-size:16px;font-weight:600; }
   .home-footer a,.home-footer span { display:block;margin-bottom:10px;color:#726e65;font-size:13px;line-height:1.35;text-decoration:none; }
   .home-footer__book { color:#eee!important;font-size:25px!important; }
   .home-footer__seal { display:grid!important;width:58px;height:58px;place-items:center;margin-top:18px;border:2px solid #ddd;border-radius:50%;color:#ddd!important;font-size:11px!important;text-align:center; }
-  .home-footer__bottom { display:flex;align-items:end;justify-content:space-between;width:min(100%,1280px);margin:55px auto 0; }
+  .home-footer__bottom { position:relative;z-index:1;display:flex;align-items:end;justify-content:space-between;width:min(100%,1280px);margin:55px auto 0; }
   .home-footer__bottom p { margin:0;font-size:11px; }
   .home-footer__bottom div { display:flex;gap:22px;align-items:center; }
   .home-footer__bottom div span { margin:0;color:#eee;font-weight:600; }
-  @media(max-width:767px){.home-footer{padding:48px 24px 24px}.home-footer__grid{grid-template-columns:1fr 1fr;gap:36px 24px}.home-footer__brand,.home-footer__legal{grid-column:1/-1}.home-footer__bottom{display:grid;gap:25px;margin-top:42px}}
+  @media(max-width:767px){.home-footer{padding:48px 24px 24px}.home-footer::before{background-image:var(--footer-pattern-mobile);background-position:center top}.home-footer__grid{grid-template-columns:1fr 1fr;gap:36px 24px}.home-footer__brand,.home-footer__legal{grid-column:1/-1}.home-footer__bottom{display:grid;gap:25px;margin-top:42px}}
 </style>
