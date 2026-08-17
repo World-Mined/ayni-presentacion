@@ -13,7 +13,7 @@
 }
 
 html[data-layout='website'] { scroll-behavior:smooth;scroll-padding-top:var(--header-height);background:var(--black); }
-html[data-layout='website'],html[data-layout='website'] body { min-width:320px;min-height:100%;margin:0;overflow-x:clip;background:var(--black);color:var(--white);font-family:var(--font-body);user-select:text;-webkit-user-select:text; }
+html[data-layout='website'],html[data-layout='website'] body { min-width:280px;min-height:100%;margin:0;overflow-x:clip;background:var(--black);color:var(--white);font-family:var(--font-body);user-select:text;-webkit-user-select:text; }
 html[data-layout='website'] * { box-sizing:border-box; }
 html[data-layout='website'] img,html[data-layout='website'] svg { user-select:none;-webkit-user-select:none;-webkit-user-drag:none; }
 html[data-layout='website'] body.menu-is-open { overflow:hidden; }

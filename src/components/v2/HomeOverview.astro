@@ -78,7 +78,7 @@ import PickupMap from './PickupMap.astro';
       <h2 id="products-title">El ciclo infinito<br />de la reciprocidad</h2>
       <p>Tres fórmulas maestras diseñadas para acompañar cada ritmo de tu vida: <strong>energía para tu mente, protección para tu cuerpo y ligereza para tu interior.</strong></p>
       <MotionCta class="home-band__cta" href={ROUTES.products}>
-        <span class="products-cta-label">Conocer más aquí</span>
+        <span class="products-cta-label">Conoce más aquí</span>
         <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </MotionCta>
     </div>
@@ -137,7 +137,7 @@ import PickupMap from './PickupMap.astro';
   .about-cta-label { white-space:nowrap; }
   .about-cta-label__mobile-suffix { display:none; }
   .home-bands__lower { position:relative;overflow:hidden;background:#050504;isolation:isolate; }
-  .home-band--products { --products-plank-top:61.8%;--products-plank-inset:2.4%;--products-copy-width:clamp(360px,38vw,547px);--products-copy-right:clamp(40px,10.417vw,150px);--products-sink:23.5%;z-index:2;display:block;min-height:0;background:#000;overflow:visible; }
+  .home-band--products { --products-plank-top:61.8%;--products-plank-inset:2.4%;--products-copy-width:clamp(360px,38vw,547px);--products-copy-right:clamp(40px,10.417vw,150px);--products-sink:21%;z-index:2;display:block;min-height:0;background:#000;overflow:visible; }
   .home-band__products-blur { position:absolute;z-index:1;top:44px;left:calc(50% + 264px);width:min(52.22vw,752px);aspect-ratio:752/429;transform:translateX(-50%);pointer-events:none; }
   .home-band__products-blur :global(img) { position:absolute;top:-58.28%;left:-33.24%;display:block;width:166.49%;height:216.55%;max-width:none; }
   .home-band__products-stage { position:relative;z-index:2;display:grid;width:100%;min-height:480px;aspect-ratio:2000/667;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden;background:#080906; }
@@ -200,17 +200,38 @@ import PickupMap from './PickupMap.astro';
     .home-band--about p { font-size:15px;line-height:23px; }
   }
   @media(max-width:767px){
-    .home-band--products { --products-plank-top:72%;--products-copy-width:100%;--products-copy-right:0;min-height:0;padding:0; }
-    .home-band__products-stage { display:block;aspect-ratio:auto;min-height:clamp(690px,190vw,787px); }
+    /* Todos los coeficientes `vw` de este bloque son `medida_Figma / 390px`:
+       el mockup móvil se diseñó a 390 de ancho y cada valor se expresa como la
+       fracción del viewport que ocupaba ahí. Así 144.359vw son los 563px de
+       alto del escenario, 44.872vw los 175px del grupo de empaques y 8.205vw
+       los 32px del titular. Los `clamp()` sólo acotan ese escalado en los
+       extremos; el término central es la medida original.
+       (Misma convención documentada en ProductsBanner.astro.) */
+    .home-band--products { --products-mobile-height:clamp(438px,144.359vw,690px);--products-mobile-group-h:clamp(136px,44.872vw,240px);--products-mobile-gap:clamp(32px,10.256vw,48px);--products-copy-width:100%;--products-copy-right:0;--products-sink:0;min-height:0;padding:0;overflow-x:clip; }
+    .home-band__products-stage { display:grid;height:var(--products-mobile-height);min-height:0;aspect-ratio:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto var(--products-mobile-group-h);row-gap:var(--products-mobile-gap);align-content:center;justify-items:center; }
     .home-band__products-scene :global(img) { object-position:center; }
-    .home-band__products-shade :global(img) { display:none; }
-    .home-band__products-shade::after { background:linear-gradient(180deg,rgba(5,6,4,.94) 0%,rgba(5,6,4,.88) 32%,rgba(5,6,4,.5) 50%,rgba(5,6,4,.12) 66%,transparent 78%); }
-    .home-band__products-plank { top:var(--products-plank-top); }
-    .home-band__products { right:0;bottom:calc(100% - var(--products-plank-top) - var(--products-plank-inset));padding:0 8vw; }
+    .home-band__products-shade { display:flex;align-items:center;justify-content:center; }
+    .home-band__products-shade :global(img) { display:block;width:var(--products-mobile-height);height:100vw;max-width:none;object-fit:fill;transform:rotate(-90deg); }
+    .home-band__products-shade::after { display:none; }
+    .home-band__products-plank { top:auto;height:clamp(82px,27.179vw,150px);overflow:hidden; }
+    .home-band__products-plank :global(img) { position:absolute;top:0;left:50%;width:clamp(716px,236.154vw,1100px);height:100%;max-width:none;object-fit:fill;transform:translateX(-50%); }
+    /* El grupo de empaques se apoya en la mesa exactamente a 390px de ancho, y
+       hay que subirlo al alejarse de esa medida en cualquier dirección: el alto
+       del escenario y el de la mesa siguen curvas distintas, así que el punto de
+       apoyo se desplaza. Son dos rampas con la misma bisagra en 390px —una para
+       cada lado— y cada una queda anulada por su `clamp` cuando le toca al otro
+       lado. Los topes (-16px y -26px) se alcanzan en ~296px y ~746px. */
+    .home-band__products { --products-lift-narrow:clamp(-16px,calc((100vw - 390px) * .17),0px);--products-lift-wide:clamp(-26px,calc((390px - 100vw) * .073),0px);position:relative;right:auto;bottom:auto;left:auto;grid-row:2;width:100%;height:var(--products-mobile-group-h);padding:0;align-items:center;align-self:center;overflow:visible;transform:translateY(calc(var(--products-lift-narrow) + var(--products-lift-wide))); }
     .home-band__products-blur { top:auto;right:auto;bottom:-6%;left:50%;width:max(500px,130vw);transform:translateX(-50%); }
-    .home-band__products img { width:min(41%,190px);margin-inline:-11%; }
-    .home-band--products .home-band__content { position:absolute;top:clamp(42px,12vw,72px);left:50%;width:min(86%,520px);max-width:none;padding:0;margin:0;align-items:center;gap:0;transform:translateX(-50%);background:none;text-align:center; }
-    .home-band--products h2 { width:100%; }
+    .home-band__products img { width:clamp(154px,50.923vw,274px);height:auto;margin-inline:clamp(-48px,-8.762vw,-28px);transform:none; }
+    .home-band--products .home-band__content { position:relative;top:auto;left:auto;grid-row:1;grid-column:1;width:min(calc(100% - 32px),520px);max-width:none;padding:0;margin:0;align-items:center;justify-self:center;gap:0;transform:none;background:none;text-align:center; }
+    .home-band--products h2 { width:100%;margin:0 0 clamp(9px,2.685vw,14px);font-size:clamp(28px,8.205vw,34px);line-height:1.1875; }
+    .home-band--products p { width:100%;margin:0 0 clamp(14px,4.027vw,22px);font-size:clamp(11.5px,3.021vw,15px);line-height:1.444; }
+    /* El CTA de productos va en bronce apagado sobre la mesa iluminada: aro de
+       medio píxel del mismo tono que el texto. El `--cta-ring` va aquí y no en
+       el bloque de 599 para que no cambie de aspecto al cruzar ese límite. */
+    .home-band--products :global(.home-band__cta) { --cta-w:100%;--cta-h:clamp(36px,9.231vw,44px);--cta-font-size:clamp(10.472px,2.685vw,14px);--cta-color:#987c40;--cta-gap:0;--cta-ring:rgba(152,124,64,.58);--cta-ring-w:.5px;margin-top:0;padding:8px 10px; }
+    .home-band--products .cta-icon--stroked { width:clamp(15.707px,4.028vw,20px);height:clamp(15.707px,4.028vw,20px); }
   }
   @media(max-width:599px){
     .home-band { min-height:640px;align-items:end; }
@@ -222,12 +243,16 @@ import PickupMap from './PickupMap.astro';
     .home-band__about-earth :global(img) { height:100%;object-position:center; }
     .home-band--about h1 { margin-bottom:clamp(14px,4.103vw,18px);font-size:clamp(30px,8.205vw,38px);line-height:1.19; }
     .home-band--about p { font-size:clamp(16px,4.615vw,20px);line-height:1.445; }
-    .home-band :global(.home-band__cta) { --cta-w:100%;--cta-h:clamp(40px,10.5vw,46px);--cta-bevel:var(--cta-bevel-sm);--cta-font-size:clamp(14px,3.85vw,16px);margin-top:clamp(20px,6.154vw,28px);padding:8px 16px;line-height:24px; }
+    /* El bisel pequeño y el interlineado valen para todas las bandas; el resto
+       del dimensionado es el del CTA grande (about, pickup). Productos queda
+       excluido a propósito: sus medidas ya están completas en el bloque de
+       767px y antes había que repetirlas aquí sólo para deshacer esta regla,
+       que gana por orden de declaración y no por especificidad. */
+    .home-band :global(.home-band__cta) { --cta-bevel:var(--cta-bevel-sm);line-height:24px; }
+    .home-band:not(.home-band--products) :global(.home-band__cta) { --cta-w:100%;--cta-h:clamp(40px,10.5vw,46px);--cta-font-size:clamp(14px,3.85vw,16px);--cta-color:#987c40;--cta-ring:rgba(152,124,64,.58);--cta-ring-w:.75px;margin-top:clamp(20px,6.154vw,28px);padding:8px 16px; }
     .home-band--about .cta-icon--stroked { width:clamp(15.71px,4.028vw,18px);height:clamp(15.71px,4.028vw,18px); }
     .about-cta-label__mobile-suffix { display:inline; }
-    .home-band--products h2 { font-size:clamp(28px,7.7vw,34px);line-height:1.2; }
-    .home-band--products p { font-size:clamp(15px,4.1vw,17px);line-height:1.5; }
-    .home-band--products :global(.home-band__cta) { margin-top:0; }
+    .home-band--products { min-height:0; }
     .home-band--pickup { display:block;min-height:0;padding:40px 16px;overflow:hidden; }
     .home-band__pickup-layout { display:flex;width:min(100%,358px);height:auto;margin-inline:auto;flex-direction:column;align-items:flex-start; }
     .home-band--pickup .home-band__content--pickup { display:block;width:100%;padding:0;margin:0;background:none;text-align:left; }
