@@ -2,10 +2,11 @@
 import { SECTION_IDS } from '../../data/v2';
 ---
 
-<section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI">
+<section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI" data-safe-frame="none">
   <video class="video-hero__media" autoplay muted loop playsinline preload="metadata" data-home-video>
     <source src="/media/ayni-home.mp4" type="video/mp4" />
   </video>
+  <canvas class="video-hero__safe-frame" aria-hidden="true" data-title-safe-frame></canvas>
   <div class="video-hero__shade" aria-hidden="true"></div>
   <div class="video-hero__controls">
     <button class="video-hero__btn" type="button" aria-label="Pausar video" data-play-toggle>
@@ -20,6 +21,11 @@ import { SECTION_IDS } from '../../data/v2';
 </section>
 
 <script>
+  // El reencuadre del cierre vive aparte: es un motor de composición con
+  // geometría propia, del mismo tipo que `cta-motion`. Aquí sólo quedan los
+  // controles, que sí pertenecen a este componente.
+  import '../../scripts/v2/hero-video';
+
   document.querySelectorAll<HTMLElement>('.video-hero').forEach((hero) => {
     const video = hero.querySelector<HTMLVideoElement>('[data-home-video]');
     const soundToggle = hero.querySelector<HTMLButtonElement>('[data-sound-toggle]');
@@ -62,9 +68,30 @@ import { SECTION_IDS } from '../../data/v2';
 </script>
 
 <style>
-  .video-hero { position:relative;width:100%;aspect-ratio:3/2;min-height:520px;max-height:calc(100svh - 104px);overflow:hidden;background:#111; }
-  .video-hero__media { display:block;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none; }
-  .video-hero__shade { position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.17));pointer-events:none; }
+  /* `svh` y no `dvh`: la portada abre la página, y con `dvh` cambiaría de alto
+     cada vez que la barra del navegador móvil se contrae al hacer scroll,
+     arrastrando consigo el redimensionado del canvas. El `min-height` mantiene
+     una portada usable en viewports muy bajos (móvil en horizontal). */
+  .video-hero { position:relative;width:100%;height:calc(100svh - var(--header-height));min-height:320px;overflow:hidden;background:#111; }
+  .video-hero__media { display:block;width:100%;height:100%;object-fit:cover;object-position:center;transition:filter .35s ease,transform .35s ease;pointer-events:none; }
+  .video-hero__safe-frame { position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .35s ease;pointer-events:none; }
+  /* Un único atributo, escrito por `hero-video`, gobierna las tres reacciones
+     de aquí abajo. El script sólo lo saca de 'none' cuando el reencuadre de
+     verdad se está dibujando, así que ninguna puede activarse por su cuenta en
+     un viewport donde no hay nada que reencuadrar. Por eso tampoco llevan
+     media query: la decisión es de proporción, no de ancho. */
+  .video-hero:not([data-safe-frame='none']) .video-hero__safe-frame { opacity:1; }
+  /* El mosaico ya contiene fondo negro opaco. Debe sustituir al encuadre
+     horizontal en el mismo frame; un fundido mostraría ambas composiciones y
+     produciría la duplicación visible al entrar en la escena. */
+  .video-hero[data-safe-frame='collage'] .video-hero__safe-frame { transition:none; }
+  .video-hero[data-safe-frame='title'] .video-hero__media { filter:blur(12px) brightness(.58);transform:scale(1.045); }
+  /* El velo separa degradado y color: `background-image` no se puede
+     interpolar, así que animar el atajo `background` dejaba el color a medio
+     camino. El oscurecido del mosaico se suma al degradado en vez de
+     reemplazarlo, y sólo transiciona el color. */
+  .video-hero__shade { position:absolute;inset:0;background-color:transparent;background-image:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.17));transition:background-color .35s ease;pointer-events:none; }
+  .video-hero[data-safe-frame='collage'] .video-hero__shade { background-color:rgba(0,0,0,.36); }
   .video-hero__controls { position:absolute;right:40px;top:50%;display:grid;gap:12px;transform:translateY(-50%); }
   .video-hero__btn { display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:50%;background:rgba(82,82,78,.78);color:#f3f1ea;backdrop-filter:blur(5px);cursor:pointer; }
   .video-hero__btn svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
@@ -81,5 +108,6 @@ import { SECTION_IDS } from '../../data/v2';
   .video-hero__btn .sound-off { display:block; }
   .video-hero__btn[data-sound-enabled='true'] .sound-on { display:block; }
   .video-hero__btn[data-sound-enabled='true'] .sound-off { display:none; }
-  @media(max-width:767px){.video-hero{aspect-ratio:4/5;min-height:520px;max-height:calc(100svh - 64px)}.video-hero__controls{right:18px}}
+  @media(max-width:767px){ .video-hero__controls { right:18px; } }
+  @media(prefers-reduced-motion:reduce){.video-hero__media,.video-hero__safe-frame,.video-hero__shade{transition:none}}
 </style>

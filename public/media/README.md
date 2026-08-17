@@ -13,6 +13,19 @@ aquí a mano antes de levantar el sitio.
 | --- | --- | --- |
 | `ayni-home.mp4` | `src/components/v2/HeroSection.astro` | fondo de la portada |
 
+## `ayni-home.mp4` tiene medidas tomadas a mano
+
+Su cierre —el mosaico de cinco planos y el logotipo— se recompone en un canvas
+cuando el viewport es demasiado vertical para mostrarlo entero. Esa recomposición
+depende de tiempos y recortes medidos sobre este archivo concreto, y viven todos
+en **`src/data/home-video.ts`**: los segundos de cada tramo, la resolución del
+máster (1280 × 768) y las coordenadas de las cinco tarjetas.
+
+Si reemplazas o reencodas el video, vuelve a medir ahí. Los recortes se
+normalizan contra la resolución declarada, así que un reencode a otro tamaño no
+los rompe; los **tiempos sí hay que revisarlos** porque nada los valida en el
+build.
+
 Sin el archivo la portada no rompe: el `<video>` se queda en su fondo sólido y
 el resto de la página funciona igual. Pero la portada pierde su contenido
 principal, así que no despliegues sin él.
