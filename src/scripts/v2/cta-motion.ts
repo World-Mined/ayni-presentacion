@@ -2,6 +2,7 @@ import { animate } from 'animejs';
 
 const SELECTOR = '[data-motion-cta]';
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+const HOVER_CAPABLE = '(hover: hover) and (pointer: fine)';
 const CYCLE_MS = 4_700;
 const DEFAULT_TAIL_TURN = 0.38;
 
@@ -85,6 +86,7 @@ function initializeCta(cta: CtaElement) {
 
   cta.dataset.motionReady = 'true';
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
+  const hoverCapable = window.matchMedia(HOVER_CAPABLE);
   const state = { progress: 0 };
   let animation: ReturnType<typeof animate> | null = null;
   let geometry = { width: 1, height: 1 };
@@ -198,6 +200,11 @@ function initializeCta(cta: CtaElement) {
   };
 
   const start = () => {
+    // El atributo se escribe siempre: marca «este CTA está activo», y de él
+    // cuelgan el color y el intercambio de aros, que no son movimiento. Sólo
+    // la cola animada se queda fuera con `prefers-reduced-motion`, y de eso se
+    // encarga el propio CSS.
+    cta.dataset.motionActive = 'true';
     if (reducedMotion.matches) return;
     refreshSettings();
     render();
@@ -216,14 +223,34 @@ function initializeCta(cta: CtaElement) {
   };
 
   const pauseWhenInactive = () => {
-    if (!cta.matches(':hover') && !cta.matches(':focus-visible')) animation?.pause();
+    const activeHover = hoverCapable.matches && cta.matches(':hover');
+    if (!activeHover && !cta.matches(':focus-visible')) {
+      animation?.pause();
+      delete cta.dataset.motionActive;
+    }
   };
 
-  cta.addEventListener('pointerenter', start);
+  cta.addEventListener('pointerenter', () => {
+    if (hoverCapable.matches) start();
+  });
   cta.addEventListener('pointerleave', pauseWhenInactive);
-  cta.addEventListener('focus', start);
+  cta.addEventListener('focus', () => {
+    requestAnimationFrame(() => {
+      if (cta.matches(':focus-visible')) start();
+    });
+  });
   cta.addEventListener('blur', pauseWhenInactive);
 
+  hoverCapable.addEventListener('change', ({ matches }) => {
+    if (!matches && !cta.matches(':focus-visible')) {
+      animation?.pause();
+      delete cta.dataset.motionActive;
+    }
+  });
+
+  // Pasar a «menos movimiento» detiene la cola, pero no desactiva el CTA: si
+  // sigue enfocado o bajo el puntero, su estado visual debe seguir siendo el
+  // activo. Quitar el atributo aquí lo apagaría a media interacción.
   reducedMotion.addEventListener('change', ({ matches }) => {
     if (matches) animation?.pause();
   });

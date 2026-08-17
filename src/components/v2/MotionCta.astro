@@ -69,9 +69,14 @@ const { href, class: className, ...rest } = Astro.props;
   .motion-cta::before,.motion-cta::after { content:"";position:absolute;z-index:1;inset:0;border-radius:inherit;pointer-events:none;transition:opacity 160ms linear;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude; }
   .motion-cta::before { padding:var(--cta-ring-w);background:var(--cta-ring); }
   .motion-cta::after { padding:var(--cta-ring-hover-w);background:var(--cta-ring-hover);opacity:0; }
-  .motion-cta:is(:hover,:focus-visible)::before { opacity:0; }
-  .motion-cta:is(:hover,:focus-visible)::after { opacity:1; }
-  .motion-cta:is(:hover,:focus-visible) { color:var(--cta-color-hover); }
+  .motion-cta:focus-visible { outline:2px solid rgba(249,203,105,.72);outline-offset:3px; }
+  /* El estado activo llega como atributo y no como `:hover` porque Safari y
+     otros navegadores táctiles dejan `:hover` pegado después de un toque.
+     Quién puede activarlo lo decide `cta-motion.ts`, que exige un puntero con
+     hover real o un foco visible; aquí no hace falta repetir esa condición. */
+  .motion-cta[data-motion-active="true"]::before { opacity:0; }
+  .motion-cta[data-motion-active="true"]::after { opacity:1; }
+  .motion-cta[data-motion-active="true"] { color:var(--cta-color-hover); }
 
   .motion-cta__content { position:relative;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:var(--cta-gap);white-space:nowrap; }
   .motion-cta__content :global(svg) { display:block;width:24px;height:24px;flex:none; }
@@ -82,11 +87,14 @@ const { href, class: className, ...rest } = Astro.props;
      gradiente continuo. Esto evita las bandas que aparecían al rasterizar el
      antiguo conjunto de cientos de trazos SVG a escalas pequeñas. */
   .motion-cta__stroke { --cta-tail-turn:.38;--cta-motion-w:1px;--cta-end-speed:.1;--cta-cardinal-speed:.12;--cta-tail-end-speed:.045;--cta-tail-end-right-boost:.008;--cta-horizontal-shrink:.063;--cta-glow:1.05px;--cta-glow-pulse:.18;--cta-glow-travel:3.25px;position:absolute;z-index:2;inset:0;display:block;box-sizing:border-box;padding:var(--cta-motion-w);border-radius:inherit;background:transparent;opacity:0;pointer-events:none;transition:opacity 140ms linear;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;will-change:background,filter; }
-  .motion-cta:is(:hover,:focus-visible) .motion-cta__stroke { opacity:1; }
+  .motion-cta[data-motion-active="true"] .motion-cta__stroke { opacity:1; }
 
+  /* Quien pide menos movimiento pierde la cola animada, pero conserva el resto
+     del estado activo: el cambio de color y el intercambio de aros no son
+     movimiento y siguen siendo la única señal de que el CTA responde. */
   @media(prefers-reduced-motion:reduce){
     .motion-cta,.motion-cta::before,.motion-cta::after,.motion-cta__stroke { transition:none; }
-    .motion-cta:is(:hover,:focus-visible) .motion-cta__stroke { opacity:0; }
+    .motion-cta[data-motion-active="true"] .motion-cta__stroke { opacity:0; }
   }
 </style>
 
