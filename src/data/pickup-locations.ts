@@ -1,8 +1,5 @@
 import type { ImageMetadata } from 'astro';
-import boliviaBase from '../assets/v2/pickup-locations-bolivia-base.png';
-import boliviaMap from '../assets/v2/pickup-locations-bolivia-map.png';
-import peruBase from '../assets/v2/pickup-locations-peru-base.png';
-import peruMap from '../assets/v2/pickup-locations-peru-map.png';
+import pickupLocationsMap from '../assets/v2/pickup-locations-map.webp';
 
 export type PickupCountry = 'peru' | 'bolivia';
 
@@ -22,7 +19,6 @@ export interface PickupCountryConfig {
     actionLabel: string;
   };
   map: ImageMetadata;
-  mapBase: ImageMetadata;
   mapAlt: string;
   mapAvailable: boolean;
 }
@@ -31,8 +27,7 @@ export const PICKUP_COUNTRIES: Record<PickupCountry, PickupCountryConfig> = {
   peru: {
     id: 'peru',
     label: 'Perú',
-    map: peruMap,
-    mapBase: peruBase,
+    map: pickupLocationsMap,
     mapAlt: 'Mapa de los puntos de recojo de AYNI en Perú',
     mapAvailable: true,
     locations: [
@@ -81,8 +76,7 @@ export const PICKUP_COUNTRIES: Record<PickupCountry, PickupCountryConfig> = {
   bolivia: {
     id: 'bolivia',
     label: 'Bolivia',
-    map: boliviaMap,
-    mapBase: boliviaBase,
+    map: pickupLocationsMap,
     mapAlt: 'Mapa referencial de Bolivia',
     mapAvailable: false,
     locations: [],
