@@ -1,0 +1,23 @@
+---
+import AmbassadorsBands from '../components/v2/AmbassadorsBands.astro';
+import AmbassadorsHero from '../components/v2/AmbassadorsHero.astro';
+import AmbassadorsProgram from '../components/v2/AmbassadorsProgram.astro';
+import HomeFooter from '../components/v2/HomeFooter.astro';
+import SiteHeader from '../components/v2/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import '../styles/v2.css';
+---
+
+<Layout
+  variant="website"
+  title="Quiero ser embajador — AYNI"
+  description="El programa de embajadores AYNI: un plan de compensación a tu medida para desarrollar tu negocio como Embajador IBO independiente y crecer junto a una comunidad de reciprocidad."
+>
+  <SiteHeader active="ambassadors" />
+  <main class="v2-page">
+    <AmbassadorsHero />
+    <AmbassadorsProgram />
+    <AmbassadorsBands />
+  </main>
+  <HomeFooter />
+</Layout>

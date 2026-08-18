@@ -7,7 +7,6 @@ export const SECTION_IDS = {
   about: 'que-es-ayni',
   products: 'productos',
   pickup: 'puntos-de-recojo',
-  ambassadors: 'embajadores',
   tools: 'herramientas',
 } as const;
 
@@ -21,6 +20,7 @@ export const ROUTES = {
   home: '/',
   products: '/productos',
   pickup: '/puntos-de-recojo',
+  ambassadors: '/embajadores',
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];

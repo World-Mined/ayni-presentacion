@@ -1,8 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import ayniLogo from '../../assets/v2/ayni-logo.webp';
 import { ROUTES, SECTION_IDS } from '../../data/v2';
 
-export type SiteNavigationItem = 'home' | 'products' | 'pickup';
+export type SiteNavigationItem = 'home' | 'products' | 'pickup' | 'ambassadors';
 
 interface Props {
   active?: SiteNavigationItem;
@@ -20,11 +21,11 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     <div class="site-header__top-inner">
       <span class="site-header__balance" aria-hidden="true"></span>
       <a class="brand" href={sectionHref(SECTION_IDS.home)} aria-label="AYNI, ir al inicio">
-        <img src={ayniLogo.src} width="112" height="30" alt="AYNI" />
+        <Image src={ayniLogo} alt="AYNI" widths={[112, 224]} sizes="112px" quality={90} />
       </a>
 
       <div class="site-header__actions">
-        <a href={sectionHref(SECTION_IDS.ambassadors)}>
+        <a href={ROUTES.ambassadors} aria-current={active === 'ambassadors' ? 'page' : undefined}>
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>
           <span>Quiero ser embajador</span>
         </a>
@@ -53,7 +54,7 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     <a class:list={{ 'is-active': active === 'products' }} href={ROUTES.products} aria-current={active === 'products' ? 'page' : undefined} data-nav-link>Productos</a>
     <a class:list={{ 'is-active': active === 'pickup' }} href={ROUTES.pickup} aria-current={active === 'pickup' ? 'page' : undefined} data-nav-link>Puntos de recojo</a>
     <div class="site-nav__mobile-actions">
-      <a href={sectionHref(SECTION_IDS.ambassadors)} data-nav-link>Quiero ser embajador</a>
+      <a href={ROUTES.ambassadors} aria-current={active === 'ambassadors' ? 'page' : undefined} data-nav-link>Quiero ser embajador</a>
       <a href={sectionHref(SECTION_IDS.tools)} data-nav-link>Herramientas</a>
     </div>
   </nav>
