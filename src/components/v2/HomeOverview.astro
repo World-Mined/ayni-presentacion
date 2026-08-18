@@ -176,6 +176,12 @@ import PickupMap from './PickupMap.astro';
     .home-band--about p { font-size:17px;line-height:25px; }
     .home-band--products h2 { font-size:34px;line-height:42px; }
     .home-band--products p { font-size:17px;line-height:25px; }
+    .home-band--pickup { min-height:clamp(650px,56.3vw,720px);padding:clamp(48px,4vw,64px); }
+    .home-band__pickup-layout { width:min(100%,1120px);height:clamp(554px,46.9vw,600px);grid-template-columns:minmax(0,1fr) minmax(320px,370px);column-gap:32px; }
+    .home-band--pickup .home-band__content--pickup { width:min(100%,430px);margin-left:0;justify-self:center; }
+    .home-band--pickup h2 { font-size:34px;line-height:42px; }
+    .home-band--pickup p { width:100%;font-size:17px;line-height:25px; }
+    .home-band__pickup-map { width:clamp(320px,30vw,370px); }
   }
   @media(min-width:768px) and (max-width:1023px){
     .home-band--about { --about-copy-left:clamp(42px,7vw,72px);--about-copy-width:clamp(320px,40vw,410px);--about-tree-right:clamp(24px,4vw,40px);--about-tree-width:clamp(310px,35vw,370px);background-position:54% center; }
@@ -198,6 +204,15 @@ import PickupMap from './PickupMap.astro';
     .home-band--about { --about-copy-left:clamp(32px,5.5vw,42px);--about-copy-width:clamp(250px,42vw,320px);--about-tree-right:clamp(20px,4vw,30px);--about-tree-width:clamp(230px,40vw,310px);background-position:52% center; }
     .home-band--about h1 { font-size:30px;line-height:38px; }
     .home-band--about p { font-size:15px;line-height:23px; }
+    /* La franja 600–767px conserva las dos columnas de tablet, pero reduce
+       progresivamente el mapa y el gap: el arte de 394px no cabe junto a la
+       copia en este rango y antes invadía el titular y el CTA. */
+    .home-band--pickup { min-height:clamp(560px,80vw,620px);padding:40px 32px;overflow:hidden; }
+    .home-band__pickup-layout { width:100%;height:clamp(480px,70vw,540px);grid-template-columns:minmax(0,1fr) clamp(250px,40vw,300px);column-gap:clamp(20px,3vw,24px);align-items:center; }
+    .home-band--pickup .home-band__content--pickup { width:100%;padding:0;margin:0; }
+    .home-band--pickup h2 { width:100%;max-width:300px;margin:0 0 16px;font-size:30px;line-height:36px; }
+    .home-band--pickup p { width:100%;max-width:320px;margin:0;font-size:15px;line-height:22px; }
+    .home-band__pickup-map { width:100%;max-width:300px;margin:0;justify-self:center;filter:none; }
   }
   @media(max-width:767px){
     /* Todos los coeficientes `vw` de este bloque son `medida_Figma / 390px`:
