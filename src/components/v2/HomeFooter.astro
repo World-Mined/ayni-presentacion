@@ -1,59 +1,280 @@
 ---
+import { Image } from 'astro:assets';
 import ayniLogo from '../../assets/v2/ayni-logo.webp';
-import footerBackgroundDesktop from '../../assets/v2/footer-background-desktop.png';
-import footerBackgroundMobile from '../../assets/v2/footer-background-mobile.png';
+import footerBackgroundDesktop from '../../assets/v2/footer-background-desktop.webp';
+import footerBackgroundMobile from '../../assets/v2/footer-background-mobile.webp';
+import footerIso9001 from '../../assets/v2/footer-iso9001.png';
+import footerLibro from '../../assets/v2/footer-libro.png';
+import socialFacebook from '../../assets/v2/social-facebook.svg';
+import socialInstagram from '../../assets/v2/social-instagram.svg';
+import socialLinkedin from '../../assets/v2/social-linkedin.svg';
+import socialYoutube from '../../assets/v2/social-youtube.svg';
 import { ROUTES, SECTION_IDS } from '../../data/v2';
 ---
 
 <footer
-  id={SECTION_IDS.ambassadors}
   class="home-footer"
   style={`--footer-pattern-desktop:url(${footerBackgroundDesktop.src});--footer-pattern-mobile:url(${footerBackgroundMobile.src})`}
 >
   <span id={SECTION_IDS.tools} class="home-footer__anchor" aria-hidden="true"></span>
-  <div class="home-footer__grid">
+  <div class="home-footer__main">
     <div class="home-footer__brand">
-      <img src={ayniLogo.src} width="176" height="47" alt="AYNI" />
+      <Image src={ayniLogo} alt="AYNI" widths={[176, 352]} sizes="176px" quality={90} />
     </div>
-    <div>
-      <h2>Servicios</h2>
-      <a href={ROUTES.products}>Productos</a>
-      <a href={ROUTES.pickup}>Puntos de recojo</a>
+    <div class="home-footer__links">
+      <section class="home-footer__item">
+        <h2>Servicios</h2>
+        <div class="home-footer__list">
+          <a href={ROUTES.products}>Productos</a>
+          <a href={ROUTES.pickup}>Puntos de recojo</a>
+        </div>
+      </section>
+      <section class="home-footer__item home-footer__legal">
+        <h2>Legal</h2>
+        <div class="home-footer__list">
+          <span>Términos y condiciones del servicio de AYNI</span>
+          <span>Políticas de reembolso</span>
+          <span>Políticas de tratamiento de datos personales</span>
+          <span>Políticas de cookies</span>
+          <span>Código de ética y buenas prácticas comerciales</span>
+        </div>
+      </section>
     </div>
-    <div class="home-footer__legal">
-      <h2>Legal</h2>
-      <span>Términos y condiciones del servicio de AYNI</span>
-      <span>Políticas de reembolso</span>
-      <span>Políticas de tratamiento de datos personales</span>
-      <span>Políticas de cookies</span>
-      <span>Código de ética y buenas prácticas comerciales</span>
-    </div>
-    <div>
+    <section class="home-footer__item home-footer__claims">
       <h2>Libro de reclamaciones</h2>
-      <span class="home-footer__book" aria-hidden="true">▰</span>
+      <img class="home-footer__book" src={footerLibro.src} width="50" height="20" alt="" />
       <span>FAQ'S</span>
-      <span class="home-footer__seal">ISO<br />9001</span>
-    </div>
+      <img class="home-footer__seal" src={footerIso9001.src} width="88" height="96" alt="Certificación ISO 9001" />
+    </section>
   </div>
   <div class="home-footer__bottom">
     <p>Copyright © AYNI 2026 - Todos los derechos reservados.</p>
-    <div aria-label="Redes sociales"><span>f</span><span>in</span><span>◎</span><span>▶</span></div>
+    <div class="home-footer__social" aria-label="Redes sociales">
+      <img src={socialFacebook.src} width="24" height="24" alt="Facebook" />
+      <img src={socialLinkedin.src} width="24" height="24" alt="LinkedIn" />
+      <img src={socialInstagram.src} width="24" height="24" alt="Instagram" />
+      <img src={socialYoutube.src} width="24" height="24" alt="YouTube" />
+    </div>
   </div>
 </footer>
 
 <style>
-  .home-footer { position:relative;min-height:390px;padding:62px clamp(28px,5.5vw,80px) 20px;overflow:hidden;background:#070707;color:#726e65;font-family:Poppins,sans-serif;isolation:isolate; }
-  .home-footer__anchor { position:absolute;inset:0 auto auto 0; }
-  .home-footer::before { content:"";position:absolute;z-index:0;inset:0;background-image:var(--footer-pattern-desktop);background-position:center;background-size:cover;pointer-events:none; }
-  .home-footer__grid { position:relative;z-index:1;display:grid;grid-template-columns:1fr .65fr 1.55fr .8fr;gap:44px;width:min(100%,1280px);margin-inline:auto; }
-  .home-footer__brand img { width:min(100%,176px);height:auto; }
-  .home-footer h2 { margin:0 0 20px;color:#b1a58d;font-size:16px;font-weight:600; }
-  .home-footer a,.home-footer span { display:block;margin-bottom:10px;color:#726e65;font-size:13px;line-height:1.35;text-decoration:none; }
-  .home-footer__book { color:#eee!important;font-size:25px!important; }
-  .home-footer__seal { display:grid!important;width:58px;height:58px;place-items:center;margin-top:18px;border:2px solid #ddd;border-radius:50%;color:#ddd!important;font-size:11px!important;text-align:center; }
-  .home-footer__bottom { position:relative;z-index:1;display:flex;align-items:end;justify-content:space-between;width:min(100%,1280px);margin:55px auto 0; }
-  .home-footer__bottom p { margin:0;font-size:11px; }
-  .home-footer__bottom div { display:flex;gap:22px;align-items:center; }
-  .home-footer__bottom div span { margin:0;color:#eee;font-weight:600; }
-  @media(max-width:767px){.home-footer{padding:48px 24px 24px}.home-footer::before{background-image:var(--footer-pattern-mobile);background-position:center top}.home-footer__grid{grid-template-columns:1fr 1fr;gap:36px 24px}.home-footer__brand,.home-footer__legal{grid-column:1/-1}.home-footer__bottom{display:grid;gap:25px;margin-top:42px}}
+  .home-footer {
+    position: relative;
+    min-height: 390px;
+    padding: 62px clamp(28px, 5.5vw, 80px) 20px;
+    overflow: hidden;
+    background: #070707;
+    color: #6b6b6b;
+    font-family: Poppins, sans-serif;
+    isolation: isolate;
+  }
+
+  .home-footer__anchor {
+    position: absolute;
+    inset: 0 auto auto 0;
+  }
+
+  .home-footer::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    background-image: var(--footer-pattern-desktop);
+    background-position: center;
+    background-size: cover;
+    content: '';
+    pointer-events: none;
+  }
+
+  .home-footer__main {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr .65fr 1.55fr .8fr;
+    gap: 44px;
+    width: min(100%, 1280px);
+    margin-inline: auto;
+  }
+
+  .home-footer__links {
+    display: contents;
+  }
+
+  .home-footer__brand img {
+    display: block;
+    width: min(100%, 176px);
+    height: auto;
+  }
+
+  .home-footer__item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .home-footer h2 {
+    margin: 0;
+    color: #c4bba8;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    letter-spacing: 0;
+  }
+
+  .home-footer__list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .home-footer a,
+  .home-footer span {
+    display: block;
+    margin: 0;
+    color: #6b6b6b;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.35;
+    text-decoration: none;
+  }
+
+  .home-footer__book,
+  .home-footer__seal {
+    display: block;
+    flex: none;
+    object-fit: fill;
+  }
+
+  .home-footer__book {
+    width: 50px;
+    height: 20px;
+  }
+
+  .home-footer__seal {
+    width: 88px;
+    height: 96px;
+  }
+
+  .home-footer__bottom {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    width: min(100%, 1280px);
+    margin: 55px auto 0;
+  }
+
+  .home-footer__bottom p {
+    margin: 0;
+    font-family: Montserrat, sans-serif;
+    font-size: 11px;
+  }
+
+  .home-footer__social {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .home-footer__social img {
+    display: block;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  @media (max-width: 767px) {
+    .home-footer {
+      display: flex;
+      min-height: 936px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 40px 16px 24px;
+    }
+
+    .home-footer::before {
+      background-image: var(--footer-pattern-mobile);
+      background-position: center top;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    .home-footer__main {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 80px;
+      margin: 0;
+    }
+
+    .home-footer__brand {
+      width: 107px;
+      height: 24px;
+      overflow: hidden;
+    }
+
+    .home-footer__brand img {
+      width: 107px;
+      max-width: none;
+      height: auto;
+      transform: translateY(-3.5px);
+    }
+
+    .home-footer__links {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 48px;
+    }
+
+    .home-footer__item {
+      width: 100%;
+    }
+
+    .home-footer h2 {
+      font-size: 20px;
+      line-height: 24px;
+    }
+
+    .home-footer a,
+    .home-footer span {
+      font-size: 16px;
+      line-height: 24px;
+    }
+
+    .home-footer__claims {
+      width: auto;
+      min-width: 238px;
+    }
+
+    .home-footer__bottom {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      margin: 0;
+    }
+
+    .home-footer__bottom p {
+      align-self: stretch;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 359px) {
+    .home-footer__bottom p {
+      font-size: 10px;
+    }
+  }
 </style>
