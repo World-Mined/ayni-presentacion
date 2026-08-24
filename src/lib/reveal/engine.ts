@@ -48,7 +48,14 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const titleblock = root.querySelector<HTMLElement>('.reveal-title');
   if (!stage || !overlay || !halo || !productImg || !titleblock) return () => {};
 
-  root.style.height = `${C.scroll.trackVH}vh`;
+  const compactViewport = window.matchMedia(
+    '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
+  );
+  const syncTrackHeight = () => {
+    root.style.height = compactViewport.matches ? '125svh' : `${C.scroll.trackVH}vh`;
+  };
+  syncTrackHeight();
+  compactViewport.addEventListener('change', syncTrackHeight);
   root.classList.add('reveal-initialized');
   root.dataset.revealState = 'hidden';
   root.dataset.framesReady = 'false';
@@ -116,6 +123,10 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   ring.style.strokeDashoffset = String(ringLen);
 
   // ── Ramas horizontales: nacen en el anillo y avanzan hacia afuera ──
+  const sideCounts = C.labels.reduce((counts, label) => {
+    counts[label.side] += 1;
+    return counts;
+  }, { left: 0, right: 0 });
   const built = C.labels.map((cfg) => {
     const rowY = G.rowsY[cfg.row];
     const outer = { x: G.iconX[cfg.side], y: rowY };
@@ -145,15 +156,24 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     label.type = 'button';
     label.disabled = true;
     label.dataset.item = cfg.id;
+    label.dataset.row = String(cfg.row);
+    label.dataset.sideCount = String(sideCounts[cfg.side]);
+    label.setAttribute('aria-label', cfg.name);
     label.setAttribute('aria-pressed', 'false');
     label.setAttribute('aria-describedby', `reveal-phrase-${C.id}-${cfg.id}`);
     label.style.left = pct(outer.x, 1920);
     label.style.top = pct(outer.y, 1080);
     label.style.marginLeft = cfg.side === 'left' ? '-14px' : '14px';
-    const ico = document.createElementNS(SVGNS, 'svg');
+    const mobileIcon = root.querySelector<HTMLImageElement>(`[data-mobile-icon="${cfg.id}"]`);
+    const ico = mobileIcon
+      ? mobileIcon.cloneNode(true) as HTMLImageElement
+      : document.createElementNS(SVGNS, 'svg');
     ico.setAttribute('class', 'reveal-ico');
-    ico.setAttribute('viewBox', '0 0 24 24');
-    ico.innerHTML = ICONS[cfg.icon] ?? ICONS.berry;
+    ico.removeAttribute('data-mobile-icon');
+    if (ico instanceof SVGSVGElement) {
+      ico.setAttribute('viewBox', '0 0 24 24');
+      ico.innerHTML = ICONS[cfg.icon] ?? ICONS.berry;
+    }
     const txt = document.createElement('span');
     txt.className = 'reveal-txt';
     [...cfg.name].forEach((ch) => {
@@ -161,8 +181,12 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       s.textContent = ch === ' ' ? ' ' : ch;
       txt.appendChild(s);
     });
+    const mobileTxt = document.createElement('span');
+    mobileTxt.className = 'reveal-mobile-txt';
+    mobileTxt.textContent = cfg.name;
     label.appendChild(ico);
     label.appendChild(txt);
+    label.appendChild(mobileTxt);
     stage.appendChild(label);
     return { cfg, stem, stemLen, label, ico, chars: [...txt.children] as HTMLElement[] };
   });
@@ -290,6 +314,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     built.forEach(({ label }) => { label.disabled = false; });
     return () => {
       disposed = true;
+      compactViewport.removeEventListener('change', syncTrackHeight);
       tl.pause();
       root.classList.remove('reveal-initialized');
       delete root.dataset.revealState;
@@ -339,14 +364,29 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     const scrollable = root.offsetHeight - window.innerHeight;
     const p = scrollable > 0 ? clamp(-rect.top / scrollable, 0, 1) : 0;
 
+    // En móvil la escena empezaba únicamente cuando el track ya había llegado
+    // al borde superior. Con una rueda o gesto rápido se podía atravesar casi
+    // todo el tramo sticky antes de que la secuencia alcanzara a aparecer. La
+    // activamos cuando entra al 28% del viewport y conservamos el foco hasta
+    // que el sticky ha subido un 14%: el producto sigue el movimiento de salida
+    // y se desvanece mientras Beneficios empieza a entrar, sin dejar un lienzo
+    // negro con los controles flotando.
+    const compact = compactViewport.matches;
+    const compactEntryLine = window.innerHeight * 0.28;
+    const compactExitLead = Math.min(120, window.innerHeight * 0.14);
+    const isCompactFocus =
+      rect.top <= compactEntryLine
+      && rect.bottom >= window.innerHeight - compactExitLead;
+
     // Mientras el track cubre el viewport, el stage sigue fijado. En cuanto
     // deja de cubrirlo, el sticky se acaba y la página vuelve a desplazarse:
     // ese mismo instante dispara la reversa. El scroll solo da la orden;
     // Anime.js completa la animación por tiempo propio.
     const isPinned = rect.top <= 0 && rect.bottom >= window.innerHeight;
-    if (!isPinned) {
+    const isFocused = compact ? isCompactFocus : isPinned;
+    if (!isFocused) {
       goHide();
-    } else if (p >= C.scroll.showAt && framesReady) {
+    } else if ((compact || p >= C.scroll.showAt) && framesReady) {
       goShow();
     }
   };
@@ -358,6 +398,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
 
   return () => {
     disposed = true;
+    compactViewport.removeEventListener('change', syncTrackHeight);
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);
     driveAnim?.pause();

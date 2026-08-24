@@ -1,6 +1,10 @@
 ---
 import { Image } from 'astro:assets';
+import revealChevronLeft from '../../assets/v2/reveal-chevron-left.svg';
+import revealChevronRight from '../../assets/v2/reveal-chevron-right.svg';
+import revealProductSwitch from '../../assets/v2/reveal-product-switch.svg';
 import type { IngredientsScene } from '../../data/product-ingredients';
+import { PRODUCT_DETAILS } from '../../data/products';
 import { DEFAULT_GEOMETRY } from '../../lib/reveal/defaults';
 import { PRODUCTS } from '../../lib/reveal/products';
 import type { ProductId } from '../../lib/reveal/products';
@@ -20,6 +24,7 @@ if (!cfg) {
   );
 }
 const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
+const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
 const circleStyle = [
   `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
   `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
@@ -36,11 +41,17 @@ const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` :
 // la relación de aspecto implícita y el bloque salta de alto mientras carga.
 const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
 const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
+const productIndex = PRODUCT_DETAILS.findIndex((item) => item.revealId === product);
+const previousProduct = PRODUCT_DETAILS[
+  (productIndex - 1 + PRODUCT_DETAILS.length) % PRODUCT_DETAILS.length
+];
+const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length];
 ---
 
 <div
   class="reveal-track"
   data-reveal={product}
+  data-row-count={rowCount}
   style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
 >
   <div class="reveal-pin">
@@ -68,6 +79,27 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
         </div>
       )}
       <div class="reveal-halo"></div>
+      <svg class="reveal-mobile-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="reveal-mobile-ring__circle" cx="50" cy="50" r="49"></circle>
+      </svg>
+      <nav class="reveal-mobile-controls" aria-label="Cambiar producto">
+        <a href={`/productos/${previousProduct.slug}`} aria-label={`Ver ${previousProduct.name}`}>
+          <Image src={revealChevronLeft} alt="" width={25} height={24} />
+        </a>
+        <a class="reveal-mobile-controls__all" href="/productos" aria-label="Ver todos los productos">
+          <Image src={revealProductSwitch} alt="" width={32} height={32} />
+        </a>
+        <a href={`/productos/${nextProduct.slug}`} aria-label={`Ver ${nextProduct.name}`}>
+          <Image src={revealChevronRight} alt="" width={25} height={24} />
+        </a>
+      </nav>
+      {scene && (
+        <div class="reveal-icon-sources" aria-hidden="true">
+          {scene.items.map((item) => (
+            <img src={item.icon.src} alt="" data-mobile-icon={item.id} />
+          ))}
+        </div>
+      )}
       {scene && (
         <div class="reveal-media-circle" style={circleStyle} aria-live="polite">
           {scene.items.map((item) => (
@@ -93,17 +125,22 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
           ))}
         </div>
       )}
-      <div class="reveal-product-wrap">
-        <img
-          class="reveal-product"
-          src={`${cfg.frames.dir}/frame-01.webp`}
-          alt={cfg.title.main}
-          width="700"
-          height="700"
-          loading="eager"
-          fetchpriority="high"
-          decoding="async"
-        />
+      <div
+        class="reveal-product-wrap"
+        data-product-tilt={product === 'capucci' ? '' : undefined}
+      >
+        <div class="reveal-product-tilt">
+          <img
+            class="reveal-product"
+            src={`${cfg.frames.dir}/frame-01.webp`}
+            alt={cfg.title.main}
+            width="700"
+            height="700"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </div>
       </div>
       <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -140,6 +177,7 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
       if (id && root.dataset.revealState !== 'shown') return;
       if (id) root.dataset.active = id;
       else delete root.dataset.active;
+      if (id) root.dispatchEvent(new Event('reveal:ingredient'));
 
       items.forEach((item) => {
         const selected = item.dataset.item === id;
@@ -172,7 +210,12 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
       item.addEventListener('pointerenter', () => {
         if (hoverCapable.matches) activate(id);
       }, options);
-      item.addEventListener('focus', () => activate(id), options);
+      item.addEventListener('focus', () => {
+        // Un toque enfoca el botón antes de disparar `click`. Si se activara
+        // también aquí, ese mismo click lo apagaría de inmediato. El foco solo
+        // adelanta la selección cuando procede del teclado.
+        if (item.matches(':focus-visible')) activate(id);
+      }, options);
       item.addEventListener('click', () => {
         if (!hoverCapable.matches) activate(root.dataset.active === id ? null : id);
       }, options);
@@ -195,6 +238,62 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
     };
   };
 
+  const bindProductTilt = (root: HTMLElement) => {
+    const wrap = root.querySelector<HTMLElement>('[data-product-tilt]');
+    const tilt = wrap?.querySelector<HTMLElement>('.reveal-product-tilt');
+    if (!wrap || !tilt) return () => {};
+
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let animationFrame = 0;
+    let horizontalPosition = 0;
+
+    const paint = () => {
+      animationFrame = 0;
+      tilt.style.setProperty('--reveal-product-tilt', `${(horizontalPosition * 5.5).toFixed(2)}deg`);
+      tilt.style.setProperty('--reveal-product-shadow-x', `${(-horizontalPosition * 14).toFixed(2)}px`);
+    };
+
+    const reset = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+      horizontalPosition = 0;
+      delete wrap.dataset.tilting;
+      tilt.style.removeProperty('--reveal-product-tilt');
+      tilt.style.removeProperty('--reveal-product-shadow-x');
+    };
+
+    wrap.addEventListener('pointermove', (event) => {
+      if (
+        !hoverCapable.matches
+        || reduceMotion.matches
+        || root.dataset.revealState !== 'shown'
+        || root.dataset.active
+      ) {
+        reset();
+        return;
+      }
+
+      const rect = wrap.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      horizontalPosition = Math.max(-1, Math.min(1, (event.clientX - center) / (rect.width / 2)));
+      wrap.dataset.tilting = '';
+      if (!animationFrame) animationFrame = requestAnimationFrame(paint);
+    }, options);
+
+    wrap.addEventListener('pointerleave', reset, options);
+    root.addEventListener('reveal:ingredient', reset, options);
+    root.addEventListener('reveal:hide', reset, options);
+    window.addEventListener('blur', reset, options);
+
+    return () => {
+      reset();
+      controller.abort();
+    };
+  };
+
   const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -205,7 +304,9 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
       if (!cfg) return;
       const cleanupReveal = createReveal(el, cfg);
       const cleanupInteraction = bindIngredientInteraction(el);
+      const cleanupProductTilt = bindProductTilt(el);
       cleanups.set(el, () => {
+        cleanupProductTilt();
         cleanupInteraction();
         cleanupReveal();
       });
@@ -350,16 +451,28 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
     width: 32%;
     transform: translate(-50%, -50%);
     transition: opacity .32s ease;
+    perspective: 900px;
+  }
+  .reveal-product-tilt {
+    transform: rotateY(var(--reveal-product-tilt, 0deg));
+    transform-origin: center;
+    transform-style: preserve-3d;
+    transition: transform .28s cubic-bezier(.22, .61, .36, 1);
+    will-change: transform;
+  }
+  .reveal-product-wrap[data-tilting] .reveal-product-tilt {
+    transition-duration: .08s;
   }
   .reveal-product {
     display: block;
     width: 100%;
     height: auto;
-    filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(var(--reveal-product-shadow-x, 0) 24px 40px rgba(0, 0, 0, 0.6));
     /* El primer frame debe nacer en el mismo estado inicial de la timeline.
        Si llega visible y JS lo oculta después, aparece un flash antes del popup. */
     opacity: 0;
-    will-change: transform, opacity;
+    transition: filter .12s ease-out;
+    will-change: transform, opacity, filter;
     user-select: none;
     -webkit-user-drag: none;
   }
@@ -444,7 +557,11 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
     width: 100%;
     height: 100%;
     overflow: visible;
+    pointer-events: none;
   }
+  .reveal-mobile-ring { display: none; }
+  .reveal-mobile-controls,
+  .reveal-icon-sources { display: none; }
   .reveal-ring,
   .reveal-stem {
     fill: none;
@@ -502,6 +619,7 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
     opacity: 0;
     will-change: transform, opacity;
   }
+  .reveal-mobile-txt { display: none; }
   .reveal-label:focus-visible {
     outline: 2px solid var(--reveal-gold);
     outline-offset: 7px;
@@ -514,18 +632,304 @@ const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
   .reveal-track[data-active] .reveal-label { opacity: .25; }
   .reveal-track[data-active] .reveal-label[data-selected] { opacity: 1; }
 
-  @media (max-width: 767px) {
-    .reveal-pin { top: var(--header-height, 72px); height: calc(100svh - var(--header-height, 72px)); }
-    .reveal-stage { width: 98vw; }
-    .reveal-product-wrap { width: 34%; }
-    .reveal-label { gap: 5px; font-size: clamp(9px, 2.7vw, 12px); }
-    .reveal-label .reveal-ico { width: 1.1em; height: 1.1em; }
-    .reveal-title { top: 10%; }
-    /* En vertical el escenario ocupa casi todo el ancho y la cabecera
-       proporcional dejaría el wordmark en ~95 px. Se ensancha la cabecera, no el
-       logotipo, para que los tres productos conserven su tamaño relativo.
-       El diseño no tiene marco móvil de esta sección. */
-    .reveal-title h2.reveal-title__mark { width: 72%; }
-    .reveal-title p.reveal-formula { font-size: clamp(11px, 3.2vw, 15px); }
+  /* La composición compacta no reduce el lienzo 16:9 de escritorio. Se
+     reconstruye dentro del alto visible para que título, anillo e ingredientes
+     sigan siendo legibles en vertical y en teléfonos girados. */
+  @media (max-width: 767px), (max-width: 1023px) and (max-height: 600px) {
+    .reveal-pin {
+      top: var(--header-height, 64px);
+      height: calc(100svh - var(--header-height, 64px));
+    }
+    .reveal-stage {
+      /* El máximo anterior correspondía exactamente a 390 px. En móviles más
+         anchos (iPhone Pro Max / Display Zoom) el círculo dejaba de crecer y
+         perdía casi diez puntos porcentuales de presencia. El nuevo techo
+         conserva la misma proporción hasta 430 px sin tocar los teléfonos que
+         ya resolvían correctamente por debajo de 390 px. */
+      --reveal-mobile-circle: clamp(190px, 70.256vw, 302px);
+      --reveal-mobile-half-circle: clamp(95px, 35.128vw, 151px);
+      --reveal-mobile-center-y: clamp(240px, 82.051vw, 320px);
+      /* Safari iOS descarta `calc(var(clamp()) + clamp())` en algunas
+         versiones. Estas posiciones ya vienen resueltas como un solo clamp:
+         conservan exactamente la geometría de 280–390 px sin depender de una
+         operación anidada que pueda devolver los ingredientes a sus filas de
+         escritorio. */
+      --reveal-mobile-row-above: clamp(215px, 73.077vw, 285px);
+      --reveal-mobile-row-upper: clamp(266px, 91.282vw, 356px);
+      --reveal-mobile-row-middle: clamp(310px, 106.923vw, 417px);
+      --reveal-mobile-row-lower: clamp(347px, 120.256vw, 469px);
+      --reveal-mobile-controls-y: clamp(348px, 120.769vw, 471px);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+      transform: none;
+    }
+    .reveal-title {
+      top: clamp(28px, 5svh, 40px);
+      padding-inline: 16px;
+      gap: clamp(12px, 5.128vw, 20px);
+    }
+    .reveal-title h2.reveal-title__mark {
+      display: flex;
+      width: auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .reveal-title h2.reveal-title__mark::before {
+      color: var(--reveal-gold);
+      font-family: var(--font-title, 'Poppins', system-ui, sans-serif);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 12px;
+      content: 'AYNI';
+    }
+    .reveal-logo {
+      width: auto;
+      height: clamp(31px, 10.513vw, 41px);
+    }
+    .reveal-title p.reveal-formula {
+      font-size: clamp(18px, 6.154vw, 24px);
+      line-height: 26px;
+    }
+
+    .reveal-media-circle,
+    .reveal-mobile-ring,
+    .reveal-product-wrap,
+    .reveal-halo {
+      left: 50%;
+      top: var(--reveal-mobile-center-y);
+    }
+    .reveal-media-circle {
+      width: var(--reveal-mobile-circle);
+    }
+    .reveal-product-wrap {
+      width: clamp(158px, 58.462vw, 251px);
+    }
+    .reveal-halo {
+      width: clamp(224px, 82.051vw, 353px);
+    }
+
+    /* El SVG de escritorio conserva intactas sus coordenadas. En compacto se
+       sustituye visualmente por un anillo local, alineado al recorte de fotos. */
+    .reveal-overlay { display: none; }
+    .reveal-mobile-ring {
+      position: absolute;
+      z-index: 3;
+      display: block;
+      width: var(--reveal-mobile-circle);
+      aspect-ratio: 1;
+      overflow: visible;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      pointer-events: none;
+    }
+    .reveal-mobile-ring__circle {
+      fill: none;
+      stroke: var(--reveal-gold);
+      stroke-width: .55;
+      stroke-linecap: round;
+      stroke-dasharray: 307.88 615.76;
+      stroke-dashoffset: 307.88;
+      opacity: 0;
+      filter: drop-shadow(0 0 1.5px rgba(249, 203, 105, .55));
+    }
+    .reveal-mobile-controls {
+      position: absolute;
+      z-index: 5;
+      top: var(--reveal-mobile-controls-y);
+      left: 50%;
+      display: flex;
+      width: 132px;
+      height: 44px;
+      align-items: center;
+      justify-content: space-between;
+      transform: translateX(-50%);
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s linear, visibility 0s linear .12s;
+    }
+    .reveal-mobile-controls a {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 50%;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reveal-mobile-controls a:focus-visible {
+      outline: 2px solid var(--reveal-gold);
+      outline-offset: 2px;
+    }
+    .reveal-mobile-controls img { display: block;flex: none; }
+    /* En reposo representa el producto actual y se mantiene encendido. Al
+       seleccionar un ingrediente pasa al mismo tono de los demás elementos
+       no seleccionados, sin dar la impresión de estar deshabilitado siempre. */
+    .reveal-mobile-controls__all img { opacity: 1; }
+    .reveal-track[data-active] .reveal-mobile-controls__all img { opacity: .25; }
+    .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown'])
+      .reveal-mobile-controls {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity .18s ease-out 1.45s, visibility 0s linear 1.45s;
+    }
+    .reveal-track[data-reveal-state='shown'] .reveal-mobile-controls {
+      pointer-events: auto;
+    }
+    .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown'])
+      .reveal-mobile-ring__circle {
+      stroke-dashoffset: 0;
+      opacity: 1;
+      transition: stroke-dashoffset .9s linear .7s, opacity .14s ease .7s;
+    }
+    .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden'])
+      .reveal-mobile-ring__circle {
+      stroke-dashoffset: 307.88;
+      opacity: 0;
+      transition: stroke-dashoffset .46s linear, opacity .12s ease .34s;
+    }
+
+    .reveal-label {
+      width: clamp(24px, 8.205vw, 35px);
+      height: clamp(24px, 8.205vw, 35px);
+      max-width: none;
+      margin-left: 0 !important;
+      min-height: 0;
+      place-items: center;
+      gap: 0;
+      transform: translateY(-50%);
+    }
+    .reveal-label.left,
+    .reveal-label.right { transform: translateY(-50%); }
+    .reveal-label.left[data-side-count='3'][data-row='0'],
+    .reveal-label.left[data-side-count='4'][data-row='1'] {
+      left: calc(50% - clamp(125px, 45.897vw, 197px)) !important;
+      top: var(--reveal-mobile-row-upper) !important;
+    }
+    .reveal-label.left[data-side-count='3'][data-row='1'],
+    .reveal-label.left[data-side-count='4'][data-row='2'] {
+      left: calc(50% - clamp(106px, 38.718vw, 166px)) !important;
+      top: var(--reveal-mobile-row-middle) !important;
+    }
+    .reveal-label.left[data-side-count='3'][data-row='2'],
+    .reveal-label.left[data-side-count='4'][data-row='3'] {
+      left: calc(50% - clamp(65px, 23.846vw, 103px)) !important;
+      top: var(--reveal-mobile-row-lower) !important;
+    }
+    .reveal-label.left[data-side-count='4'][data-row='0'] {
+      left: calc(50% - clamp(123px, 45.128vw, 194px)) !important;
+      top: var(--reveal-mobile-row-above) !important;
+    }
+    .reveal-label.right[data-row='0'] {
+      left: calc(50% + clamp(101px, 36.923vw, 159px)) !important;
+      top: var(--reveal-mobile-row-above) !important;
+    }
+    .reveal-label.right[data-row='1'] {
+      left: calc(50% + clamp(102px, 37.436vw, 161px)) !important;
+      top: var(--reveal-mobile-row-upper) !important;
+    }
+    .reveal-label.right[data-row='2'] {
+      left: calc(50% + clamp(82px, 30vw, 129px)) !important;
+      top: var(--reveal-mobile-row-middle) !important;
+    }
+    .reveal-label.right[data-row='3'] {
+      left: calc(50% + clamp(41px, 15.128vw, 65px)) !important;
+      top: var(--reveal-mobile-row-lower) !important;
+    }
+    .reveal-label .reveal-ico {
+      width: 100%;
+      height: 100%;
+    }
+    .reveal-label .reveal-txt { display: none; }
+    .reveal-mobile-txt { display: none; }
+    .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown']) .reveal-mobile-txt {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .16s linear 1.54s, transform .2s ease-out 1.54s;
+    }
+    .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-mobile-txt {
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .08s linear, transform .12s ease-in;
+    }
+
+    /* Las ramas nacen del borde del producto y avanzan rectas hacia el icono.
+       Su estado acompaña al anillo y a los elementos que controla Anime.js. */
+    .reveal-label::before {
+      display: none;
+    }
+    .reveal-label.left::before {
+      right: calc(var(--reveal-mobile-stem) * -1 + 10px);
+      transform-origin: right center;
+    }
+    .reveal-label.right::before {
+      left: calc(var(--reveal-mobile-stem) * -1 + 10px);
+      transform-origin: left center;
+    }
+    .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown']) .reveal-label::before {
+      opacity: 1;
+      transform: translateY(-50%) scaleX(1);
+      transition: transform .18s ease-out 1.45s, opacity .08s linear 1.45s;
+    }
+    .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-label::before {
+      opacity: 0;
+      transform: translateY(-50%) scaleX(0);
+      transition: transform .12s ease-in, opacity .08s linear .05s;
+    }
+
+    .reveal-phrase {
+      width: 84%;
+      font-size: clamp(13px, 4.5vw, 21px);
+    }
+  }
+
+  /* Esta variante es exclusivamente horizontal. Sin `orientation`, las barras
+     de Chrome/Safari podían reducir el viewport de un iPhone en vertical por
+     debajo de 600 px y activar por error el círculo compacto de 200 px. */
+  @media (max-width: 1023px) and (max-height: 600px) and (orientation: landscape) {
+    .reveal-stage {
+      --reveal-mobile-circle: clamp(140px, 46svh, 200px);
+      --reveal-mobile-half-circle: clamp(70px, 23svh, 100px);
+      --reveal-mobile-center-y: 58%;
+      width: min(100%, 620px);
+    }
+    .reveal-title { top: 8px; }
+    .reveal-title h2.reveal-title__mark { width: min(62%, 270px); }
+    .reveal-title p.reveal-formula { font-size: clamp(10px, 2.2vw, 13px); }
+    .reveal-media-circle,
+    .reveal-mobile-ring,
+    .reveal-product-wrap,
+    .reveal-halo { top: 58%; }
+    .reveal-product-wrap { width: clamp(118px, 38.64svh, 168px); }
+    .reveal-halo { width: clamp(165px, 53.66svh, 233px); }
+    .reveal-mobile-controls {
+      top: calc(58% + var(--reveal-mobile-half-circle) + 8px);
+      width: 80px;
+      transform: translate(-50%, -50%) scale(.82);
+    }
+    .reveal-label.left { left: calc(50% - var(--reveal-mobile-half-circle) - 24px) !important; }
+    .reveal-label.right { left: calc(50% + var(--reveal-mobile-half-circle) + 8px) !important; }
+    .reveal-track[data-row-count='4'] .reveal-label[data-row='0'] { top: 36% !important; }
+    .reveal-track[data-row-count='4'] .reveal-label[data-row='1'] { top: 50% !important; }
+    .reveal-track[data-row-count='4'] .reveal-label[data-row='2'] { top: 64% !important; }
+    .reveal-track[data-row-count='4'] .reveal-label[data-row='3'] { top: 78% !important; }
+    .reveal-track[data-row-count='3'] .reveal-label[data-row='0'] { top: 42% !important; }
+    .reveal-track[data-row-count='3'] .reveal-label[data-row='1'] { top: 58% !important; }
+    .reveal-track[data-row-count='3'] .reveal-label[data-row='2'] { top: 74% !important; }
+    .reveal-label { width:16px;height:16px;font-size:clamp(9px,1.45vw,11px); }
+    .reveal-label .reveal-ico { width: 16px; height: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-product-tilt {
+      transform: none !important;
+      transition: none;
+    }
+    .reveal-product { transition: none; }
+    .reveal-mobile-ring__circle,
+    .reveal-label::before,
+    .reveal-mobile-txt { transition: none !important; }
   }
 </style>

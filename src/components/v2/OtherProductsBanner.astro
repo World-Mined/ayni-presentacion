@@ -93,7 +93,15 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .other-products__gradient { height:60vw; }
     .other-products__content { gap:clamp(32px,10vw,56px);padding-top:clamp(24px,8vw,44px); }
     .other-products h2 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb; }
-    .other-products__packs { height:clamp(200px,52vw,300px); }
-    .other-products__pack { width:clamp(140px,42vw,240px); }
+    /* La fila conserva un mínimo de 200 px, pero las bolsas sí reducen su
+       tamaño por debajo de 340 px de viewport. Alinearlas al centro dejaba el
+       espacio sobrante debajo y parecía que flotaban; la base queda ahora
+       anclada a la tabla en todos los anchos. */
+    .other-products__packs {
+      height:clamp(200px,52vw,300px);
+      align-items:flex-end;
+      transform:translateY(clamp(14px,4vw,18px));
+    }
+    .other-products__pack { width:clamp(116px,42vw,240px); }
   }
 </style>

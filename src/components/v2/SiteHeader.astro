@@ -87,8 +87,9 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && trigger.getAttribute('aria-expanded') === 'true') closeMenu(true);
     });
-    window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
-      if (event.matches) closeMenu();
+    const compactHeader = window.matchMedia('(max-width: 767px), (max-width: 1023px) and (max-height: 600px)');
+    compactHeader.addEventListener('change', (event) => {
+      if (!event.matches) closeMenu();
     });
   }
 </script>
@@ -115,7 +116,7 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
   .site-nav>a:hover,.site-nav>a:focus-visible,.site-header__actions a:hover,.site-header__actions a:focus-visible { color:#f9cb69;transform:scale(var(--hover-scale,1.05)); }
   .site-nav__mobile-actions,.menu-trigger { display:none; }
 
-  @media(max-width:767px){
+  @media(max-width:767px),(max-width:1023px) and (max-height:600px){
     .site-header { height:64px; }
     .site-header__top-inner { grid-template-columns:44px 1fr 44px;padding:12px 16px; }
     .site-header__balance { display:block; }
@@ -137,7 +138,7 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     .site-nav__mobile-actions a { display:flex;min-height:48px;align-items:center;color:#b1a58d;font-size:14px;text-decoration:none; }
   }
 
-  @media(min-width:768px) and (max-width:1100px){
+  @media(min-width:768px) and (max-width:1100px) and (min-height:601px){
     .site-header__top-inner { padding-inline:32px; }
     .site-header__actions { gap:12px; }
     .site-header__actions a { font-size:13px; }

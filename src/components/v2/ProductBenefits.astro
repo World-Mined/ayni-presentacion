@@ -1,6 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import type { ProductDetail } from '../../data/products';
+import chevronLeft from '../../assets/v2/chevron-left.svg';
+import chevronRight from '../../assets/v2/chevron-right.svg';
 
 interface Props {
   subtitle: string;
@@ -22,25 +24,45 @@ const { subtitle, items, ctaHref, productName } = Astro.props;
       <p>{subtitle}</p>
     </div>
 
-    <ul class="benefits__cards">
-      {items.map((item) => (
-        <li class="benefits__card">
-          <Image
-            class="benefits__card-art"
-            src={item.image}
-            alt=""
-            widths={[225, 450]}
-            sizes="225px"
-            quality={72}
-            loading="lazy"
-          />
-          <div class="benefits__card-text">
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div class="benefits__carousel" data-benefits-carousel>
+      <ul class="benefits__cards" data-benefits-track>
+        {items.map((item) => (
+          <li class="benefits__card" data-benefits-card>
+            <Image
+              class="benefits__card-art"
+              src={item.image}
+              alt=""
+              widths={[225, 450]}
+              sizes="225px"
+              quality={72}
+              loading="lazy"
+            />
+            <div class="benefits__card-text">
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <button class="benefits__nav benefits__nav--prev" type="button" aria-label="Beneficio anterior" data-benefits-prev>
+        <Image src={chevronLeft} alt="" width={20} height={20} />
+      </button>
+      <button class="benefits__nav benefits__nav--next" type="button" aria-label="Siguiente beneficio" data-benefits-next>
+        <Image src={chevronRight} alt="" width={20} height={20} />
+      </button>
+
+      <div class="benefits__pagination" aria-label="Paginación de beneficios">
+        {items.map((item, index) => (
+          <button
+            type="button"
+            aria-label={`Mostrar ${item.title}`}
+            aria-current={index === 0 ? 'true' : undefined}
+            data-benefits-dot={index}
+          ></button>
+        ))}
+      </div>
+    </div>
 
     <a class="benefits__cta" href={ctaHref} target="_blank" rel="noopener">
       <span>Conoce más aquí</span>
@@ -49,6 +71,75 @@ const { subtitle, items, ctaHref, productName } = Astro.props;
     </a>
   </div>
 </section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-benefits-carousel]').forEach((carousel) => {
+    if (carousel.dataset.ready) return;
+    carousel.dataset.ready = 'true';
+
+    const track = carousel.querySelector<HTMLElement>('[data-benefits-track]');
+    const cards = [...carousel.querySelectorAll<HTMLElement>('[data-benefits-card]')];
+    const dots = [...carousel.querySelectorAll<HTMLButtonElement>('[data-benefits-dot]')];
+    const previous = carousel.querySelector<HTMLButtonElement>('[data-benefits-prev]');
+    const next = carousel.querySelector<HTMLButtonElement>('[data-benefits-next]');
+    if (!track || !cards.length || !previous || !next) return;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let activeIndex = -1;
+    let frame = 0;
+    let activationTimer = 0;
+
+    const setActive = (index: number) => {
+      const nextIndex = Math.max(0, Math.min(cards.length - 1, index));
+      if (nextIndex !== activeIndex) {
+        window.clearTimeout(activationTimer);
+        cards.forEach((card) => card.removeAttribute('data-active'));
+        activeIndex = nextIndex;
+
+        const revealActiveCard = () => cards[activeIndex]?.setAttribute('data-active', '');
+        if (reducedMotion.matches) revealActiveCard();
+        else activationTimer = window.setTimeout(revealActiveCard, 180);
+      }
+      dots.forEach((dot, dotIndex) => {
+        if (dotIndex === activeIndex) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+      previous.disabled = activeIndex === 0;
+      next.disabled = activeIndex === cards.length - 1;
+    };
+
+    const nearestIndex = () => {
+      const left = track.getBoundingClientRect().left;
+      return cards.reduce((best, card, index) => {
+        const distance = Math.abs(card.getBoundingClientRect().left - left);
+        return distance < best.distance ? { index, distance } : best;
+      }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
+    };
+
+    const sync = () => {
+      frame = 0;
+      setActive(nearestIndex());
+    };
+    const queueSync = () => {
+      if (!frame) frame = requestAnimationFrame(sync);
+    };
+    const goTo = (index: number) => {
+      const targetIndex = Math.max(0, Math.min(cards.length - 1, index));
+      const firstOffset = cards[0]?.offsetLeft ?? 0;
+      track.scrollTo({
+        left: (cards[targetIndex]?.offsetLeft ?? firstOffset) - firstOffset,
+        behavior: reducedMotion.matches ? 'auto' : 'smooth',
+      });
+    };
+
+    track.addEventListener('scroll', queueSync, { passive: true });
+    previous.addEventListener('click', () => goTo(activeIndex - 1));
+    next.addEventListener('click', () => goTo(activeIndex + 1));
+    dots.forEach((dot, index) => dot.addEventListener('click', () => goTo(index)));
+    new ResizeObserver(queueSync).observe(track);
+    setActive(0);
+  });
+</script>
 
 <style>
   /* Marco de Figma: 1440×744, padding 80, contenedor de 1166 y separaciones
@@ -65,6 +156,8 @@ const { subtitle, items, ctaHref, productName } = Astro.props;
   .benefits__head p { margin:0;color:#b1a58d;font-family:var(--font-title);font-size:clamp(16px,1.25vw,18px);font-weight:300;line-height:1.4444;text-wrap:balance; }
 
   .benefits__cards { position:relative;z-index:1;display:flex;width:100%;flex-wrap:wrap;justify-content:center;gap:24px;margin:0;padding:0;list-style:none; }
+  .benefits__carousel { display:contents; }
+  .benefits__nav,.benefits__pagination { display:none; }
   /* Las tarjetas son 225×340 en el diseño; mantienen la proporción al encoger
      para que el degradado inferior siga cubriendo el mismo tercio. */
   .benefits__card { position:relative;width:225px;max-width:calc(50% - 12px);aspect-ratio:225/340;overflow:hidden;border-radius:16px; }
@@ -92,7 +185,63 @@ const { subtitle, items, ctaHref, productName } = Astro.props;
   }
 
   @media (max-width:767px) {
-    .benefits__glow { height:60%; }
-    .benefits__card { width:calc(50% - 12px);max-width:225px; }
+    .benefits { padding:40px 16px; }
+    .benefits__inner { align-items:center;gap:48px; }
+    .benefits__glow { width:390px;height:340px; }
+    .benefits__head { gap:16px;padding-inline:0; }
+    .benefits__head h2 { font-size:clamp(30px,9.231vw,36px);line-height:44px; }
+    .benefits__head p { font-size:18px;line-height:26px; }
+    .benefits__carousel { position:relative;display:flex;width:min(100%,358px);flex-direction:column;align-items:center;gap:24px; }
+    .benefits__cards {
+      --benefits-edge-space:calc((100% - 225px) / 2);
+      height:340px;
+      flex-wrap:nowrap;
+      justify-content:flex-start;
+      gap:16px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      overscroll-behavior-inline:contain;
+      box-sizing:border-box;
+      padding:0 var(--benefits-edge-space);
+      scroll-padding-inline:var(--benefits-edge-space);
+      scroll-snap-type:x mandatory;
+      scrollbar-width:none;
+      -webkit-overflow-scrolling:touch;
+    }
+    .benefits__cards::-webkit-scrollbar { display:none; }
+    .benefits__card {
+      width:225px;
+      max-width:none;
+      flex:0 0 225px;
+      scroll-snap-align:start;
+      scroll-snap-stop:normal;
+    }
+    /* La tarjeta centrada replica el hover de escritorio. El atributo llega
+       180 ms después de seleccionarla para que primero se perciba la imagen
+       en reposo; la anterior vuelve a escala normal sin demora. */
+    .benefits__card[data-active] .benefits__card-art { transform:scale(1.05); }
+    .benefits__nav {
+      position:absolute;
+      z-index:3;
+      top:146px;
+      display:grid;
+      width:48px;
+      height:48px;
+      place-items:center;
+      padding:0;
+      border:1px solid #b1a58d;
+      border-radius:50%;
+      background:rgba(0,0,0,.5);
+      backdrop-filter:blur(5px);
+      cursor:pointer;
+    }
+    .benefits__nav :global(img) { display:block;width:20px;height:20px; }
+    .benefits__nav--prev { left:0; }
+    .benefits__nav--next { right:0; }
+    .benefits__nav:disabled { opacity:.42;cursor:default; }
+    .benefits__pagination { display:flex;height:12px;align-items:center;justify-content:center;gap:12px; }
+    .benefits__pagination button { width:12px;height:12px;padding:0;border:0;border-radius:50%;background:#4a4741;cursor:pointer; }
+    .benefits__pagination button[aria-current='true'] { background:#b1a58d; }
+    .benefits__cta { align-self:center; }
   }
 </style>

@@ -26,5 +26,5 @@ html[data-layout='website'] section[id] { scroll-margin-top:var(--header-height)
 
 .v2-page { overflow:clip;background:var(--black); }
 
-@media (max-width:767px) { :root { --header-height:64px; } }
+@media (max-width:767px), (max-width:1023px) and (max-height:600px) { :root { --header-height:64px; } }
 @media (prefers-reduced-motion:reduce) { html[data-layout='website'] { scroll-behavior:auto; } *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important; } }

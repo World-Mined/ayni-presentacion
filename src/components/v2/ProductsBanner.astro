@@ -171,8 +171,14 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     /* Las bolsas ocupan casi todo el ancho del marco, así que la fila se sale
        del padding lateral del banner en vez de quedarse dentro. El `min` es el
        mismo tope de 480px+padding: en móviles anchos deja de crecer y el
-       `margin-inline:auto` la recentra sin perder el desbordamiento. */
-    .products-banner__packs { width:min(calc(100% + 40px),520px);margin-inline:auto; }
+       `align-self:center` la recentra sin perder el desbordamiento.
+       `margin-inline:auto` no centra un flex-item que desborda a su padre:
+       cuando la fila mide el viewport completo pero el contenido conserva
+       20px de padding, los márgenes automáticos colapsan a cero y la fila
+       queda apoyada en el borde izquierdo interior (20px a la derecha del
+       centro real). `align-self:center` mantiene el desborde simétrico y
+       también centra la fila cuando alcanza su tope de 520px. */
+    .products-banner__packs { width:min(calc(100% + 40px),520px);margin-inline:0;align-self:center; }
     /* El paso (116) es menor que el arte (121.8): en vertical las bolsas sí se
        solapan, y por eso el `inset` del arte es negativo. Las zonas siguen
        siendo contiguas, aunque aquí no haya hover que dependa de ellas. */
