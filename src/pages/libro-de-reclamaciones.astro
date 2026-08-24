@@ -1,0 +1,27 @@
+---
+import ComplaintsBook from '../components/v2/ComplaintsBook.astro';
+import HomeFooter from '../components/v2/HomeFooter.astro';
+import SiteHeader from '../components/v2/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import '../styles/v2.css';
+---
+
+<Layout
+  variant="website"
+  title="Libro de reclamaciones — AYNI"
+  description="Registra un reclamo o una queja sobre los productos y servicios de AYNI a través del libro de reclamaciones virtual."
+>
+  <SiteHeader active="legal" />
+  <main class="v2-page">
+    <h1 class="claims-title">Libro de reclamaciones</h1>
+    <ComplaintsBook />
+  </main>
+  <HomeFooter />
+</Layout>
+
+<style>
+  /* El diseño no rotula la página: el encabezado del formulario hace de título.
+     Se mantiene un h1 accesible fuera de pantalla para no dejar la página sin
+     encabezado de primer nivel. */
+  .claims-title { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+</style>

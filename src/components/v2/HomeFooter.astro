@@ -9,6 +9,7 @@ import socialFacebook from '../../assets/v2/social-facebook.svg';
 import socialInstagram from '../../assets/v2/social-instagram.svg';
 import socialLinkedin from '../../assets/v2/social-linkedin.svg';
 import socialYoutube from '../../assets/v2/social-youtube.svg';
+import { LEGAL_DOCUMENTS, legalHref } from '../../data/legal';
 import { ROUTES, SECTION_IDS } from '../../data/v2';
 ---
 
@@ -32,17 +33,27 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
       <section class="home-footer__item home-footer__legal">
         <h2>Legal</h2>
         <div class="home-footer__list">
-          <span>Términos y condiciones del servicio de AYNI</span>
-          <span>Políticas de reembolso</span>
-          <span>Políticas de tratamiento de datos personales</span>
-          <span>Políticas de cookies</span>
-          <span>Código de ética y buenas prácticas comerciales</span>
+          {LEGAL_DOCUMENTS.map((document) => (
+            <a href={legalHref(document.slug)}>{document.navLabel}</a>
+          ))}
         </div>
       </section>
     </div>
     <section class="home-footer__item home-footer__claims">
       <h2>Libro de reclamaciones</h2>
-      <img class="home-footer__book" src={footerLibro.src} width="50" height="20" alt="" />
+      <!-- El icono va como máscara y no como `<img>` para poder teñirlo: el PNG
+           es blanco puro sobre transparente, así que la máscara lo reproduce
+           igual y además admite cualquier color. No se pierde nada accesible:
+           la imagen era decorativa (`alt=""`) y quien nombra el enlace es su
+           `aria-label`. -->
+      <a
+        class="home-footer__book-link"
+        href={ROUTES.complaints}
+        aria-label="Libro de reclamaciones"
+        style={`--book-icon:url(${footerLibro.src})`}
+      >
+        <span class="home-footer__book" aria-hidden="true"></span>
+      </a>
       <span>FAQ'S</span>
       <img class="home-footer__seal" src={footerIso9001.src} width="88" height="96" alt="Certificación ISO 9001" />
     </section>
@@ -140,16 +151,85 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
     text-decoration: none;
   }
 
+  /* El mismo dorado que usa el header al pasar por encima, para que el sitio
+     responda igual arriba y abajo. La regla apunta solo a `a` y no al selector
+     de arriba: el estilo base lo comparten con los `span` —"FAQ'S"—, que no
+     llevan a ningún sitio y encenderlos prometería un enlace que no existe.
+     `:focus-visible` acompaña al hover para que con teclado se vea lo mismo. */
+  .home-footer a {
+    transition: color .18s ease;
+  }
+
+  .home-footer a:hover,
+  .home-footer a:focus-visible {
+    color: #f9cb69;
+  }
+
+  /* Los enlaces de texto crecen igual que el icono del libro. Va acotado a los
+     de las listas y no a `.home-footer a` para no alcanzar al enlace del icono:
+     ese ya escala su `span` interno, así que heredar esto lo multiplicaría por
+     sí mismo. El origen a la izquierda mantiene fija la columna. */
+  .home-footer__list a {
+    transition:
+      color .18s ease,
+      transform .34s cubic-bezier(.22, .61, .36, 1);
+  }
+
+  .home-footer__list a:hover,
+  .home-footer__list a:focus-visible {
+    transform: scale(var(--hover-scale, 1.05));
+    transform-origin: left center;
+  }
+
+  .home-footer__book-link {
+    line-height: 0;
+  }
+
   .home-footer__book,
   .home-footer__seal {
     display: block;
     flex: none;
+  }
+
+  .home-footer__seal {
     object-fit: fill;
   }
 
+  /* Base: el icono pintado como imagen de fondo, idéntico a como se veía. Si el
+     navegador no soporta máscaras se queda exactamente así —crece, pero no se
+     tiñe— en vez de arriesgar un rectángulo sólido.
+     La curva del escalado es la misma que el hover de las bolsas en
+     `ProductsBanner`, que es el gesto de "crecer" que ya usa el sitio. */
   .home-footer__book {
     width: 50px;
     height: 20px;
+    background: var(--book-icon) no-repeat center / contain;
+    transition:
+      transform .34s cubic-bezier(.22, .61, .36, 1),
+      background-color .18s ease;
+  }
+
+  /* El origen a la izquierda lo deja anclado al borde de la columna, alineado
+     con el título de encima, en vez de desplazarse hacia fuera al escalar. */
+  .home-footer__book-link:hover .home-footer__book,
+  .home-footer__book-link:focus-visible .home-footer__book {
+    transform: scale(var(--hover-scale, 1.05));
+    transform-origin: left center;
+  }
+
+  @supports (mask-image: url('')) or (-webkit-mask-image: url('')) {
+    /* Con máscara el color lo pone el fondo, así que el icono puede teñirse del
+       mismo dorado que los enlaces de texto. */
+    .home-footer__book {
+      background: #fff;
+      -webkit-mask: var(--book-icon) no-repeat center / contain;
+      mask: var(--book-icon) no-repeat center / contain;
+    }
+
+    .home-footer__book-link:hover .home-footer__book,
+    .home-footer__book-link:focus-visible .home-footer__book {
+      background-color: #f9cb69;
+    }
   }
 
   .home-footer__seal {
@@ -187,6 +267,15 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
   }
 
   @media (max-width: 767px) {
+    /* En vertical los enlaces largos ya ocupan el ancho de la columna y van a
+       dos líneas: al escalar se saldrían unos 30 px —el `transform` no reflota—
+       y el hueco de 8 px entre ellos se quedaría en 2. Aquí solo cambia el
+       color. El icono del libro sí sigue creciendo: es pequeño y le sobra sitio. */
+    .home-footer__list a:hover,
+    .home-footer__list a:focus-visible {
+      transform: none;
+    }
+
     .home-footer {
       display: flex;
       min-height: 936px;
