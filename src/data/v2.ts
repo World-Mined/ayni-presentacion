@@ -1,6 +1,4 @@
-import capucci from '../assets/v2/products-capucci-shadow.webp';
-import moravi from '../assets/v2/products-moravi-shadow.webp';
-import reset from '../assets/v2/products-reset-shadow.webp';
+import { PRODUCT_DETAILS, productHref } from './products';
 
 export const SECTION_IDS = {
   home: 'inicio',
@@ -21,16 +19,18 @@ export const ROUTES = {
   products: '/productos',
   pickup: '/puntos-de-recojo',
   ambassadors: '/embajadores',
+  complaints: '/libro-de-reclamaciones',
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
-// La línea de producto la pintan dos composiciones distintas —la banda de la
-// home y el banner de /productos— con maquetación propia cada una. Lo que
-// comparten es el dato: si entra un cuarto producto o cambia un nombre, se
-// toca solo aquí.
-export const PRODUCT_LINE = [
-  { src: moravi, alt: 'Moravi 360' },
-  { src: capucci, alt: 'Capucci 360' },
-  { src: reset, alt: 'Reset 360' },
-] as const;
+// La línea de producto la pintan tres composiciones distintas —la banda de la
+// home, el banner de /productos y el de "Otros Productos" de cada ficha—, con
+// maquetación propia cada una. El dato vive en `products.ts`, que es donde está
+// la ficha completa de cada producto; aquí queda solo la proyección que
+// necesitan las composiciones: bolsa, nombre y enlace a su página.
+export const PRODUCT_LINE = PRODUCT_DETAILS.map((product) => ({
+  src: product.pack,
+  alt: product.name,
+  href: productHref(product.slug),
+}));

@@ -1,29 +1,98 @@
 ---
+import { Image } from 'astro:assets';
+import type { IngredientsScene } from '../../data/product-ingredients';
+import { DEFAULT_GEOMETRY } from '../../lib/reveal/defaults';
 import { PRODUCTS } from '../../lib/reveal/products';
 import type { ProductId } from '../../lib/reveal/products';
 
 interface Props {
   /** id del producto registrado en lib/reveal/products/index.ts */
   product: ProductId;
+  /** Fotos y frases que ocupan el mismo círculo al interactuar. */
+  scene?: IngredientsScene;
 }
 
-const { product } = Astro.props;
+const { product, scene } = Astro.props;
 const cfg = PRODUCTS[product];
 if (!cfg) {
   throw new Error(
     `<ProductReveal>: producto desconocido "${product}". Regístralo en src/lib/reveal/products/index.ts`,
   );
 }
+const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
+const circleStyle = [
+  `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
+  `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
+  `--reveal-circle-size:${((geometry.ringRadius * 2) / 1920) * 100}%`,
+].join(';');
+
+// El wordmark se dimensiona en dos pasos, igual que en Figma: el `h2` hace de
+// cabecera y mide 521/1440 del ancho de sección, y dentro el logotipo ocupa
+// `anchoDelSVG / 521`. Se saca del propio asset en vez de un dato aparte porque
+// así no hay nada que mantener sincronizado: si cambia el SVG, cambia el ancho.
+const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` : undefined;
+// Los atributos width/height de HTML solo admiten enteros y estos SVG miden
+// 370.999×56.0007: sin redondear, el navegador descarta la dimensión, se pierde
+// la relación de aspecto implícita y el bloque salta de alto mientras carga.
+const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
+const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
 ---
 
-<div class="reveal-track" data-reveal={product}>
+<div
+  class="reveal-track"
+  data-reveal={product}
+  style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
+>
   <div class="reveal-pin">
     <div class="reveal-stage" aria-label={`Animación de ${cfg.title.main}`}>
-      <div class="reveal-title">
-        <h2>{cfg.title.main}</h2>
-        <p>{cfg.title.sub}</p>
-      </div>
+      {scene ? (
+        <div class="reveal-title" style={logoStyle}>
+          <h2 class="reveal-title__mark">
+            <img
+              class="reveal-logo"
+              src={scene.logo.src}
+              width={logoWidth}
+              height={logoHeight}
+              alt={scene.logoAlt}
+              decoding="async"
+            />
+          </h2>
+          <p class="reveal-formula">{scene.formula.lead} <strong>{scene.formula.strong}</strong></p>
+        </div>
+      ) : (
+        /* Sin escena no hay logotipo que pintar: queda el título de texto, que
+           es la ruta que usa `reveal-demo.astro`. */
+        <div class="reveal-title">
+          <h2>{cfg.title.main}</h2>
+          <p>{cfg.title.sub}</p>
+        </div>
+      )}
       <div class="reveal-halo"></div>
+      {scene && (
+        <div class="reveal-media-circle" style={circleStyle} aria-live="polite">
+          {scene.items.map((item) => (
+            <Image
+              class="reveal-media"
+              data-media={item.id}
+              src={item.photo}
+              alt=""
+              widths={[550, 700]}
+              sizes="38vw"
+              quality={78}
+              loading="lazy"
+            />
+          ))}
+          {scene.items.map((item) => (
+            <p
+              class="reveal-phrase"
+              id={`reveal-phrase-${product}-${item.id}`}
+              data-phrase={item.id}
+            >
+              {item.phrase}
+            </p>
+          ))}
+        </div>
+      )}
       <div class="reveal-product-wrap">
         <img
           class="reveal-product"
@@ -31,7 +100,8 @@ if (!cfg) {
           alt={cfg.title.main}
           width="700"
           height="700"
-          loading="lazy"
+          loading="eager"
+          fetchpriority="high"
           decoding="async"
         />
       </div>
@@ -40,11 +110,91 @@ if (!cfg) {
   </div>
 </div>
 
+<noscript>
+  <style is:global>
+    .reveal-product { opacity: 1 !important; }
+    /* La opacidad del título la levanta la timeline. Sin JS eso dejaba oculto el
+       logotipo de marca, que es justo lo que nombra la sección. */
+    .reveal-title { opacity: 1 !important; }
+  </style>
+</noscript>
+
 <script>
   import { createReveal } from '../../lib/reveal/engine';
   import { PRODUCTS } from '../../lib/reveal/products';
 
   const cleanups = new Map<HTMLElement, () => void>();
+  const bindIngredientInteraction = (root: HTMLElement) => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const items = root.querySelectorAll<HTMLButtonElement>('[data-item]');
+    const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
+    const circle = root.querySelector<HTMLElement>('.reveal-media-circle');
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    if (!circle || !layers.length) return () => controller.abort();
+
+    const activate = (id: string | null) => {
+      // Los botones siguen en el DOM mientras Anime.js los desvanece. Sin
+      // esta compuerta el navegador puede lanzar otro pointerenter sobre un
+      // botón ya invisible y volver a encender su foto durante el reverso.
+      if (id && root.dataset.revealState !== 'shown') return;
+      if (id) root.dataset.active = id;
+      else delete root.dataset.active;
+
+      items.forEach((item) => {
+        const selected = item.dataset.item === id;
+        item.setAttribute('aria-pressed', String(selected));
+        item.toggleAttribute('data-selected', selected);
+      });
+      layers.forEach((layer) => {
+        const selected = layer.dataset.media === id || layer.dataset.phrase === id;
+        layer.toggleAttribute('data-selected', selected);
+      });
+    };
+
+    const isNearInteraction = (x: number, y: number) => {
+      const elements = [circle, ...items];
+      const rects = elements
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (!rects.length) return false;
+
+      const padding = Math.min(64, Math.max(24, circle.getBoundingClientRect().width * 0.08));
+      const left = Math.min(...rects.map((rect) => rect.left)) - padding;
+      const right = Math.max(...rects.map((rect) => rect.right)) + padding;
+      const top = Math.min(...rects.map((rect) => rect.top)) - padding;
+      const bottom = Math.max(...rects.map((rect) => rect.bottom)) + padding;
+      return x >= left && x <= right && y >= top && y <= bottom;
+    };
+
+    items.forEach((item) => {
+      const id = item.dataset.item!;
+      item.addEventListener('pointerenter', () => {
+        if (hoverCapable.matches) activate(id);
+      }, options);
+      item.addEventListener('focus', () => activate(id), options);
+      item.addEventListener('click', () => {
+        if (!hoverCapable.matches) activate(root.dataset.active === id ? null : id);
+      }, options);
+    });
+
+    window.addEventListener('pointermove', (event) => {
+      if (hoverCapable.matches && root.dataset.active && !isNearInteraction(event.clientX, event.clientY)) {
+        activate(null);
+      }
+    }, options);
+    window.addEventListener('blur', () => activate(null), options);
+    root.addEventListener('reveal:hide', () => activate(null), options);
+    root.addEventListener('focusout', (event) => {
+      if (!root.contains(event.relatedTarget as Node | null)) activate(null);
+    }, options);
+
+    return () => {
+      activate(null);
+      controller.abort();
+    };
+  };
+
   const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -53,7 +203,12 @@ if (!cfg) {
       const product = el.dataset.reveal as keyof typeof PRODUCTS;
       const cfg = PRODUCTS[product];
       if (!cfg) return;
-      cleanups.set(el, createReveal(el, cfg));
+      const cleanupReveal = createReveal(el, cfg);
+      const cleanupInteraction = bindIngredientInteraction(el);
+      cleanups.set(el, () => {
+        cleanupInteraction();
+        cleanupReveal();
+      });
       observer.unobserve(el);
     });
   }, { rootMargin: '85% 0px 85%' });
@@ -91,21 +246,56 @@ if (!cfg) {
     background: radial-gradient(120% 90% at 50% 42%, #14110b 0%, #0a0805 48%, #000 100%);
   }
 
+  /* La textura del mandala que el diseño pone detrás de la animación. Va como
+     capa aparte y no en el `background` de arriba para que el degradado siga
+     mandando en el centro, donde se apoya el producto. */
+  .reveal-track[style*='--reveal-bg'] .reveal-pin::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    background-image: var(--reveal-bg);
+    background-position: center;
+    background-size: cover;
+    content: '';
+    pointer-events: none;
+  }
+  .reveal-track[style*='--reveal-bg'] .reveal-stage { z-index: 1; }
+
   .reveal-stage {
     position: relative;
     width: min(94vw, 1120px);
     aspect-ratio: 1920 / 1080;
   }
 
+  /* En desktop el header ocupa la franja superior del viewport. Este pequeño
+     desplazamiento centra ópticamente la composición en el espacio visible
+     restante, sin alterar la geometría interna ni el disparo del sticky. */
+  @media (min-width: 768px) {
+    .reveal-stage { transform: translateY(clamp(52px, 8vh, 72px)); }
+  }
+
+  /* Se centra con `left/right` + flex y NO con `translateX(-50%)`: la timeline
+     anima `scale` sobre este mismo nodo (engine.ts, `tl.add(titleblock, …)`) y
+     cualquier transform propio lo pisaría anime.js en el primer fotograma. */
   .reveal-title {
     position: absolute;
     z-index: 5;
     top: 3%;
     left: 0;
     right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Los 12 px de separación del diseño sobre el lienzo de 1440. En % no vale:
+       el `row-gap` porcentual de un flex column de alto automático resuelve
+       contra cero. */
+    gap: clamp(4px, 0.78vw, 9px);
     text-align: center;
     opacity: 0;
   }
+
+  /* Título de texto: solo queda como respaldo cuando el componente se usa sin
+     escena, que hoy es únicamente `reveal-demo.astro`. */
   .reveal-title h2 {
     margin: 0;
     color: var(--reveal-gold);
@@ -120,25 +310,59 @@ if (!cfg) {
     font-size: clamp(12px, 1.4vw, 18px);
   }
 
+  /* El h2 hace de cabecera del diseño (521/1440 del ancho de sección) y dentro
+     el logotipo ocupa lo suyo, así cada producto conserva su tamaño relativo.
+     Los selectores repiten `h2`/`p` a propósito: con la clase suelta perderían
+     contra `.reveal-title h2`, y el logotipo heredaría `font-size: 48px`. */
+  .reveal-title h2.reveal-title__mark {
+    display: block;
+    width: 36.18%;
+    margin: 0;
+    line-height: 0;
+  }
+  /* Nunca fijar también el alto: estos SVG llevan `preserveAspectRatio="none"`
+     y se estirarían sin avisar. */
+  .reveal-logo {
+    display: block;
+    width: var(--reveal-logo-w);
+    height: auto;
+    margin-inline: auto;
+  }
+
+  /* Poppins Light + SemiBold para el número, como el nodo de Figma. El fallback
+     literal de la familia hace falta porque `reveal-demo.astro` no carga v2.css
+     y allí `--font-title` no existe. */
+  .reveal-title p.reveal-formula {
+    margin: 0;
+    color: #c4bba8;
+    font-family: var(--font-title, 'Poppins', system-ui, sans-serif);
+    font-size: clamp(12px, 1.57vw, 19px);
+    font-weight: 300;
+    line-height: 1.0834;
+  }
+  .reveal-title p.reveal-formula strong { font-weight: 600; }
+
   .reveal-product-wrap {
     position: absolute;
     z-index: 2;
     left: 50%;
     top: 55%;
-    width: 26%;
+    width: 32%;
     transform: translate(-50%, -50%);
+    transition: opacity .32s ease;
   }
   .reveal-product {
     display: block;
     width: 100%;
     height: auto;
     filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
-    opacity: 1;
+    /* El primer frame debe nacer en el mismo estado inicial de la timeline.
+       Si llega visible y JS lo oculta después, aparece un flash antes del popup. */
+    opacity: 0;
+    will-change: transform, opacity;
     user-select: none;
     -webkit-user-drag: none;
   }
-
-  .reveal-initialized .reveal-product { opacity: 0; }
 
   .reveal-halo {
     position: absolute;
@@ -152,6 +376,66 @@ if (!cfg) {
     opacity: 0;
     background: radial-gradient(circle, rgba(249, 203, 105, 0.22) 0%, rgba(249, 203, 105, 0) 66%);
   }
+
+  /* Las fotos del hover ocupan exactamente el interior del anillo que dibuja
+     la animación. No existe un segundo círculo ni una segunda composición. */
+  .reveal-media-circle {
+    position: absolute;
+    z-index: 2;
+    left: var(--reveal-circle-x);
+    top: var(--reveal-circle-y);
+    width: var(--reveal-circle-size);
+    aspect-ratio: 1;
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    isolation: isolate;
+    pointer-events: none;
+  }
+  .reveal-media {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity .32s ease;
+    /* Las fotos de Figma vienen con su propio filete dorado horneado en el
+       borde —3 px de 700, el 0.43% del ancho—. Sin recortarlo se sumaba al
+       anillo que dibuja la animación y el borde engordaba justo al entrar el
+       hover, que es lo que hacía parecer que aparecía un segundo círculo.
+       Este escalado mínimo lo empuja fuera del recorte y deja un solo anillo:
+       el de la animación, que nunca se mueve. */
+    transform: scale(1.012);
+  }
+  .reveal-phrase {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    width: 82%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-family: var(--font-title);
+    font-size: clamp(15px, 2.5vw, 36px);
+    font-weight: 700;
+    line-height: 1.22;
+    text-align: center;
+    text-wrap: balance;
+    opacity: 0;
+    transition: opacity .32s ease;
+    pointer-events: none;
+  }
+  [data-media][data-selected],
+  [data-phrase][data-selected] { opacity: 1; }
+  .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-media,
+  .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-phrase {
+    opacity: 0 !important;
+    transition: none;
+  }
+  .reveal-track[data-active] .reveal-product-wrap { opacity: 0; }
 
   .reveal-overlay {
     position: absolute;
@@ -167,14 +451,18 @@ if (!cfg) {
     stroke: var(--reveal-gold);
     stroke-linecap: round;
   }
+  /* En reposo el anillo y las ramas quedan con el `stroke-dashoffset` igual a su
+     longitud, o sea con el trazo visible a cero. Pero `stroke-linecap: round`
+     sigue pintando el remate: un punto por cada rama y otro en el arranque del
+     anillo que además arrastra su `drop-shadow`. Eso era la mancha que quedaba
+     al desaparecer. Se apagan solo en el estado oculto —el inicial y el de
+     después del reverso—, así que la animación no se entera. */
+  .reveal-track[data-reveal-state='hidden'] .reveal-ring,
+  .reveal-track[data-reveal-state='hidden'] .reveal-stem {
+    visibility: hidden;
+  }
   .reveal-ring {
     filter: drop-shadow(0 0 5px rgba(249, 203, 105, 0.45));
-  }
-  .reveal-node {
-    fill: var(--reveal-gold);
-    filter: drop-shadow(0 0 4px rgba(249, 203, 105, 0.6));
-    transform-box: fill-box;
-    transform-origin: center;
   }
 
   .reveal-label {
@@ -191,6 +479,12 @@ if (!cfg) {
     font-size: clamp(13px, 1.6vw, 22px);
     transform: translateY(-50%);
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    margin-block: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+    pointer-events: none;
   }
   .reveal-label.left {
     flex-direction: row-reverse;
@@ -208,6 +502,17 @@ if (!cfg) {
     opacity: 0;
     will-change: transform, opacity;
   }
+  .reveal-label:focus-visible {
+    outline: 2px solid var(--reveal-gold);
+    outline-offset: 7px;
+    border-radius: 3px;
+  }
+  .reveal-track[data-reveal-state='shown'] .reveal-label:not(:disabled) {
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .reveal-track[data-active] .reveal-label { opacity: .25; }
+  .reveal-track[data-active] .reveal-label[data-selected] { opacity: 1; }
 
   @media (max-width: 767px) {
     .reveal-pin { top: var(--header-height, 72px); height: calc(100svh - var(--header-height, 72px)); }
@@ -216,5 +521,11 @@ if (!cfg) {
     .reveal-label { gap: 5px; font-size: clamp(9px, 2.7vw, 12px); }
     .reveal-label .reveal-ico { width: 1.1em; height: 1.1em; }
     .reveal-title { top: 10%; }
+    /* En vertical el escenario ocupa casi todo el ancho y la cabecera
+       proporcional dejaría el wordmark en ~95 px. Se ensancha la cabecera, no el
+       logotipo, para que los tres productos conserven su tamaño relativo.
+       El diseño no tiene marco móvil de esta sección. */
+    .reveal-title h2.reveal-title__mark { width: 72%; }
+    .reveal-title p.reveal-formula { font-size: clamp(11px, 3.2vw, 15px); }
   }
 </style>

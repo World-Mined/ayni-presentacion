@@ -43,8 +43,8 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
          no las lea como tres ilustraciones sueltas sin relación. -->
     <div class="products-banner__packs" role="group" aria-label="Línea AYNI 360">
       {PRODUCT_LINE.map((product) => (
-        <div class="products-banner__pack">
-          <div class="products-banner__pack-art">
+        <a class="products-banner__pack" href={product.href}>
+          <span class="products-banner__pack-art">
             <Image
               src={product.src}
               alt={product.alt}
@@ -52,8 +52,8 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
               widths={[260, 460, 920]}
               sizes="(max-width: 767px) 43vw, min(35.6vw, 456px)"
             />
-          </div>
-        </div>
+          </span>
+        </a>
       ))}
     </div>
   </div>
@@ -111,14 +111,14 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
      transparente. Al recortarla a eso, su borde inferior ES la base de la
      bolsa y el asiento sobre la mesa se controla directo. Esta es la que
      escala. */
-  .products-banner__pack { position:relative;z-index:1;width:22.813%;aspect-ratio:292/396.2; }
+  .products-banner__pack { position:relative;z-index:1;display:block;width:22.813%;aspect-ratio:292/396.2; }
   /* `pointer-events:none` es la otra mitad del arreglo. El PNG mide 456px y
      sobresale 88px por cada lado de la caja del arte —todo transparente—,
      pero el hit-testing no mira el alfa: esos 88px capturaban el ratón igual.
      Las imágenes de bolsas contiguas se solapaban 164px, así que la frontera
      real caía donde empezaba el PNG vecino y no en el punto medio. Dejando
      solo `__pack` como diana, el relevo es exacto y no depende del z-index. */
-  .products-banner__pack-art { position:absolute;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
+  .products-banner__pack-art { position:absolute;display:block;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
   /* `left` sí resuelve el porcentaje contra el ancho, pero `top` lo haría
      contra el alto de la caja —que aquí es 1.42× el ancho— y dejaba la bolsa
      14px más arriba de la cuenta, flotando sobre la mesa. Anclar por `bottom`

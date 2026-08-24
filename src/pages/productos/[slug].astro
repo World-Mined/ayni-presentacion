@@ -1,0 +1,45 @@
+---
+import ProductReveal from '../../components/reveal/ProductReveal.astro';
+import HomeFooter from '../../components/v2/HomeFooter.astro';
+import OtherProductsBanner from '../../components/v2/OtherProductsBanner.astro';
+import ProductBenefits from '../../components/v2/ProductBenefits.astro';
+import ProductHero from '../../components/v2/ProductHero.astro';
+import SiteHeader from '../../components/v2/SiteHeader.astro';
+import { PRODUCT_INGREDIENTS } from '../../data/product-ingredients';
+import { PRODUCT_DETAILS, otherProducts } from '../../data/products';
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/v2.css';
+
+export function getStaticPaths() {
+  return PRODUCT_DETAILS.map((product) => ({
+    params: { slug: product.slug },
+    props: { product },
+  }));
+}
+
+const { product } = Astro.props;
+// Las tres escenas comparten el mismo componente interactivo; imágenes,
+// frases, iconos y coordenadas se resuelven desde el registro por producto.
+const ingredients = PRODUCT_INGREDIENTS[product.revealId];
+---
+
+<Layout variant="website" title={`${product.name} — AYNI`} description={product.description}>
+  <SiteHeader active="products" />
+  <main class="v2-page">
+    <ProductHero
+      lead={product.hero.lead}
+      highlight={product.hero.highlight}
+      background={product.hero.background}
+      alt={`Ingredientes de ${product.name} sobre una mesa de madera`}
+    />
+    <ProductReveal product={product.revealId} scene={ingredients} />
+    <ProductBenefits
+      subtitle={product.benefits.subtitle}
+      items={product.benefits.items}
+      ctaHref={product.benefits.ctaHref}
+      productName={product.name}
+    />
+    <OtherProductsBanner products={otherProducts(product.slug)} />
+  </main>
+  <HomeFooter />
+</Layout>

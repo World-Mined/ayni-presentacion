@@ -9,6 +9,11 @@ import {
 } from './defaults';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
+/** Fracción del anillo durante la que su trazo termina de aparecer. Con el 5% el
+ *  arco ya mide más de cien píxeles cuando alcanza opacidad plena, así que nace
+ *  como arco y no como punto; y son unos 50 ms, demasiado poco para leerse como
+ *  un fundido. */
+const RING_FADE_IN = 0.05;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
@@ -19,6 +24,7 @@ function resolve(config: RevealConfig): ResolvedConfig {
     title: config.title,
     frames: { ...DEFAULT_FRAMES, ...config.frames },
     labels: config.labels,
+    background: config.background,
     timing: { ...DEFAULT_TIMING, ...config.timing },
     geometry: { ...DEFAULT_GEOMETRY, ...config.geometry },
     scroll: { ...DEFAULT_SCROLL, ...config.scroll },
@@ -44,16 +50,49 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
 
   root.style.height = `${C.scroll.trackVH}vh`;
   root.classList.add('reveal-initialized');
+  root.dataset.revealState = 'hidden';
+  root.dataset.framesReady = 'false';
 
   const frameSrc = (i: number) =>
     `${C.frames.dir}/${C.frames.prefix}${String(i + 1).padStart(C.frames.pad, '0')}.${C.frames.ext}`;
 
-  // Precarga de frames
-  for (let i = 0; i < C.frames.count; i++) {
+  // Conservamos las referencias de precarga durante toda la animación. El
+  // frame visible solo cambia cuando el siguiente bitmap ya está listo, para
+  // evitar un destello transparente si el usuario llega muy rápido al reveal.
+  const preloadedFrames = Array.from({ length: C.frames.count }, (_, i) => {
     const im = new Image();
+    im.decoding = 'async';
     im.src = frameSrc(i);
-  }
+    return im;
+  });
   productImg.src = frameSrc(0);
+
+  // En una visita sin caché, `complete` puede cambiar entre dos ticks mientras
+  // Anime.js ya está recorriendo los frames. Eso hacía que la secuencia saltara
+  // algunos bitmaps y produjera el flicker que solo se veía la primera vez.
+  // Esperamos tanto la descarga como la decodificación antes de permitir el
+  // play; un archivo fallido no bloquea para siempre el reveal.
+  let framesReady = false;
+  let disposed = false;
+  let refreshAfterFramesReady = () => {};
+  const waitUntilDecoded = async (image: HTMLImageElement) => {
+    try {
+      await image.decode();
+    } catch {
+      if (!image.complete) {
+        await new Promise<void>((resolve) => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+        });
+      }
+    }
+  };
+  void Promise.all([productImg, ...preloadedFrames].map(waitUntilDecoded)).then(() => {
+    if (disposed) return;
+    framesReady = true;
+    root.dataset.framesReady = 'true';
+    refreshAfterFramesReady();
+  });
 
   // ── Círculo (anillo) ──
   const ring = document.createElementNS(SVGNS, 'circle');
@@ -62,21 +101,29 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   ring.setAttribute('cy', String(G.center.y));
   ring.setAttribute('r', String(G.ringRadius));
   ring.setAttribute('stroke-width', '2.4');
+  // En reposo el trazo va apagado: `setRingProgress` solo corre mientras la
+  // timeline avanza, así que sin esto el anillo nacería opaco.
+  ring.style.strokeOpacity = '0';
   overlay.appendChild(ring);
   const ringLen = 2 * Math.PI * G.ringRadius;
-  ring.style.strokeDasharray = String(ringLen);
+  // El hueco se declara del doble de largo que el trazo a propósito. Con el
+  // atajo `strokeDasharray = L` el hueco mide también L, así que el siguiente
+  // guión arranca exactamente donde termina el recorrido: al estar replegado
+  // queda un guión de longitud cero ahí, y `stroke-linecap: round` le pinta el
+  // remate igual —un punto suelto—. Con el hueco a 2L el guión más cercano cae
+  // fuera del trazo y no hay nada que rematar. El crecimiento no cambia.
+  ring.style.strokeDasharray = `${ringLen} ${ringLen * 2}`;
   ring.style.strokeDashoffset = String(ringLen);
 
-  // ── Ramas (stem + node + label) ──
+  // ── Ramas horizontales: nacen en el anillo y avanzan hacia afuera ──
   const built = C.labels.map((cfg) => {
     const rowY = G.rowsY[cfg.row];
     const outer = { x: G.iconX[cfg.side], y: rowY };
-    const dx = outer.x - G.center.x;
-    const dy = outer.y - G.center.y;
-    const d = Math.hypot(dx, dy);
+    const dy = rowY - G.center.y;
+    const horizontalReach = Math.sqrt(Math.max(0, G.ringRadius ** 2 - dy ** 2));
     const ringPt = {
-      x: G.center.x + (dx / d) * G.ringRadius,
-      y: G.center.y + (dy / d) * G.ringRadius,
+      x: G.center.x + (cfg.side === 'left' ? -horizontalReach : horizontalReach),
+      y: rowY,
     };
 
     const stem = document.createElementNS(SVGNS, 'line');
@@ -86,21 +133,20 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     stem.setAttribute('x2', outer.x.toFixed(1));
     stem.setAttribute('y2', outer.y.toFixed(1));
     stem.setAttribute('stroke-width', '2');
-    const stemLen = Math.hypot(outer.x - ringPt.x, outer.y - ringPt.y);
-    stem.style.strokeDasharray = String(stemLen);
+    const stemLen = Math.abs(outer.x - ringPt.x);
+    // Hueco al doble, por el mismo motivo que en el anillo: si no, el remate
+    // redondo deja un punto en la punta de cada rama mientras está replegada.
+    stem.style.strokeDasharray = `${stemLen} ${stemLen * 2}`;
     stem.style.strokeDashoffset = String(stemLen);
     overlay.appendChild(stem);
 
-    const node = document.createElementNS(SVGNS, 'circle');
-    node.setAttribute('class', 'reveal-node');
-    node.setAttribute('cx', ringPt.x.toFixed(1));
-    node.setAttribute('cy', ringPt.y.toFixed(1));
-    node.setAttribute('r', '5');
-    node.style.transform = 'scale(0)';
-    overlay.appendChild(node);
-
-    const label = document.createElement('div');
+    const label = document.createElement('button');
     label.className = `reveal-label ${cfg.side}`;
+    label.type = 'button';
+    label.disabled = true;
+    label.dataset.item = cfg.id;
+    label.setAttribute('aria-pressed', 'false');
+    label.setAttribute('aria-describedby', `reveal-phrase-${C.id}-${cfg.id}`);
     label.style.left = pct(outer.x, 1920);
     label.style.top = pct(outer.y, 1080);
     label.style.marginLeft = cfg.side === 'left' ? '-14px' : '14px';
@@ -118,7 +164,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     label.appendChild(ico);
     label.appendChild(txt);
     stage.appendChild(label);
-    return { cfg, stem, stemLen, node, ico, chars: [...txt.children] as HTMLElement[] };
+    return { cfg, stem, stemLen, label, ico, chars: [...txt.children] as HTMLElement[] };
   });
 
   // ── Timeline único y continuo: entrada → círculo → ramas ──
@@ -136,22 +182,68 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const endIdx = Math.round(T.rotateEnd * (count - 1));
   const ringFromIdx = Math.max(0, T.ringStartFrame - 1);
   const ringToIdx = Math.max(ringFromIdx + 1, T.ringEndFrame - 1);
-  const setFrame = () => {
-    productImg.src = frameSrc(Math.round(state.f));
-    const cp = clamp((state.f - ringFromIdx) / (ringToIdx - ringFromIdx), 0, 1);
+  const ringFollowsFrames = endIdx > centerIdx && ringToIdx <= endIdx;
+  const ringState = { p: 0 };
+  const setRingProgress = (progress: number) => {
+    const cp = clamp(progress, 0, 1);
     ring.style.strokeDashoffset = String(ringLen * (1 - cp));
+    // Los primeros píxeles del trazo, con el remate redondo y el `drop-shadow`
+    // de 5 px encima, se leen como un punto que aparece de la nada en el borde
+    // derecho. Se nota sobre todo en los productos sin rotación, donde el
+    // paquete ya está quieto cuando el anillo arranca. Con esta entrada el arco
+    // no empieza a verse hasta que tiene longitud de arco y no de punto.
+    // Al cuadrado y no lineal: con la rampa lineal, el arco de 14 px todavía
+    // salía al 12% y sobre negro —con el halo del `drop-shadow`— seguía leyéndose.
+    const fade = clamp(cp / RING_FADE_IN, 0, 1);
+    ring.style.strokeOpacity = String(fade * fade);
     halo.style.opacity = String(cp);
+  };
+  const setFrame = () => {
+    const frame = preloadedFrames[Math.round(state.f)];
+    if (frame?.complete && frame.naturalWidth > 0 && productImg.src !== frame.src) {
+      productImg.src = frame.src;
+    }
+    if (ringFollowsFrames) {
+      setRingProgress((state.f - ringFromIdx) / (ringToIdx - ringFromIdx));
+    }
   };
   // FASE A: sube al centro girando (frames 0→centerIdx)
   tl.add(state, { f: [0, centerIdx], duration: T.riseDur, ease: 'linear', onUpdate: setFrame }, 0);
   // FASE B: gira en el centro (frames centerIdx→endIdx)
   tl.add(state, { f: [centerIdx, endIdx], duration: T.rotateCenterDur, ease: 'linear', onUpdate: setFrame }, T.riseDur);
 
-  // Instante en que el giro alcanza ringEndFrame → ahí arrancan las ramas.
-  const labelsStart =
-    ringToIdx <= centerIdx
+  // Con una secuencia completa, el círculo continúa sincronizado a sus frames.
+  // Moravi y Reset solo tienen el arte final (`count: 1`): en ese caso no hay
+  // frame al cual amarrarlo, así que conservamos el mismo ritmo por tiempo. De
+  // este modo aparecen halo y ramas sin fingir una rotación inexistente.
+  //
+  // Ese ritmo es la misma proporción que usa la ruta por frames, pero medida
+  // sobre la secuencia de referencia (`nominalFrameCount`) en lugar de sobre la
+  // real, que aquí no da de sí. Calcularlo —en vez de dejar la constante a ojo
+  // que había antes— es lo que mantiene las dos rutas sincronizadas si alguien
+  // retoca `centerFrame`, `rotateEnd` o `ringEndFrame`.
+  const nominalEnd = Math.round(T.rotateEnd * (T.nominalFrameCount - 1));
+  const nominalCenter = clamp(T.centerFrame - 1, 0, nominalEnd);
+  // Si la referencia se queda corta para los tiempos, el anillo ocupa toda la fase.
+  const timedRingRatio =
+    nominalEnd > nominalCenter
+      ? clamp((ringToIdx - nominalCenter) / (nominalEnd - nominalCenter), 0, 1)
+      : 1;
+  const timedRingDur = T.rotateCenterDur * timedRingRatio;
+  if (!ringFollowsFrames) {
+    tl.add(
+      ringState,
+      { p: [0, 1], duration: timedRingDur, ease: 'linear', onUpdate: () => setRingProgress(ringState.p) },
+      T.riseDur,
+    );
+  }
+
+  // Instante en que se cierra el círculo → ahí arrancan las ramas.
+  const labelsStart = ringFollowsFrames
+    ? ringToIdx <= centerIdx
       ? (ringToIdx / centerIdx) * T.riseDur
-      : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur;
+      : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur
+    : T.riseDur + timedRingDur;
 
   // RAMAS
   const slots = built.map((_, i) => i);
@@ -166,9 +258,12 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     const slot = T.labelsOrder === 'random' ? slots[idx] : idx;
     const at = labelsStart + slot * T.labelsStagger;
     tl.add(b.stem, { strokeDashoffset: [b.stemLen, 0], duration: LD, ease: 'outQuad' }, at);
-    tl.add(b.node, { scale: [0, 1], duration: LD * 0.9, ease: 'outBack' }, at + LD * 0.7);
-    tl.add(b.ico, { opacity: [0, 1], scale: [0.6, 1], duration: LD * 0.85, ease: 'outQuad' }, at + LD * 0.8);
-    const dir = b.cfg.side === 'left' ? 14 : -14;
+    const dir = b.cfg.side === 'left' ? 38 : -38;
+    tl.add(
+      b.ico,
+      { opacity: [0, 1], scale: [0.75, 1], translateX: [dir, 0], duration: LD, ease: 'outQuad' },
+      at + LD * 0.72,
+    );
     tl.add(
       b.chars,
       {
@@ -191,44 +286,84 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
     tl.seek(DUR); // accesibilidad: estado final sin movimiento
+    root.dataset.revealState = 'shown';
+    built.forEach(({ label }) => { label.disabled = false; });
     return () => {
+      disposed = true;
       tl.pause();
       root.classList.remove('reveal-initialized');
+      delete root.dataset.revealState;
+      delete root.dataset.framesReady;
     };
   }
 
   let shown = false;
   const driver = { p: 0 };
   let driveAnim: ReturnType<typeof animate> | null = null;
-  const driveTo = (target: number, duration: number) => {
+  const driveTo = (target: number, duration: number, onComplete?: () => void) => {
     if (driveAnim) driveAnim.pause();
     driveAnim = animate(driver, {
       p: target,
       duration,
       ease: 'linear',
       onUpdate: () => tl.seek(DUR * clamp(driver.p, 0, 1)),
+      onComplete,
     });
   };
-  const goShow = () => { if (!shown) { shown = true; driveTo(1, DUR); } };
-  const goHide = () => { if (shown) { shown = false; driveTo(0, DUR / C.scroll.revRate); } };
+  const goShow = () => {
+    if (shown) return;
+    shown = true;
+    root.dataset.revealState = 'showing';
+    driveTo(1, DUR, () => {
+      if (!shown) return;
+      root.dataset.revealState = 'shown';
+      built.forEach(({ label }) => { label.disabled = false; });
+    });
+  };
+  const goHide = () => {
+    if (!shown) return;
+    shown = false;
+    root.dataset.revealState = 'hiding';
+    built.forEach(({ label }) => { label.disabled = true; });
+    // La capa interactiva no forma parte de la timeline de Anime.js. Se le
+    // avisa antes de invertir la animación para que ninguna foto seleccionada
+    // quede flotando cuando producto, título y ramas ya se ocultaron.
+    root.dispatchEvent(new Event('reveal:hide'));
+    driveTo(0, DUR / C.scroll.revRate, () => {
+      if (!shown) root.dataset.revealState = 'hidden';
+    });
+  };
 
   const onScroll = () => {
     const rect = root.getBoundingClientRect();
     const scrollable = root.offsetHeight - window.innerHeight;
     const p = scrollable > 0 ? clamp(-rect.top / scrollable, 0, 1) : 0;
-    if (p >= C.scroll.showAt) goShow();
-    else if (p <= C.scroll.hideAt) goHide();
+
+    // Mientras el track cubre el viewport, el stage sigue fijado. En cuanto
+    // deja de cubrirlo, el sticky se acaba y la página vuelve a desplazarse:
+    // ese mismo instante dispara la reversa. El scroll solo da la orden;
+    // Anime.js completa la animación por tiempo propio.
+    const isPinned = rect.top <= 0 && rect.bottom >= window.innerHeight;
+    if (!isPinned) {
+      goHide();
+    } else if (p >= C.scroll.showAt && framesReady) {
+      goShow();
+    }
   };
+  refreshAfterFramesReady = onScroll;
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   onScroll();
 
   return () => {
+    disposed = true;
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);
     driveAnim?.pause();
     tl.pause();
     root.classList.remove('reveal-initialized');
+    delete root.dataset.revealState;
+    delete root.dataset.framesReady;
   };
 }

@@ -9,6 +9,8 @@ export type IconKey = 'leaf' | 'berry' | 'spiral' | 'mush' | 'root' | 'mol' | 'b
 
 /** Una "rama": etiqueta alrededor del círculo. */
 export interface LabelDef {
+  /** Id compartido con la escena interactiva del ingrediente. */
+  id: string;
   name: string;
   side: Side;   // lado del círculo
   row: number;  // fila 0..3 (posición vertical)
@@ -37,6 +39,7 @@ export interface TimingConfig {
   // 2) CÍRCULO (sincronizado al giro)
   ringStartFrame: number;           // frame donde empieza el círculo
   ringEndFrame: number;             // frame donde se cierra (< frame final = más rápido)
+  nominalFrameCount: number;        // longitud de secuencia contra la que están afinados los frames de arriba
   // 3) RAMAS
   labelsStagger: number;            // ms entre una rama y otra
   labelsOrder: 'sequence' | 'random';
@@ -65,6 +68,8 @@ export interface RevealConfig {
   title: { main: string; sub: string };
   frames: FramesConfig;
   labels: LabelDef[];
+  /** Fondo de la sección (ruta en /public). Sin él queda solo el degradado. */
+  background?: string;
   timing?: Partial<TimingConfig>;
   geometry?: Partial<GeometryConfig>;
   scroll?: Partial<ScrollConfig>;
@@ -76,6 +81,7 @@ export interface ResolvedConfig {
   title: { main: string; sub: string };
   frames: Required<FramesConfig>;
   labels: LabelDef[];
+  background?: string;
   timing: TimingConfig;
   geometry: GeometryConfig;
   scroll: ScrollConfig;

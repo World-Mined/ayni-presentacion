@@ -1,0 +1,99 @@
+---
+import { Image, getImage } from 'astro:assets';
+import banner from '../../assets/v2/products-banner.webp';
+import bannerPortrait from '../../assets/v2/products-jungle.webp';
+import plank from '../../assets/v2/products-plank.webp';
+import { productHref, type ProductDetail } from '../../data/products';
+
+interface Props {
+  /** Los otros dos productos de la línea, en orden de `PRODUCT_DETAILS`. */
+  products: ProductDetail[];
+}
+
+const { products } = Astro.props;
+
+// Misma art direction que `ProductsBanner`: en vertical el diseño usa un
+// encuadre más cerrado de la misma foto, y `<Image>` no hace art direction.
+const sceneWide = await getImage({ src: banner, widths: [768, 1280, 1920], format: 'webp', quality: 72 });
+const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1170], format: 'webp', quality: 72 });
+---
+
+<section class="other-products" aria-labelledby="other-products-title">
+  <div class="other-products__scene" aria-hidden="true">
+    <picture>
+      <source media="(max-width: 767px)" srcset={scenePortrait.srcSet.attribute} sizes="100vw" />
+      <img
+        src={sceneWide.src}
+        srcset={sceneWide.srcSet.attribute}
+        sizes="100vw"
+        alt=""
+        width={banner.width}
+        height={banner.height}
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
+  </div>
+  <div class="other-products__gradient" aria-hidden="true"></div>
+  <div class="other-products__plank" aria-hidden="true">
+    <Image src={plank} alt="" loading="lazy" widths={[768, 1280, 2000]} sizes="100vw" />
+  </div>
+
+  <div class="other-products__content">
+    <h2 id="other-products-title">Otros Productos</h2>
+    <div class="other-products__packs">
+      {products.map((product) => (
+        <a class="other-products__pack" href={productHref(product.slug)}>
+          <span class="other-products__pack-art">
+            <Image src={product.pack} alt={product.name} widths={[260, 460, 920]} sizes="(max-width: 767px) 45vw, min(25.07vw, 361px)" loading="lazy" />
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Hermano de `ProductsBanner`: comparte fondo, mesa y bolsas, pero es otra
+     composición —dos bolsas solapadas y enlazadas, sobre un marco de 1440×727
+     en vez de 1440×846—, así que va aparte en lugar de detrás de una prop.
+     Como allí, todo se expresa en vw sobre 1440 y se congela con clamp. */
+  .other-products {
+    --plank-h:clamp(84px,11.458vw,165px);
+    position:relative;display:flex;width:100%;min-height:clamp(520px,50.486vw,727px);flex-direction:column;justify-content:flex-end;padding-inline:clamp(24px,5.556vw,80px);overflow:hidden;background:#000;box-shadow:inset -2px -2px 4px rgba(177,165,141,.2);isolation:isolate;
+  }
+  .other-products__scene { position:absolute;z-index:0;inset:0; }
+  .other-products__scene :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+  .other-products__gradient { position:absolute;z-index:1;top:0;right:0;left:0;height:clamp(180px,23.403vw,337px);background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,rgba(0,0,0,0) 69.212%);pointer-events:none; }
+  .other-products__plank { position:absolute;z-index:2;right:0;bottom:0;left:0;height:var(--plank-h); }
+  .other-products__plank :global(img) { display:block;width:100%;height:100%;object-fit:fill; }
+
+  .other-products__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);flex-direction:column;align-items:center;gap:clamp(24px,3.333vw,48px);margin-inline:auto;padding:clamp(40px,5.556vw,80px) 0 clamp(64px,8.681vw,125px); }
+  .other-products h2 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;letter-spacing:0;line-height:1.209;text-align:center; }
+
+  /* La fila mide 416 y las bolsas 442: sobresalen 13 px por arriba y por abajo,
+     que es lo que las apoya sobre la cara de la mesa. `align-items:center` en
+     una fila de alto fijo reproduce ese desborde sin números mágicos. */
+  .other-products__packs { display:flex;width:100%;height:clamp(240px,28.889vw,416px);align-items:center;justify-content:center; }
+  .other-products__pack { position:relative;width:clamp(160px,25.069vw,361px);aspect-ratio:361/442; }
+  .other-products__pack:first-child { margin-right:calc(-1 * clamp(22px,3.472vw,50px)); }
+  /* Como en `ProductsBanner`, la caja del enlace es la zona sensible y el arte
+     —que sobresale por los lados con píxeles transparentes— no captura el ratón. */
+  .other-products__pack-art { position:absolute;inset:0;display:block;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
+  .other-products__pack-art :global(img) { position:absolute;top:0;left:-12.65%;display:block;width:122.47%;height:100.09%;max-width:none;object-fit:contain; }
+
+  @media(hover:hover){
+    .other-products__packs:has(.other-products__pack:hover) .other-products__pack-art { transform:scale(.98); }
+    .other-products__packs:has(.other-products__pack:hover) .other-products__pack:hover .other-products__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
+  }
+
+  @media(max-width:767px){
+    .other-products { --plank-h:clamp(80px,24vw,120px);min-height:clamp(420px,120vw,600px);padding-inline:20px;box-shadow:none; }
+    .other-products__plank :global(img) { width:236.15%;margin-left:-68.08%; }
+    .other-products__gradient { height:60vw; }
+    .other-products__content { gap:clamp(32px,10vw,56px);padding-top:clamp(24px,8vw,44px); }
+    .other-products h2 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb; }
+    .other-products__packs { height:clamp(200px,52vw,300px); }
+    .other-products__pack { width:clamp(140px,42vw,240px); }
+  }
+</style>

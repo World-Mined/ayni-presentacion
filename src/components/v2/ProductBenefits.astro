@@ -1,0 +1,98 @@
+---
+import { Image } from 'astro:assets';
+import type { ProductDetail } from '../../data/products';
+
+interface Props {
+  subtitle: string;
+  items: ProductDetail['benefits']['items'];
+  ctaHref: string;
+  /** Nombre del producto: sale en el rótulo accesible del CTA. */
+  productName: string;
+}
+
+const { subtitle, items, ctaHref, productName } = Astro.props;
+---
+
+<section class="benefits" aria-labelledby="benefits-title">
+  <div class="benefits__inner">
+    <div class="benefits__glow" aria-hidden="true"></div>
+
+    <div class="benefits__head">
+      <h2 id="benefits-title">Beneficios</h2>
+      <p>{subtitle}</p>
+    </div>
+
+    <ul class="benefits__cards">
+      {items.map((item) => (
+        <li class="benefits__card">
+          <Image
+            class="benefits__card-art"
+            src={item.image}
+            alt=""
+            widths={[225, 450]}
+            sizes="225px"
+            quality={72}
+            loading="lazy"
+          />
+          <div class="benefits__card-text">
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+
+    <a class="benefits__cta" href={ctaHref} target="_blank" rel="noopener">
+      <span>Conoce más aquí</span>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4.5 12h14m0 0-5.6-5.6M18.5 12l-5.6 5.6"/></svg>
+      <span class="benefits__sr-only">sobre {productName}, se abre en otra pestaña</span>
+    </a>
+  </div>
+</section>
+
+<style>
+  /* Marco de Figma: 1440×744, padding 80, contenedor de 1166 y separaciones
+     de 48. Igual que el resto de la v2, las medidas se expresan en vw sobre
+     1440 y se congelan con clamp. */
+  .benefits { display:flex;justify-content:center;padding:clamp(48px,5.556vw,80px) clamp(20px,5.556vw,80px);background:#000; }
+  .benefits__inner { position:relative;display:flex;width:min(100%,1166px);flex-direction:column;align-items:center;gap:clamp(32px,3.333vw,48px); }
+
+  /* Las dos elipses doradas desenfocadas que iluminan la banda por detrás. */
+  .benefits__glow { position:absolute;z-index:0;top:50%;left:50%;width:100%;height:340px;transform:translate(-50%,-50%);border-radius:10000px;background:linear-gradient(90deg,#6e582b 10.512%,#f9cb69 50.363%,#f0c365 58.373%,#d8b05a 69.587%,#b29049 85.607%,#7d6431 103.23%,#6e582b 108.03%);filter:blur(150px);opacity:.25;pointer-events:none; }
+
+  .benefits__head { position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center; }
+  .benefits__head h2 { margin:0;color:#f9cb69;font-family:var(--font-title);font-size:clamp(28px,2.5vw,36px);font-weight:600;letter-spacing:0;line-height:1.2222; }
+  .benefits__head p { margin:0;color:#b1a58d;font-family:var(--font-title);font-size:clamp(16px,1.25vw,18px);font-weight:300;line-height:1.4444;text-wrap:balance; }
+
+  .benefits__cards { position:relative;z-index:1;display:flex;width:100%;flex-wrap:wrap;justify-content:center;gap:24px;margin:0;padding:0;list-style:none; }
+  /* Las tarjetas son 225×340 en el diseño; mantienen la proporción al encoger
+     para que el degradado inferior siga cubriendo el mismo tercio. */
+  .benefits__card { position:relative;width:225px;max-width:calc(50% - 12px);aspect-ratio:225/340;overflow:hidden;border-radius:16px; }
+  .benefits__card-art { position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;transform:scale(1);transform-origin:center;transition:transform 300ms cubic-bezier(.22,1,.36,1);will-change:transform; }
+  /* El degradado del diseño mide 137 de 340 (40.3%) y arranca opaco hasta el
+     25.557% de su propio alto. */
+  .benefits__card::after { content:"";position:absolute;right:0;bottom:0;left:0;height:40.3%;background:linear-gradient(to top,#000 25.557%,rgba(20,20,20,0)); }
+  .benefits__card-text { position:absolute;z-index:1;right:8px;bottom:8px;left:8px;color:#fff;text-align:center; }
+  .benefits__card-text h3 { margin:0;font-family:Montserrat,var(--font-body);font-size:20px;font-weight:700;letter-spacing:-1px;line-height:28px; }
+  .benefits__card-text p { margin:4px 0 0;font-family:Montserrat,var(--font-body);font-size:14px;font-weight:400;line-height:20px; }
+
+  .benefits__cta { position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border:.75px solid #b1a58d;border-radius:60px;color:#987c40;background:linear-gradient(90deg,#000,#000),linear-gradient(185.219deg,rgba(135,116,79,.2) 0%,rgba(43,43,43,.14) 100%);box-shadow:inset -2.62px -1.618px 4.239px rgba(250,250,250,.22);font-family:var(--font-title);font-size:16px;font-weight:400;text-decoration:none; }
+  .benefits__cta svg { width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .benefits__cta:hover { color:#f9cb69;border-color:#f9cb69; }
+  .benefits__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+
+  /* El estado hover conserva texto y degradado en su sitio y acerca la
+     fotografía lo suficiente para que la interacción resulte perceptible. */
+  @media (hover:hover) and (pointer:fine) {
+    .benefits__card:hover .benefits__card-art { transform:scale(1.05); }
+  }
+
+  @media (prefers-reduced-motion:reduce) {
+    .benefits__card-art { transition:none; }
+  }
+
+  @media (max-width:767px) {
+    .benefits__glow { height:60%; }
+    .benefits__card { width:calc(50% - 12px);max-width:225px; }
+  }
+</style>

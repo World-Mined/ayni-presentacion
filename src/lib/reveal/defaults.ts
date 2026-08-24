@@ -24,25 +24,32 @@ export const DEFAULT_TIMING: TimingConfig = {
   // 2) CÍRCULO — sincronizado al giro, se cierra ANTES del final
   ringStartFrame: 24,      // frame donde empieza a dibujarse (= centro)
   ringEndFrame: 39,        // frame donde cierra (menor = círculo más rápido). Ahí arrancan las ramas
+  // Los tres frames de arriba describen POSICIONES dentro de una secuencia, así
+  // que solo significan algo si se sabe cuánto dura esa secuencia. 47 es la de
+  // Capucci, contra la que se afinó todo. Un producto sin secuencia (`count: 1`)
+  // no tiene último frame del que sacar la proporción, y es este número el que
+  // se la presta: así el anillo por tiempo mantiene el mismo ritmo que el de
+  // Capucci, y si alguien retoca `centerFrame` o `ringEndFrame` se mueven los dos.
+  nominalFrameCount: 47,
 
   // 3) RAMAS
-  labelsStagger: 55,       // ms entre una rama y la siguiente (0 = todas juntas)
+  labelsStagger: 32,       // ráfaga corta: las ramas salen casi juntas
   labelsOrder: 'sequence', // 'sequence' (orden de la lista) · 'random' (barajado)
-  labelsDur: 220,          // ms de crecimiento de cada rama. MENOR → más rápido
+  labelsDur: 160,          // salida rápida desde el anillo hacia las etiquetas
 };
 
 export const DEFAULT_GEOMETRY: GeometryConfig = {
   center: { x: 960, y: 594 },
-  ringRadius: 360,
+  ringRadius: 378,
   rowsY: [310, 494, 678, 862],
   iconX: { left: 560, right: 1360 },
 };
 
 export const DEFAULT_SCROLL: ScrollConfig = {
-  trackVH: 300,   // alto de la sección fija. MÁS → hay que scrollear más
+  trackVH: 175,   // 75vh fijados: punto medio entre la retención original y la corta
   showAt: 0.12,   // % para aparecer. MENOR → con menos scroll
   hideAt: 0.08,   // % para desaparecer (⚠ debe ser < showAt)
-  revRate: 1.9,   // velocidad de la desaparición. MAYOR → más rápida
+  revRate: 1.9,   // velocidad original de la animación inversa
 };
 
 export const DEFAULT_FRAMES = { prefix: 'frame-', pad: 2, ext: 'webp' };

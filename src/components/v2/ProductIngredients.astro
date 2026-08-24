@@ -1,0 +1,221 @@
+---
+import { Image } from 'astro:assets';
+import type { IngredientsScene } from '../../data/product-ingredients';
+
+interface Props {
+  scene: IngredientsScene;
+}
+
+const { scene } = Astro.props;
+---
+
+<section class="ingredients" data-ingredients aria-labelledby="ingredients-title">
+  <div class="ingredients__stage">
+    <div class="ingredients__head" style={`--logo-width:${scene.logoWidth ?? 68.4}%`}>
+      <img class="ingredients__logo" src={scene.logo.src} width="357" height="56" alt={scene.logoAlt} />
+      <p id="ingredients-title" class="ingredients__formula">
+        {scene.formula.lead} <strong>{scene.formula.strong}</strong>
+      </p>
+    </div>
+
+    <div class="ingredients__glow" aria-hidden="true"></div>
+
+    <div class="ingredients__circle" style={`--rest-scale:${scene.restScale ?? 1}`}>
+      <Image class="ingredients__media is-rest" src={scene.rest} alt={scene.restAlt} widths={[550, 700]} sizes="38vw" quality={80} loading="lazy" />
+      {scene.items.map((item) => (
+        <Image class="ingredients__media" data-media={item.id} src={item.photo} alt="" widths={[550, 700]} sizes="38vw" quality={78} loading="lazy" />
+      ))}
+      {scene.items.map((item) => (
+        <p class="ingredients__phrase" data-phrase={item.id}>{item.phrase}</p>
+      ))}
+    </div>
+
+    <!-- Cada rama es un botón: el diseño solo describe el hover, pero así el
+         mismo gesto funciona con teclado y con lector de pantalla, y en táctil
+         —donde no hay hover— se activa al tocar. -->
+    {scene.items.map((item, index) => (
+      <button
+        class="ingredients__item"
+        type="button"
+        data-item={item.id}
+        data-side={item.side}
+        style={`--x:${item.x}%;--y:${item.y}%;--i:${index}`}
+        aria-describedby={`ingredient-phrase-${item.id}`}
+        aria-pressed="false"
+      >
+        <span class="ingredients__name">{item.name}</span>
+        <img class="ingredients__icon" src={item.icon.src} width="40" height="40" alt="" />
+        <span class="ingredients__line"></span>
+        <span class="ingredients__sr" id={`ingredient-phrase-${item.id}`}>{item.phrase}</span>
+      </button>
+    ))}
+  </div>
+</section>
+
+<script>
+  const roots = document.querySelectorAll<HTMLElement>('[data-ingredients]');
+
+  roots.forEach((root) => {
+    // Las ramas salen del centro cuando la sección entra en pantalla. Se hace
+    // con una clase y transiciones CSS —no con JS por fotograma— para que el
+    // navegador pueda componerlas y respetar `prefers-reduced-motion`.
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        root.dataset.revealed = 'true';
+        observer.disconnect();
+      });
+    }, { threshold: 0.35 });
+    observer.observe(root);
+
+    const items = root.querySelectorAll<HTMLButtonElement>('[data-item]');
+    const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
+    const circle = root.querySelector<HTMLElement>('.ingredients__circle');
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const activate = (id: string | null) => {
+      if (id) root.dataset.active = id;
+      else delete root.dataset.active;
+
+      items.forEach((item) => {
+        const selected = item.dataset.item === id;
+        item.setAttribute('aria-pressed', String(selected));
+        item.toggleAttribute('data-selected', selected);
+      });
+      layers.forEach((layer) => {
+        const selected = layer.dataset.media === id || layer.dataset.phrase === id;
+        layer.toggleAttribute('data-selected', selected);
+      });
+    };
+
+    // La selección puede sobrevivir al espacio vacío entre una rama y otra,
+    // pero no a cualquier punto del lienzo negro. Este límite reúne el círculo
+    // y todas las etiquetas, con un margen corto para que cruzar entre ellas no
+    // produzca parpadeos.
+    const isNearInteraction = (x: number, y: number) => {
+      const elements = circle ? [circle, ...items] : [...items];
+      const rects = elements
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (!rects.length) return false;
+
+      const padding = circle
+        ? Math.min(64, Math.max(24, circle.getBoundingClientRect().width * 0.08))
+        : 32;
+      const left = Math.min(...rects.map((rect) => rect.left)) - padding;
+      const right = Math.max(...rects.map((rect) => rect.right)) + padding;
+      const top = Math.min(...rects.map((rect) => rect.top)) - padding;
+      const bottom = Math.max(...rects.map((rect) => rect.bottom)) + padding;
+
+      return x >= left && x <= right && y >= top && y <= bottom;
+    };
+
+    items.forEach((item) => {
+      const id = item.dataset.item!;
+      item.addEventListener('pointerenter', () => {
+        if (hoverCapable.matches) activate(id);
+      });
+      item.addEventListener('focus', () => activate(id));
+      // En táctil no hay hover: el toque fija el ingrediente y el segundo lo
+      // suelta. Con mouse, `pointerenter` conserva la última selección aunque
+      // el cursor atraviese el espacio entre ramas.
+      item.addEventListener('click', () => {
+        if (!hoverCapable.matches) activate(root.dataset.active === id ? null : id);
+      });
+    });
+
+    root.addEventListener('pointerleave', () => {
+      if (hoverCapable.matches) activate(null);
+    });
+    root.addEventListener('pointermove', (event) => {
+      if (
+        hoverCapable.matches &&
+        root.dataset.active &&
+        !isNearInteraction(event.clientX, event.clientY)
+      ) activate(null);
+    });
+    root.addEventListener('focusout', (event) => {
+      if (!root.contains(event.relatedTarget as Node | null)) activate(null);
+    });
+  });
+</script>
+
+<style>
+  /* Lienzo del diseño: 1440×852. Todo se posiciona en % sobre él, así la
+     composición —círculo, ramas y el punto en el que cada rama toca la
+     circunferencia— se mantiene a cualquier ancho. */
+  .ingredients { display:flex;justify-content:center;padding-inline:clamp(16px,5.556vw,80px);background:#000; }
+  .ingredients__stage { position:relative;width:min(100%,1440px);aspect-ratio:1440/852; }
+
+  .ingredients__head { position:absolute;z-index:3;top:9.39%;left:50%;display:flex;width:36.18%;flex-direction:column;align-items:center;gap:1.41%;transform:translateX(-50%);text-align:center; }
+  .ingredients__logo { display:block;width:var(--logo-width);height:auto; }
+  .ingredients__formula { margin:0;color:#c4bba8;font-family:var(--font-title);font-size:clamp(15px,1.667vw,24px);font-weight:300;line-height:1.0834; }
+  .ingredients__formula strong { font-weight:600; }
+
+  /* El halo dorado que el diseño pone tras la bolsa. */
+  .ingredients__glow { position:absolute;z-index:0;top:calc(58.33% + 8.39%);left:50%;width:9.24%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#f9cb69;filter:blur(clamp(40px,8.04vw,116px));pointer-events:none; }
+
+  /* El círculo es un único escenario inmóvil. La bolsa permanece como capa
+     base y cada ingrediente solo llena su interior por encima: no se crea,
+     desplaza ni sustituye la geometría del círculo durante el hover. */
+  .ingredients__circle { position:absolute;z-index:1;top:58.33%;left:50%;width:38.19%;aspect-ratio:1;overflow:hidden;transform:translate(-50%,-50%);border-radius:50%;isolation:isolate; }
+  .ingredients__media { position:absolute;inset:0;display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;opacity:0;transition:opacity .32s ease; }
+  .ingredients__media.is-rest { z-index:0;opacity:1;transform:scale(var(--rest-scale)); }
+  .ingredients__media:not(.is-rest) { z-index:1; }
+
+  .ingredients__phrase { position:absolute;z-index:2;top:50%;left:50%;width:82%;margin:0;transform:translate(-50%,-50%);color:#fff;font-family:var(--font-title);font-size:clamp(15px,2.5vw,36px);font-weight:700;line-height:1.2223;text-align:center;text-wrap:balance;opacity:0;transition:opacity .32s ease;pointer-events:none; }
+
+  .ingredients__item { position:absolute;top:var(--y);display:flex;align-items:center;gap:4px;padding:0;border:0;background:transparent;cursor:pointer;transform:translateY(-50%);transition:opacity .3s ease; }
+  .ingredients__item[data-side='left'] { right:calc(100% - var(--x));flex-direction:row; }
+  .ingredients__item[data-side='right'] { left:var(--x);flex-direction:row-reverse; }
+
+  .ingredients__name { color:#fcfcfb;font-family:Montserrat,var(--font-body);font-size:clamp(13px,1.667vw,24px);font-weight:600;line-height:1.1667;white-space:nowrap; }
+  .ingredients__icon { display:block;width:clamp(22px,2.778vw,40px);height:auto; }
+  /* 80 px de línea sobre el lienzo de 1440. */
+  .ingredients__line { display:block;width:clamp(28px,5.556vw,80px);height:2px;border-radius:1px;background:#f9cb69;transform-origin:var(--line-origin,right center);transition:transform .5s cubic-bezier(.22,.61,.36,1); }
+  .ingredients__item[data-side='right'] .ingredients__line { --line-origin:left center; }
+  .ingredients__sr { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+
+  /* Estado activo: se enciende la foto y la frase del ingrediente y el resto
+     de las ramas se apagan al 25%, como en el diseño. */
+  [data-media][data-selected],
+  [data-phrase][data-selected] { opacity:1; }
+
+  .ingredients__item:focus-visible { outline:2px solid var(--gold-200);outline-offset:6px;border-radius:4px; }
+
+  /* Salida desde el centro: las ramas arrancan encogidas contra la
+     circunferencia y crecen hacia afuera, escalonadas. */
+  .ingredients__item { opacity:0;transition:opacity .45s ease var(--delay),transform .55s cubic-bezier(.22,.61,.36,1) var(--delay); --delay:calc(var(--i) * 90ms); }
+  .ingredients__item[data-side='left'] { transform:translate(38px,-50%); }
+  .ingredients__item[data-side='right'] { transform:translate(-38px,-50%); }
+  .ingredients__line { transform:scaleX(0); }
+  [data-revealed] .ingredients__item { opacity:1;transform:translate(0,-50%); }
+  [data-revealed] .ingredients__line { transform:scaleX(1);transition-delay:var(--delay); }
+
+  /* El atenuado del hover tiene que ir DESPUÉS —y con más peso— que la
+     opacidad de entrada, o `[data-revealed]` deja todas las ramas encendidas y
+     la rama activa no destaca. Por eso ambas reglas repiten `[data-revealed]`:
+     con la misma especificidad, gana el orden, y el resaltado de la rama
+     activa se queda en último lugar. */
+  [data-revealed][data-active] .ingredients__item { opacity:.25;transition:opacity .3s ease,transform .55s cubic-bezier(.22,.61,.36,1); }
+  [data-revealed][data-active] [data-item][data-selected] { opacity:1; }
+
+  @media (prefers-reduced-motion:reduce) {
+    .ingredients__item,.ingredients__line { opacity:1;transform:translate(0,-50%); }
+    .ingredients__line { transform:scaleX(1); }
+  }
+
+  /* En vertical el lienzo de 1440 no cabe: las ramas pasan a una lista bajo el
+     círculo, que es la única forma de que los nombres sigan siendo legibles.
+     El diseño no tiene marco móvil para esta sección. */
+  @media (max-width:767px) {
+    .ingredients__stage { display:flex;aspect-ratio:auto;flex-direction:column;align-items:center;gap:24px;padding-block:40px; }
+    .ingredients__head { position:static;width:100%;transform:none; }
+    .ingredients__logo { width:min(100%,240px); }
+    .ingredients__circle { position:static;width:min(100%,320px);transform:none; }
+    .ingredients__glow { top:auto;width:40%; }
+    .ingredients__item { position:static;transform:none!important;gap:8px; }
+    .ingredients__item[data-side='left'],.ingredients__item[data-side='right'] { right:auto;left:auto;flex-direction:row; }
+    .ingredients__line { display:none; }
+    .ingredients__phrase { font-size:clamp(14px,4.6vw,20px); }
+  }
+</style>
