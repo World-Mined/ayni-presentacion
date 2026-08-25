@@ -12,6 +12,11 @@ import { PRODUCT_LINE } from '../../data/v2';
 // `<Image>` no hace art direction, de ahí el `<picture>` a mano con getImage.
 const sceneWide = await getImage({ src: banner, widths: [768, 1280, 1920], format: 'webp', quality: 72 });
 const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1170], format: 'webp', quality: 72 });
+
+// Turno de entrada de cada bolsa, por posición en `PRODUCT_LINE`. El centro
+// (Capucci) va último a propósito: la mirada acaba donde está el producto que
+// la banda quiere destacar.
+const PACK_ENTRY_ORDER = [0, 2, 1];
 ---
 
 <section class="products-banner" aria-labelledby="products-banner-title">
@@ -42,8 +47,12 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
          entera y cada imagen aporta el suyo, para que un lector de pantalla
          no las lea como tres ilustraciones sueltas sin relación. -->
     <div class="products-banner__packs" role="group" aria-label="Línea AYNI 360">
-      {PRODUCT_LINE.map((product) => (
-        <a class="products-banner__pack" href={product.href}>
+      {PRODUCT_LINE.map((product, index) => (
+        <a
+          class="products-banner__pack"
+          href={product.href}
+          style={`--pack-order:${PACK_ENTRY_ORDER[index] ?? index}`}
+        >
           <span class="products-banner__pack-art">
             <Image
               src={product.src}
@@ -78,6 +87,10 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
        Al 22% quedaba rozando el canto trasero y parecía flotar. */
     --plank-h:clamp(96px,13.75vw,198px);
     --pack-seat:calc(var(--plank-h) * .777);
+    /* Retardo de la primera bolsa y separación entre turnos. Los consume
+       `--pack-order`, que cada bolsa trae desde el marcado. */
+    --pack-entry-base:.12s;
+    --pack-entry-step:.08s;
     position:relative;display:flex;width:100%;min-height:clamp(560px,58.75vw,846px);padding-inline:clamp(24px,5.556vw,80px);overflow:hidden;background:#000;box-shadow:inset -2px -2px 4px rgba(177,165,141,.2);isolation:isolate;
   }
   /* Línea dorada que separa el header del banner: en Figma es un SVG de
@@ -96,7 +109,7 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
      con él las bolsas (627px a 1920) y su aire transparente las dejaba
      flotando sobre la mesa. `margin-inline:auto` centra la columna. */
   .products-banner__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);margin-inline:auto;flex-direction:column;align-items:center;justify-content:flex-end;gap:clamp(48px,8.333vw,120px);padding:clamp(40px,5.556vw,80px) 0 var(--pack-seat); }
-  .products-banner h1 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;line-height:1.209;letter-spacing:0;text-align:center;text-transform:uppercase; }
+  .products-banner h1 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;line-height:1.209;letter-spacing:0;text-align:center;text-transform:uppercase;animation:products-title-in .38s .04s cubic-bezier(.22,.61,.36,1) both; }
   .products-banner__packs { display:flex;width:100%;align-items:flex-end;justify-content:center; }
   /* Dos cajas por bolsa, y la separación es deliberada:
      `__pack` es la ZONA SENSIBLE. Mide el paso completo entre bolsas (292 de
@@ -118,7 +131,17 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
      Las imágenes de bolsas contiguas se solapaban 164px, así que la frontera
      real caía donde empezaba el PNG vecino y no en el punto medio. Dejando
      solo `__pack` como diana, el relevo es exacto y no depende del z-index. */
-  .products-banner__pack-art { position:absolute;display:block;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
+  .products-banner__pack-art { position:absolute;display:block;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;animation:products-pack-in .32s cubic-bezier(.22,.61,.36,1) both;pointer-events:none; }
+  /* La entrada termina en el centro para dirigir la mirada a Capucci sin
+     convertir la banda en otro carrusel. Se anima `translate` en el arte y no
+     `transform` en el enlace: así el escalado del hover conserva su propia
+     transición y la zona sensible nunca cambia de tamaño.
+
+     El turno de cada bolsa llega por `--pack-order`, escrito en el marcado
+     desde `PACK_ENTRY_ORDER`. Antes iba en tres reglas `:nth-child` con los
+     índices desordenados: no se leía que el centro entraba último y se rompía
+     ante cualquier hermano que no fuera una bolsa. */
+  .products-banner__pack-art { animation-delay:calc(var(--pack-entry-base) + var(--pack-order,0) * var(--pack-entry-step)); }
   /* `left` sí resuelve el porcentaje contra el ancho, pero `top` lo haría
      contra el alto de la caja —que aquí es 1.42× el ancho— y dejaba la bolsa
      14px más arriba de la cuenta, flotando sobre la mesa. Anclar por `bottom`
@@ -144,6 +167,15 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack:hover .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
   }
 
+  @keyframes products-title-in {
+    from { opacity:0;transform:translateY(14px); }
+    to { opacity:1;transform:translateY(0); }
+  }
+  @keyframes products-pack-in {
+    from { opacity:0;translate:0 24px; }
+    to { opacity:1;translate:0 0; }
+  }
+
   @media(min-width:768px) and (max-width:1023px){
     .products-banner { min-height:clamp(520px,60vw,600px); }
     .products-banner__content { gap:clamp(32px,5vw,56px); }
@@ -167,7 +199,7 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .products-banner__content { gap:clamp(111px,34.87vw,167px);justify-content:flex-end;padding-top:clamp(24px,8vw,44px); }
     /* En vertical el titular cambia de familia y de escala respecto a
        escritorio: Poppins SemiBold 32/38 en vez de Montserrat Bold 48/58. */
-    .products-banner h1 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb;text-wrap:balance; }
+    .products-banner h1 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb;text-wrap:balance;animation-duration:.32s;animation-delay:.02s; }
     /* Las bolsas ocupan casi todo el ancho del marco, así que la fila se sale
        del padding lateral del banner en vez de quedarse dentro. El `min` es el
        mismo tope de 480px+padding: en móviles anchos deja de crecer y el
@@ -183,6 +215,12 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
        solapan, y por eso el `inset` del arte es negativo. Las zonas siguen
        siendo contiguas, aunque aquí no haya hover que dependa de ellas. */
     .products-banner__pack { width:29.74%;aspect-ratio:116/172.9; }
-    .products-banner__pack-art { inset:0 -2.5%; }
+    .products-banner__pack-art { inset:0 -2.5%;animation-duration:.3s; }
+    .products-banner { --pack-entry-base:.08s;--pack-entry-step:.06s; }
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .products-banner h1,
+    .products-banner__pack-art { animation:none; }
   }
 </style>

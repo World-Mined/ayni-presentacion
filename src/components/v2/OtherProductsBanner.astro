@@ -68,7 +68,7 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
   .other-products__plank { position:absolute;z-index:2;right:0;bottom:0;left:0;height:var(--plank-h); }
   .other-products__plank :global(img) { display:block;width:100%;height:100%;object-fit:fill; }
 
-  .other-products__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);flex-direction:column;align-items:center;gap:clamp(24px,3.333vw,48px);margin-inline:auto;padding:clamp(40px,5.556vw,80px) 0 clamp(64px,8.681vw,125px); }
+  .other-products__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);flex-direction:column;align-items:center;gap:clamp(24px,3.333vw,48px);margin-inline:auto;padding:clamp(40px,5.556vw,80px) 0 clamp(64px,8.681vw,125px);transform:translateY(clamp(14px,1.667vw,24px)); }
   .other-products h2 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;letter-spacing:0;line-height:1.209;text-align:center; }
 
   /* La fila mide 416 y las bolsas 442: sobresalen 13 px por arriba y por abajo,
@@ -91,7 +91,10 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .other-products { --plank-h:clamp(80px,24vw,120px);min-height:clamp(420px,120vw,600px);padding-inline:20px;box-shadow:none; }
     .other-products__plank :global(img) { width:236.15%;margin-left:-68.08%; }
     .other-products__gradient { height:60vw; }
-    .other-products__content { gap:clamp(32px,10vw,56px);padding-top:clamp(24px,8vw,44px); }
+    /* Compensa el cambio de geometría en 767 px: el bloque móvil sube de
+       forma fluida mientras el de escritorio/tablet baja ligeramente. Así no
+       hay un salto visual al cruzar el breakpoint. */
+    .other-products__content { gap:clamp(32px,10vw,56px);padding-top:clamp(24px,8vw,44px);transform:translateY(clamp(-28px,-4vw,-14px)); }
     .other-products h2 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb; }
     /* La fila conserva un mínimo de 200 px, pero las bolsas sí reducen su
        tamaño por debajo de 340 px de viewport. Alinearlas al centro dejaba el
@@ -100,7 +103,10 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .other-products__packs {
       height:clamp(200px,52vw,300px);
       align-items:flex-end;
-      transform:translateY(clamp(14px,4vw,18px));
+      /* En viewports muy estrechos la bolsa se reduce, pero su transparencia
+         inferior también se vuelve más perceptible. El desplazamiento crece
+         al reducir el ancho para que el arte siga apoyado sobre la madera. */
+      transform:translateY(clamp(14px,calc(52px - 10vw),24px));
     }
     .other-products__pack { width:clamp(116px,42vw,240px); }
   }
