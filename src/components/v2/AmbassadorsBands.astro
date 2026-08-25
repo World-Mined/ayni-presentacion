@@ -56,7 +56,7 @@ const STAR_FADE = 1100;
           widths={[768, 1440, 2880]}
           sizes="100vw"
           data-star-slide
-          data-active={index === 0 ? 'true' : 'false'}
+          data-active={index === 0 ? 'initial' : 'false'}
         />
       ))}
       <span class="ambassadors-star__fade"></span>
@@ -162,6 +162,10 @@ const STAR_FADE = 1100;
      opacidad sí transiciona en los dos sentidos, que para eso es un cruce. */
   .ambassadors-star__backdrop { --fade:1.1s;--drift:5.6s; }
   .ambassadors-star__backdrop :global(img) { position:absolute;top:0;left:0;z-index:0;display:block;width:100%;height:101%;opacity:0;object-fit:cover;object-position:bottom;transform:scale(1);transition:opacity var(--fade) linear; }
+  /* La primera foto se pinta visible pero todavía quieta. Al entrar la banda en
+     pantalla el script la pasa a `true`, y así también ella recorre la deriva
+     completa en vez de nacer ya colocada en su fotograma final. */
+  .ambassadors-star__backdrop :global(img[data-active='initial']) { z-index:2;opacity:1;transform:scale(1);transition:none; }
   /* La entrante se funde por encima de una foto que sigue opaca debajo, así que
      el cruce no pasa nunca por el fondo negro —cosa que sí ocurría al volver de
      la última a la primera, cuando el orden del DOM dejaba la entrante debajo—.
@@ -242,6 +246,8 @@ const STAR_FADE = 1100;
     const stillness = matchMedia('(prefers-reduced-motion: reduce)');
     let current = 0;
     let timer: ReturnType<typeof setInterval> | undefined;
+    let activationFrame: number | undefined;
+    let onScreen = false;
 
     const advance = () => {
       // La anterior pasa por «leaving» y no directamente a apagada: ahí es
@@ -255,20 +261,47 @@ const STAR_FADE = 1100;
     };
 
     const start = () => {
-      if (timer || stillness.matches) return;
+      if (timer || stillness.matches || !onScreen) return;
+
+      if (slides[current].dataset.active === 'initial') {
+        // Esperar un frame garantiza que el navegador haya pintado el encuadre
+        // neutro antes de activar el zoom y el desplazamiento de la primera foto.
+        activationFrame = requestAnimationFrame(() => {
+          slides[current].dataset.active = 'true';
+          activationFrame = undefined;
+        });
+      }
+
       timer = setInterval(advance, interval);
     };
 
     const stop = () => {
       clearInterval(timer);
       timer = undefined;
+      if (activationFrame !== undefined) cancelAnimationFrame(activationFrame);
+      activationFrame = undefined;
     };
 
-    // Arranca de entrada y el observador sólo sirve para pausar fuera de
-    // pantalla: al revés —esperando a que avise de que se ve— un navegador que
-    // no entregue el callback dejaría el carrusel congelado para siempre.
-    start();
-    new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop())).observe(carousel);
+    // La primera deriva empieza cuando la sección entra en pantalla, no durante
+    // la carga de la página mientras AYNI Estrella todavía queda fuera de foco.
+    //
+    // Antes se arrancaba de entrada y el observador sólo servía para pausar,
+    // por miedo a que un navegador no entregara nunca el callback y dejara el
+    // carrusel congelado. Ese miedo no aplica: la spec obliga a una primera
+    // notificación con el estado inicial en cuanto se observa el elemento. El
+    // fallback queda entonces sólo para navegadores sin `IntersectionObserver`,
+    // donde damos la banda por visible y conservamos el arranque inmediato.
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        onScreen = entry.isIntersecting;
+        if (onScreen) start(); else stop();
+      }).observe(carousel);
+    } else {
+      onScreen = true;
+      start();
+    }
+    // `start` consulta `onScreen` por su cuenta, así que reactivar el
+    // movimiento con la banda fuera de foco ya no la pone a la deriva.
     stillness.addEventListener('change', () => (stillness.matches ? stop() : start()));
   }
 </script>
