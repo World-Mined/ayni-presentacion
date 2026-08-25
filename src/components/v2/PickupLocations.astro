@@ -1,16 +1,38 @@
 ---
 import { Image } from 'astro:assets';
 import infoIcon from '../../assets/v2/pickup-locations-info.svg';
+import searchIcon from '../../assets/v2/pickup-search.svg';
 import { PICKUP_COUNTRIES, PICKUP_COUNTRY_ORDER } from '../../data/pickup-locations';
 
 const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country]);
+
+// Copy y zoom por defecto de las vistas que todavia no tienen mapa propio.
+// Viven aqui —y no incrustados en el marcado— porque los reutilizan las dos
+// ramas de `preview` que aun no estan conectadas a un proveedor de mapas.
+const PREVIEW_PENDING_LABEL = 'Vista de ubicación próximamente';
+const DEFAULT_PREVIEW_ZOOM = 15;
 ---
 
 <section class="pickup-locations" aria-labelledby="pickup-locations-title" data-pickup-locations>
   <div class="pickup-locations__glow" aria-hidden="true"></div>
   <div class="pickup-locations__layout">
     <div class="pickup-locations__sidebar">
-      <h1 id="pickup-locations-title">Puntos de recojo</h1>
+      <h1 id="pickup-locations-title">
+        <span class="pickup-locations__title-desktop">Puntos de recojo</span>
+        <span class="pickup-locations__title-mobile">Ubícanos</span>
+      </h1>
+
+      <label class="pickup-search">
+        <span class="pickup-search__label">Buscar punto de recojo</span>
+        <img src={searchIcon.src} width="24" height="24" alt="" aria-hidden="true" />
+        <input type="search" placeholder="Buscar" autocomplete="off" data-pickup-search />
+      </label>
+
+      {/* Una sola region viva para toda la seccion. Antes cada vista de mapa
+          llevaba su propio `aria-live` sobre un texto que nunca muta, asi que
+          no anunciaba el cambio de local y si arriesgaba lecturas duplicadas
+          al alternar `hidden`. */}
+      <p class="pickup-locations__status" role="status" aria-live="polite" data-pickup-status></p>
 
       <div class="pickup-tabs" role="tablist" aria-label="Selecciona un país">
         {countries.map((country, index) => (
@@ -37,23 +59,39 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
           hidden={index !== 0}
         >
           {country.locations.map((location, locationIndex) => (
-            <article class:list={['pickup-card', { 'pickup-card--featured': locationIndex === 0 }]}>
+            <button
+              id={`pickup-location-${country.id}-${location.id}`}
+              class:list={['pickup-card', { 'is-active': locationIndex === 0 }]}
+              type="button"
+              aria-pressed={locationIndex === 0 ? 'true' : 'false'}
+              aria-controls={`pickup-view-${country.id}-${location.id}`}
+              data-pickup-card
+              data-pickup-location={location.id}
+              data-pickup-country={country.id}
+            >
               <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
-              <div class="pickup-card__copy">
-                <h2>{location.name}</h2>
-                <p>{location.address}</p>
-                <p>{location.schedule[0]}</p>
-                <p>{location.schedule[1]}</p>
-              </div>
-            </article>
+              <span class="pickup-card__copy">
+                <span class="pickup-card__title">{location.name}</span>
+                <span class="pickup-card__line">{location.address}</span>
+                <span class="pickup-card__line">{location.schedule[0]}</span>
+                <span class="pickup-card__line">{location.schedule[1]}</span>
+              </span>
+            </button>
           ))}
+
+          {/* Mensaje de lista vacia: sin el, una busqueda sin coincidencias
+              dejaba la columna en blanco y sin explicacion. Lo alterna
+              `filterLocations`. */}
+          <p class="pickup-locations__empty" data-pickup-empty hidden>
+            No encontramos puntos de recojo para tu búsqueda.
+          </p>
 
           {country.auxiliaryContent && (
             <article class="pickup-card pickup-card--delivery">
               <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
               <div class="pickup-card__copy">
-                <h2>{country.auxiliaryContent.title}</h2>
-                <p>{country.auxiliaryContent.description}</p>
+                <h2 class="pickup-card__title">{country.auxiliaryContent.title}</h2>
+                <p class="pickup-card__line">{country.auxiliaryContent.description}</p>
                 <span class="pickup-card__action" aria-disabled="true">
                   {country.auxiliaryContent.actionLabel}
                   <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -76,19 +114,80 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
           data-pickup-panel={country.id}
           hidden={index !== 0}
         >
+          {/* El mapa del pais se pinta una sola vez como base del panel: los
+              locales que todavia no tienen vista propia lo comparten en vez de
+              repetir la misma imagen —y el mismo `alt`— una vez por local. */}
           <Image
             class="pickup-map-panel__art"
             src={country.map}
             alt={country.mapAlt}
             loading={index === 0 ? 'eager' : 'lazy'}
             widths={[640, 960, 1024]}
-            sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 58vw, 846px"
+            sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1023px) 58vw, 846px"
           />
+
           {!country.mapAvailable && (
             <div class="pickup-map-panel__unavailable">
               <p>Ubicación<br />no disponible</p>
             </div>
           )}
+
+          {country.locations.map((location, locationIndex) => (
+            <div
+              id={`pickup-view-${country.id}-${location.id}`}
+              class="pickup-map-view"
+              role="region"
+              aria-labelledby={`pickup-location-${country.id}-${location.id}`}
+              data-pickup-view={location.id}
+              data-pickup-country={country.id}
+              hidden={locationIndex !== 0}
+            >
+              {location.preview?.type === 'image' && (
+                <Image
+                  class="pickup-map-view__art"
+                  src={location.preview.image}
+                  alt={location.preview.alt}
+                  loading={index === 0 && locationIndex === 0 ? 'eager' : 'lazy'}
+                  widths={[640, 960, 1024]}
+                  sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1023px) 58vw, 846px"
+                />
+              )}
+
+              {location.preview?.type === 'embed' && (
+                <iframe
+                  class="pickup-map-view__embed"
+                  src={location.preview.url}
+                  title={location.preview.title}
+                  loading="lazy"
+                  allowfullscreen
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+                ></iframe>
+              )}
+
+              {location.preview?.type === 'coordinates' && (
+                <div
+                  class="pickup-map-view__placeholder"
+                  data-latitude={location.preview.latitude}
+                  data-longitude={location.preview.longitude}
+                  data-zoom={location.preview.zoom ?? DEFAULT_PREVIEW_ZOOM}
+                >
+                  <span>{PREVIEW_PENDING_LABEL}</span>
+                </div>
+              )}
+
+              {location.preview?.type === 'placeholder' && (
+                <div class="pickup-map-view__placeholder">
+                  <span>{location.preview.label ?? PREVIEW_PENDING_LABEL}</span>
+                </div>
+              )}
+
+              <div class="pickup-map-view__caption">
+                <strong>{location.name}</strong>
+                <span>{location.address}</span>
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -100,8 +199,71 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
     const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pickup-tab]'));
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-panel]'));
     const lists = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-list]'));
+    const locationButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-pickup-location]'));
+    const locationViews = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-view]'));
+    const search = root.querySelector<HTMLInputElement>('[data-pickup-search]');
+    const status = root.querySelector<HTMLElement>('[data-pickup-status]');
+    const emptyStates = Array.from(root.querySelectorAll<HTMLElement>('[data-pickup-empty]'));
+    const selectedLocationByCountry = new Map<string, string>();
+
+    locationButtons.forEach((button) => {
+      if (button.getAttribute('aria-pressed') === 'true') {
+        selectedLocationByCountry.set(button.dataset.pickupCountry ?? '', button.dataset.pickupLocation ?? '');
+      }
+    });
+
+    const selectLocation = (country: string, location: string, moveFocus = false) => {
+      if (!country || !location) return;
+      selectedLocationByCountry.set(country, location);
+
+      locationButtons.forEach((button) => {
+        if (button.dataset.pickupCountry !== country) return;
+        const selected = button.dataset.pickupLocation === location;
+        button.classList.toggle('is-active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+        if (selected && moveFocus) button.focus();
+      });
+
+      locationViews.forEach((view) => {
+        if (view.dataset.pickupCountry !== country) return;
+        view.hidden = view.dataset.pickupView !== location;
+      });
+
+      // Con teclado el foco ya aterriza en el boton y el lector lee su estado,
+      // pero al filtrar la seleccion cambia sin que el foco se mueva. Ahi es
+      // donde esta region hace el trabajo.
+      const active = locationButtons.find((button) => (
+        button.dataset.pickupCountry === country && button.dataset.pickupLocation === location
+      ));
+      const name = active?.querySelector('.pickup-card__title')?.textContent?.trim();
+      if (status && name) status.textContent = `Mostrando ${name} en el mapa.`;
+    };
+
+    const filterLocations = () => {
+      const query = search?.value.trim().toLocaleLowerCase('es') ?? '';
+      lists.forEach((list) => {
+        const country = list.dataset.pickupList ?? '';
+        const cards = Array.from(list.querySelectorAll<HTMLButtonElement>('[data-pickup-card]'));
+        cards.forEach((card) => {
+          card.hidden = query.length > 0 && !card.textContent?.toLocaleLowerCase('es').includes(query);
+        });
+
+        const visible = cards.filter((card) => !card.hidden);
+        const selected = cards.find((card) => card.getAttribute('aria-pressed') === 'true');
+        // El mapa no puede quedarse en un local que la busqueda acaba de
+        // ocultar: si el seleccionado desaparece, arrastramos la seleccion al
+        // primero que siga en pantalla.
+        if (selected?.hidden && visible.length > 0) {
+          selectLocation(country, visible[0].dataset.pickupLocation ?? '');
+        }
+
+        const empty = emptyStates.find((node) => node.closest('[data-pickup-list]') === list);
+        if (empty) empty.hidden = !(cards.length > 0 && visible.length === 0);
+      });
+    };
 
     const selectCountry = (country: string, moveFocus = false) => {
+      if (search) search.value = '';
       tabs.forEach((tab) => {
         const selected = tab.dataset.pickupTab === country;
         tab.classList.toggle('is-active', selected);
@@ -111,6 +273,10 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
       });
       panels.forEach((panel) => { panel.hidden = panel.dataset.pickupPanel !== country; });
       lists.forEach((list) => { list.hidden = list.dataset.pickupList !== country; });
+      const selectedLocation = selectedLocationByCountry.get(country)
+        ?? locationButtons.find((button) => button.dataset.pickupCountry === country)?.dataset.pickupLocation;
+      if (selectedLocation) selectLocation(country, selectedLocation);
+      filterLocations();
     };
 
     tabs.forEach((tab, index) => {
@@ -126,6 +292,36 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
         selectCountry(tabs[nextIndex].dataset.pickupTab ?? 'peru', true);
       });
     });
+
+    locationButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        selectLocation(button.dataset.pickupCountry ?? '', button.dataset.pickupLocation ?? '');
+      });
+
+      button.addEventListener('keydown', (event) => {
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+        const siblings = locationButtons.filter((candidate) => (
+          candidate.dataset.pickupCountry === button.dataset.pickupCountry && !candidate.hidden
+        ));
+        const index = siblings.indexOf(button);
+        if (index < 0 || siblings.length === 0) return;
+
+        let nextIndex = index;
+        if (event.key === 'ArrowDown') nextIndex = (index + 1) % siblings.length;
+        else if (event.key === 'ArrowUp') nextIndex = (index - 1 + siblings.length) % siblings.length;
+        else if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = siblings.length - 1;
+
+        event.preventDefault();
+        selectLocation(
+          button.dataset.pickupCountry ?? '',
+          siblings[nextIndex].dataset.pickupLocation ?? '',
+          true,
+        );
+      });
+    });
+
+    search?.addEventListener('input', filterLocations);
   });
 </script>
 
@@ -135,6 +331,10 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
   .pickup-locations__layout { display:grid;width:min(100%,1280px);height:960px;margin-inline:auto;grid-template-columns:410px minmax(0,846px);gap:24px; }
   .pickup-locations__sidebar { display:grid;min-width:0;height:960px;grid-template-rows:44px 60px minmax(0,816px); }
   .pickup-locations h1 { margin:0;color:#f9cb69;font-size:36px;font-weight:600;line-height:44px;letter-spacing:0; }
+  .pickup-locations__title-mobile,.pickup-search { display:none; }
+  .pickup-locations__status { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+  .pickup-locations__empty { margin:8px 0 0;padding:0 4px;color:#c4bba8;font:300 16px/24px Poppins,sans-serif; }
+  .pickup-locations__empty[hidden] { display:none; }
   .pickup-tabs { display:grid;height:60px;grid-template-columns:1fr 1fr;align-items:end; }
   .pickup-tabs__tab { position:relative;display:grid;height:36px;place-items:center;padding:0;border:0;background:transparent;color:#c4bba8;font:400 16px/24px Poppins,sans-serif;cursor:pointer; }
   .pickup-tabs__tab::after { content:"";position:absolute;right:0;bottom:0;left:0;height:2px;background:transparent; }
@@ -142,23 +342,46 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
   .pickup-tabs__tab.is-active::after { background:#f9cb69; }
   .pickup-locations__list { min-height:0;padding:24px 16px 0 0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:rgba(196,187,168,.5) transparent;scrollbar-width:thin; }
   .pickup-locations__list[hidden],.pickup-map-panel[hidden] { display:none; }
-  .pickup-card { display:grid;width:100%;min-height:168px;margin-bottom:12px;padding:24px;grid-template-columns:24px minmax(0,1fr);gap:16px;border:.5px solid transparent;border-radius:12px;background:rgba(67,54,26,.08); }
-  .pickup-card--featured { border-color:#f9cb69;background:rgba(67,54,26,.2); }
+  .pickup-card[hidden] { display:none; }
+  .pickup-card { display:grid;width:100%;min-height:168px;margin:0 0 12px;padding:24px;grid-template-columns:24px minmax(0,1fr);gap:16px;border:.5px solid transparent;border-radius:12px;background:rgba(67,54,26,.08);color:inherit;font:inherit;text-align:left;cursor:default;appearance:none;transition:border-color .18s ease,background-color .18s ease,box-shadow .18s ease,transform .18s ease; }
+  .pickup-card[data-pickup-card] { cursor:pointer; }
+  .pickup-card.is-active { border-color:#f9cb69;background:rgba(67,54,26,.2);box-shadow:inset 3px 0 0 rgba(249,203,105,.92); }
+  .pickup-card:focus-visible { outline:2px solid rgba(249,203,105,.88);outline-offset:2px; }
   .pickup-card__icon { display:block;width:24px;height:24px;margin-top:1px; }
-  .pickup-card__copy { min-width:0; }
-  .pickup-card h2 { margin:0 0 8px;color:#ae8e4a;font-size:18px;font-weight:600;line-height:26px;letter-spacing:0; }
-  .pickup-card p { margin:0;color:#c4bba8;font-size:16px;font-weight:300;line-height:24px; }
+  .pickup-card__copy,.pickup-card__title,.pickup-card__line { display:block;min-width:0; }
+  .pickup-card__title { margin:0 0 8px;color:#ae8e4a;font-size:18px;font-weight:600;line-height:26px;letter-spacing:0; }
+  .pickup-card__line { margin:0;color:#c4bba8;font-size:16px;font-weight:300;line-height:24px; }
   .pickup-card--delivery { min-height:202px;margin-bottom:0;background:rgba(67,54,26,.2); }
   .pickup-card__action { position:relative;display:inline-flex;height:48px;align-items:center;justify-content:center;gap:0;margin-top:24px;padding:12px 16px;border:.75px solid #b1a58d;border-radius:60px;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,.6)),linear-gradient(188deg,rgba(135,116,79,.2),rgba(43,43,43,.14));color:#987c40;font-size:16px;line-height:24px; }
   .pickup-card__action svg { width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
   .pickup-locations__maps { min-width:0;padding-top:104px; }
   .pickup-map-panel { position:relative;width:100%;height:856px;overflow:hidden;border-radius:24px;background:#050505; }
+  /* Transparente a proposito: el mapa base del pais vive en el panel y se ve
+     por debajo. Solo las vistas con arte propio (`__art`, `__embed`,
+     `__placeholder`) lo tapan, y lo hacen a sangre completa. */
+  .pickup-map-view { position:absolute;inset:0;overflow:hidden;border-radius:inherit;background:transparent; }
+  .pickup-map-view[hidden] { display:none; }
   .pickup-map-panel :global(.pickup-map-panel__art) { position:absolute;display:block;max-width:none;object-fit:cover; }
-  .pickup-map-panel--peru :global(.pickup-map-panel__art) { bottom:0;left:0;width:113.475%;height:auto; }
+  .pickup-map-view :global(.pickup-map-view__art) { position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center; }
+  .pickup-map-view__embed { display:block;width:100%;height:100%;border:0; }
+  .pickup-map-view__placeholder { position:absolute;inset:0;display:grid;place-items:center;padding:32px;background:radial-gradient(circle at center,rgba(152,124,64,.15),rgba(0,0,0,.92) 68%);color:#c4bba8;text-align:center; }
+  .pickup-map-view__caption { position:absolute;z-index:3;right:24px;bottom:24px;left:24px;display:flex;max-width:420px;flex-direction:column;gap:3px;padding:14px 16px;border:1px solid rgba(249,203,105,.32);border-radius:12px;background:rgba(0,0,0,.74);box-shadow:0 10px 30px rgba(0,0,0,.28);backdrop-filter:blur(8px); }
+  .pickup-map-view__caption strong { color:#f9cb69;font-size:17px;line-height:24px; }
+  .pickup-map-view__caption span { color:#c4bba8;font-size:14px;line-height:20px; }
+  .pickup-map-panel--peru :global(.pickup-map-panel__art) { inset:0;width:100%;height:100%;object-fit:cover;object-position:center; }
   .pickup-map-panel--bolivia :global(.pickup-map-panel__art) { top:0;right:0;width:224.35%;height:auto;opacity:.14; }
   .pickup-map-panel--bolivia::after { content:"";position:absolute;z-index:1;inset:0;border-radius:inherit;background:rgba(0,0,0,.92); }
   .pickup-map-panel__unavailable { position:absolute;z-index:2;inset:0;display:grid;place-items:center;text-align:center; }
   .pickup-map-panel__unavailable p { margin:0;color:#fff;font-size:28px;font-weight:600;line-height:33px; }
+
+  @media(hover:hover) and (pointer:fine){
+    .pickup-card[data-pickup-card]:not(.is-active):hover { border-color:rgba(249,203,105,.55);background:rgba(67,54,26,.16);box-shadow:0 10px 28px rgba(0,0,0,.22);transform:translateX(4px); }
+    .pickup-card[data-pickup-card]:not(.is-active):hover .pickup-card__title { color:#f9cb69; }
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .pickup-card { transition:none; }
+  }
 
   @media(max-width:1100px){
     .pickup-locations { min-height:auto;padding:40px clamp(24px,4vw,40px) 56px; }
@@ -167,21 +390,49 @@ const countries = PICKUP_COUNTRY_ORDER.map((country) => PICKUP_COUNTRIES[country
     .pickup-locations__maps { padding-top:104px; }
     .pickup-map-panel { height:auto;aspect-ratio:846/856; }
     .pickup-card { padding:20px 16px;gap:12px; }
-    .pickup-card p { font-size:14px;line-height:21px; }
+    .pickup-card__line { font-size:14px;line-height:21px; }
   }
 
   @media(max-width:767px){
-    .pickup-locations { padding:32px 20px 56px; }
+    .pickup-locations { height:1040px;min-height:1040px;padding:40px 16px; }
     .pickup-locations__glow { width:160vw;height:170px; }
-    .pickup-locations__layout { display:block;width:100%; }
-    .pickup-locations__sidebar { display:block;width:100%;height:auto;min-height:0; }
-    .pickup-locations h1 { font-size:32px;line-height:38px; }
-    .pickup-tabs { height:68px;margin-top:8px; }
-    .pickup-locations__list { padding:24px 0 0;overflow:visible; }
-    .pickup-card { min-height:0;padding:20px;margin-bottom:12px; }
+    .pickup-locations__layout { display:flex;width:min(100%,358px);height:960px;flex-direction:column;margin-inline:auto; }
+    .pickup-locations__sidebar { display:contents; }
+    .pickup-locations__title-desktop { display:none; }
+    .pickup-locations__title-mobile { display:inline; }
+    .pickup-locations h1 { color:#ae8e4a;font-size:32px;line-height:38px; }
+    .pickup-search { position:relative;display:flex;width:100%;height:36px;flex:0 0 36px;align-items:center;order:3;margin-top:24px;padding:1px 9px;border:1px solid #87744f;border-radius:12px; }
+    .pickup-search__label { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+    .pickup-search img { display:block;width:24px;height:24px;flex:0 0 24px; }
+    .pickup-search input { width:100%;height:32px;padding:0;border:0;outline:0;background:transparent;color:#c4bba8;font:500 14px/20px Poppins,sans-serif; }
+    .pickup-search input::placeholder { color:#ab9e84;opacity:1; }
+    .pickup-search:focus-within { border-color:#f9cb69;box-shadow:0 0 0 1px rgba(249,203,105,.16); }
+    .pickup-tabs { height:36px;flex:0 0 36px;order:4;margin-top:8px;border-bottom:1px solid #987c40;grid-template-columns:64px 72px 1fr;align-items:start; }
+    .pickup-tabs__tab { height:36px;padding:8px 16px 14px;font-size:14px;line-height:14px; }
+    .pickup-tabs__tab::after { height:2px; }
+    .pickup-locations__list { min-height:0;order:5;padding:24px 0 16px;overflow-x:hidden;overflow-y:auto; }
+    .pickup-card { min-height:0;padding:12px;margin-bottom:12px;grid-template-columns:minmax(0,1fr) 24px;gap:16px;background:transparent; }
+    .pickup-card__icon { grid-column:2;grid-row:1; }
+    .pickup-card__copy { grid-column:1;grid-row:1; }
+    .pickup-card__line { font-size:16px;line-height:24px; }
     .pickup-card--delivery { min-height:0; }
-    .pickup-locations__maps { padding-top:24px; }
-    .pickup-map-panel { min-height:360px;aspect-ratio:390/420;border-radius:18px; }
+    .pickup-locations__maps { width:100%;height:min(400px,102.564vw);flex:0 0 min(400px,102.564vw);order:2;margin-top:24px;padding:0; }
+    .pickup-map-panel { width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:24px; }
+    .pickup-map-panel--peru :global(.pickup-map-panel__art) { top:-62%;right:auto;bottom:auto;left:-100%;width:286%;height:auto;object-fit:unset; }
+    .pickup-map-panel--bolivia :global(.pickup-map-panel__art) { inset:0;width:100%;height:100%;object-fit:cover; }
+    .pickup-map-view__caption { right:12px;bottom:12px;left:12px;padding:10px 12px; }
+    .pickup-map-view__caption strong { font-size:15px;line-height:20px; }
+    .pickup-map-view__caption span { font-size:12px;line-height:17px; }
     .pickup-map-panel__unavailable p { font-size:24px;line-height:30px; }
+  }
+
+  /* Entre un telefono estrecho y una tablet vertical, la composicion sigue
+     apilada: el mapa aprovecha primero el ancho disponible y los controles y
+     locales continúan debajo. El limite anterior de 358px solo corresponde a
+     la maqueta de 390px y dejaba demasiado aire en estos viewports. */
+  @media(min-width:520px) and (max-width:767px){
+    .pickup-locations__layout { width:min(100%,720px); }
+    .pickup-locations__maps { height:clamp(400px,62vw,476px);flex-basis:clamp(400px,62vw,476px); }
+    .pickup-map-panel--peru :global(.pickup-map-panel__art) { top:-58%;left:50%;width:1024px;transform:translateX(-50%); }
   }
 </style>
