@@ -14,6 +14,30 @@ const SVGNS = 'http://www.w3.org/2000/svg';
  *  como arco y no como punto; y son unos 50 ms, demasiado poco para leerse como
  *  un fundido. */
 const RING_FADE_IN = 0.05;
+/** Altura del viewport, en tanto por uno, a la que la sección empieza a
+ *  «tirar» del scroll hacia el punto que dispara el reveal. Un tercio llega
+ *  temprano para que nadie quede detenido en el vacío, pero deja recorrido
+ *  manual antes del desplazamiento asistido. */
+const SNAP_TRIGGER_RATIO = 0.32;
+/** Holgura, en píxeles, que hay que dejar atrás para rearmar el enganche en un
+ *  sentido. Sin ella el seguro se soltaría en el borde exacto del umbral y el
+ *  enganche se repetiría en bucle. */
+const SNAP_RESET_MARGIN = 120;
+/** Umbral en píxeles para considerar que hubo movimiento en un sentido: filtra
+ *  el ruido subpíxel de los trackpads. */
+const SNAP_DIRECTION_EPSILON = 0.5;
+/** Un píxel dentro del tramo, para caer del lado correcto del umbral. */
+const SNAP_INSET = 1;
+/** Margen con el que damos por llegado el desplazamiento suave. */
+const SNAP_ARRIVAL_TOLERANCE = 4;
+/** Cuánto esperamos antes de comprobar si el desplazamiento suave llegó. Los
+ *  navegadores lo cancelan ante cualquier rueda del usuario, así que pasado
+ *  este tiempo o llegamos, o soltamos el seguro para poder reintentar. */
+const SNAP_VERIFY_MS = 700;
+/** Segunda espera, para distinguir «el usuario quedó detenido a medio camino»
+ *  —que es a quien hay que ayudar— de «el usuario sigue desplazándose por su
+ *  cuenta», a quien reenganchar sería pelearse con él. */
+const SNAP_SETTLE_MS = 180;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
@@ -359,6 +383,92 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     });
   };
 
+  // En escritorio hay un pequeño tramo entre la entrada visual de la sección
+  // y `showAt`. Si el usuario soltaba la rueda justo ahí, podía quedarse viendo
+  // únicamente el fondo oscuro. Lo tratamos como un umbral magnético: al bajar
+  // y entrar en la franja final, completamos el desplazamiento hasta el punto
+  // exacto que dispara el reveal. Un enganche por sentido y por pasada, salvo
+  // que el desplazamiento no llegue a su destino —ver `verifySnapArrival`—.
+  // La animación sigue siendo temporal (no queda ligada al progreso del scroll).
+  let previousScrollY = window.scrollY;
+  let downwardSnapDone = false;
+  let upwardSnapDone = false;
+  let snapVerifyTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // El seguro se arma al despachar el desplazamiento, porque durante el
+  // trayecto siguen llegando eventos de scroll y sin él el enganche se
+  // repetiría. Pero un `behavior:'smooth'` lo cancela cualquier rueda o
+  // trackpad del usuario, y entonces nos quedamos a medio camino —justo en la
+  // franja oscura que esto existe para evitar— sin posibilidad de reintento.
+  // Por eso comprobamos la llegada y, si no se produjo, soltamos el seguro.
+  const verifySnapArrival = (target: number, release: () => void) => {
+    clearTimeout(snapVerifyTimer);
+    snapVerifyTimer = setTimeout(() => {
+      const missed = Math.abs(window.scrollY - target) > SNAP_ARRIVAL_TOLERANCE;
+      if (!missed) {
+        snapVerifyTimer = undefined;
+        return;
+      }
+      // No llegamos. Antes de rearmar comprobamos que el scroll esté quieto:
+      // si el usuario sigue moviéndose, no está atrapado y volver a tirar de
+      // la página sería pelearse con él.
+      const settleFrom = window.scrollY;
+      snapVerifyTimer = setTimeout(() => {
+        snapVerifyTimer = undefined;
+        if (Math.abs(window.scrollY - settleFrom) <= SNAP_ARRIVAL_TOLERANCE) release();
+      }, SNAP_SETTLE_MS);
+    }, SNAP_VERIFY_MS);
+  };
+
+  const snapToRevealIfNeeded = (
+    rect: DOMRect,
+    scrollable: number,
+    compact: boolean,
+  ) => {
+    const currentScrollY = window.scrollY;
+    const movingDown = currentScrollY > previousScrollY + SNAP_DIRECTION_EPSILON;
+    const movingUp = currentScrollY < previousScrollY - SNAP_DIRECTION_EPSILON;
+    const snapOffset = scrollable * C.scroll.showAt;
+    const triggerLine = window.innerHeight * SNAP_TRIGGER_RATIO;
+
+    // Cada sentido conserva su propio seguro. Así, haber usado el enganche al
+    // bajar no impide que funcione al regresar desde la siguiente sección.
+    if (rect.top > triggerLine + SNAP_RESET_MARGIN) downwardSnapDone = false;
+    if (rect.bottom < window.innerHeight - triggerLine - SNAP_RESET_MARGIN) upwardSnapDone = false;
+
+    if (
+      !compact
+      && !downwardSnapDone
+      && movingDown
+      && scrollable > 0
+      && rect.top <= triggerLine
+      && rect.top > -snapOffset
+    ) {
+      downwardSnapDone = true;
+      const trackTop = currentScrollY + rect.top;
+      const target = Math.max(0, trackTop + snapOffset + SNAP_INSET);
+      window.scrollTo({ top: target, behavior: 'smooth' });
+      verifySnapArrival(target, () => { downwardSnapDone = false; });
+    } else if (
+      !compact
+      && !upwardSnapDone
+      && movingUp
+      && scrollable > 0
+      && rect.bottom >= window.innerHeight - triggerLine
+      && rect.bottom < window.innerHeight
+    ) {
+      upwardSnapDone = true;
+      const trackTop = currentScrollY + rect.top;
+      // Al regresar desde la sección siguiente, el punto equivalente es el
+      // final del sticky: ahí vuelve a cubrir el viewport y puede mostrarse.
+      const target = Math.max(0, trackTop + scrollable - SNAP_INSET);
+      window.scrollTo({ top: target, behavior: 'smooth' });
+      verifySnapArrival(target, () => { upwardSnapDone = false; });
+    }
+
+    previousScrollY = currentScrollY;
+  };
+
   const onScroll = () => {
     const rect = root.getBoundingClientRect();
     const scrollable = root.offsetHeight - window.innerHeight;
@@ -372,6 +482,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     // y se desvanece mientras Beneficios empieza a entrar, sin dejar un lienzo
     // negro con los controles flotando.
     const compact = compactViewport.matches;
+    snapToRevealIfNeeded(rect, scrollable, compact);
     const compactEntryLine = window.innerHeight * 0.28;
     const compactExitLead = Math.min(120, window.innerHeight * 0.14);
     const isCompactFocus =
@@ -401,6 +512,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     compactViewport.removeEventListener('change', syncTrackHeight);
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);
+    clearTimeout(snapVerifyTimer);
     driveAnim?.pause();
     tl.pause();
     root.classList.remove('reveal-initialized');

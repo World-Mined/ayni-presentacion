@@ -394,6 +394,14 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     text-align: center;
     opacity: 0;
   }
+  /* La entrada del título pertenece a la timeline, pero al salir de foco no
+     debe esperar a que toda la secuencia se rebobine hasta su primer tramo.
+     El estado del reveal lo apaga desde el inicio de la reversa; producto,
+     anillo y ramas continúan recorriendo normalmente el camino inverso. */
+  .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-title {
+    opacity: 0 !important;
+    transition: opacity .26s ease-out;
+  }
 
   /* Título de texto: solo queda como respaldo cuando el componente se usa sin
      escena, que hoy es únicamente `reveal-demo.astro`. */
