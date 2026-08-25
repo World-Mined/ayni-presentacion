@@ -97,6 +97,28 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
     pointer-events: none;
   }
 
+  /* El Figma repite en la entrada del footer el mismo halo cálido que abre la
+     sección de puntos de recojo. Se mantiene entre el patrón y el contenido
+     para iluminar el fondo sin lavar los textos ni los logotipos. */
+  .home-footer::after {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 50%;
+    width: min(100%, 1440px);
+    height: 211px;
+    transform: translateX(-50%);
+    background: radial-gradient(
+      ellipse 43% 142% at 47.2% -98.6%,
+      rgba(249, 203, 105, 1) 0%,
+      rgba(206, 168, 86, .75) 25%,
+      rgba(163, 133, 68, .5) 50%,
+      rgba(77, 62, 30, 0) 100%
+    );
+    content: '';
+    pointer-events: none;
+  }
+
   .home-footer__main {
     position: relative;
     z-index: 1;
@@ -290,6 +312,11 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
       background-position: center top;
       background-size: cover;
       background-repeat: no-repeat;
+    }
+
+    .home-footer::after {
+      width: 160vw;
+      height: 170px;
     }
 
     .home-footer__main {
