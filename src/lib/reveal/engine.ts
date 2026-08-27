@@ -47,6 +47,7 @@ function resolve(config: RevealConfig): ResolvedConfig {
     id: config.id,
     title: config.title,
     frames: { ...DEFAULT_FRAMES, ...config.frames },
+    video: config.video,
     labels: config.labels,
     background: config.background,
     timing: { ...DEFAULT_TIMING, ...config.timing },
@@ -68,15 +69,27 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const stage = root.querySelector<HTMLElement>('.reveal-stage');
   const overlay = root.querySelector<SVGSVGElement>('.reveal-overlay');
   const halo = root.querySelector<HTMLElement>('.reveal-halo');
-  const productImg = root.querySelector<HTMLImageElement>('.reveal-product');
+  const productImg = root.querySelector<HTMLImageElement | HTMLVideoElement>('.reveal-product');
   const titleblock = root.querySelector<HTMLElement>('.reveal-title');
   if (!stage || !overlay || !halo || !productImg || !titleblock) return () => {};
+  const nativeVideo = productImg instanceof HTMLVideoElement ? productImg : undefined;
+  // Safari móvil evalúa las políticas de autoplay antes de que Anime.js entre
+  // en juego. Fijamos las propiedades DOM además de los atributos HTML para
+  // que el MP4 remoto siempre sea reconocido como silencioso e inline.
+  if (nativeVideo) {
+    nativeVideo.muted = true;
+    nativeVideo.defaultMuted = true;
+    nativeVideo.playsInline = true;
+    nativeVideo.autoplay = true;
+  }
 
   const compactViewport = window.matchMedia(
     '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
   );
   const syncTrackHeight = () => {
-    root.style.height = compactViewport.matches ? '125svh' : `${C.scroll.trackVH}vh`;
+    // Móvil conserva un tramo breve de 20svh, suficiente para que el encaje
+    // al producto pueda completar su movimiento sin retener el scroll.
+    root.style.height = compactViewport.matches ? '120svh' : `${C.scroll.trackVH}vh`;
   };
   syncTrackHeight();
   compactViewport.addEventListener('change', syncTrackHeight);
@@ -90,13 +103,13 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // Conservamos las referencias de precarga durante toda la animación. El
   // frame visible solo cambia cuando el siguiente bitmap ya está listo, para
   // evitar un destello transparente si el usuario llega muy rápido al reveal.
-  const preloadedFrames = Array.from({ length: C.frames.count }, (_, i) => {
+  const preloadedFrames = nativeVideo ? [] : Array.from({ length: C.frames.count }, (_, i) => {
     const im = new Image();
     im.decoding = 'async';
     im.src = frameSrc(i);
     return im;
   });
-  productImg.src = frameSrc(0);
+  if (!nativeVideo) productImg.src = frameSrc(0);
 
   // En una visita sin caché, `complete` puede cambiar entre dos ticks mientras
   // Anime.js ya está recorriendo los frames. Eso hacía que la secuencia saltara
@@ -118,7 +131,16 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       }
     }
   };
-  void Promise.all([productImg, ...preloadedFrames].map(waitUntilDecoded)).then(() => {
+  const ready = nativeVideo
+    ? new Promise<void>((resolve) => {
+      if (nativeVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
+      else {
+        nativeVideo.addEventListener('loadeddata', () => resolve(), { once: true });
+        nativeVideo.addEventListener('error', () => resolve(), { once: true });
+      }
+    })
+    : Promise.all([productImg as HTMLImageElement, ...preloadedFrames].map(waitUntilDecoded)).then(() => {});
+  void ready.then(() => {
     if (disposed) return;
     framesReady = true;
     root.dataset.framesReady = 'true';
@@ -221,8 +243,13 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
 
   // ENTRADA
   tl.add(titleblock, { opacity: [0, 1], scale: [0.5, 1], duration: T.titleDur, ease: T.curve }, 0);
-  tl.add(productImg, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0); // sólido al centro
-  tl.add(productImg, { translateY: [T.riseFrom, '0%'], duration: T.riseDur, ease: T.curve }, 0); // popup
+  // El MP4 ya contiene el desplazamiento vertical. Le damos la misma ventana
+  // de subida que a la ruta por frames para que aparezca suavemente desde
+  // transparente y, al invertir, se desvanezca durante la bajada.
+  tl.add(productImg, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0);
+  if (!nativeVideo) {
+    tl.add(productImg, { translateY: [T.riseFrom, '0%'], duration: T.riseDur, ease: T.curve }, 0);
+  }
 
   // Giro en 2 fases + círculo sincronizado al frame.
   const count = C.frames.count;
@@ -248,7 +275,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   };
   const setFrame = () => {
     const frame = preloadedFrames[Math.round(state.f)];
-    if (frame?.complete && frame.naturalWidth > 0 && productImg.src !== frame.src) {
+    if (!nativeVideo && frame?.complete && frame.naturalWidth > 0 && productImg.src !== frame.src) {
       productImg.src = frame.src;
     }
     if (ringFollowsFrames) {
@@ -287,7 +314,9 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   }
 
   // Instante en que se cierra el círculo → ahí arrancan las ramas.
-  const labelsStart = ringFollowsFrames
+  const labelsStart = nativeVideo
+    ? C.video!.labelsStart
+    : ringFollowsFrames
     ? ringToIdx <= centerIdx
       ? (ringToIdx / centerIdx) * T.riseDur
       : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur
@@ -333,6 +362,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   //    controla la velocidad de cada dirección de forma fiable. ──
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
+    if (nativeVideo) nativeVideo.currentTime = nativeVideo.duration || 0;
     tl.seek(DUR); // accesibilidad: estado final sin movimiento
     root.dataset.revealState = 'shown';
     built.forEach(({ label }) => { label.disabled = false; });
@@ -349,6 +379,27 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   let shown = false;
   const driver = { p: 0 };
   let driveAnim: ReturnType<typeof animate> | null = null;
+  let reverseVideoFrame: number | undefined;
+  const stopVideoReverse = () => {
+    if (reverseVideoFrame !== undefined) cancelAnimationFrame(reverseVideoFrame);
+    reverseVideoFrame = undefined;
+  };
+  const reverseNativeVideo = () => {
+    if (!nativeVideo) return;
+    nativeVideo.pause();
+    stopVideoReverse();
+    const startTime = nativeVideo.currentTime;
+    const reverseDuration = Math.max(1, DUR / C.scroll.revRate);
+    let startTimestamp: number | undefined;
+    const tick = (timestamp: number) => {
+      startTimestamp ??= timestamp;
+      const progress = clamp((timestamp - startTimestamp) / reverseDuration, 0, 1);
+      nativeVideo.currentTime = startTime * (1 - progress);
+      if (progress < 1) reverseVideoFrame = requestAnimationFrame(tick);
+      else reverseVideoFrame = undefined;
+    };
+    reverseVideoFrame = requestAnimationFrame(tick);
+  };
   const driveTo = (target: number, duration: number, onComplete?: () => void) => {
     if (driveAnim) driveAnim.pause();
     driveAnim = animate(driver, {
@@ -363,6 +414,18 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     if (shown) return;
     shown = true;
     root.dataset.revealState = 'showing';
+    if (nativeVideo) {
+      stopVideoReverse();
+      nativeVideo.muted = true;
+      nativeVideo.defaultMuted = true;
+      nativeVideo.playsInline = true;
+      nativeVideo.currentTime = 0;
+      nativeVideo.playbackRate = C.video?.playbackRate ?? 1;
+      void nativeVideo.play().then(
+        () => { delete root.dataset.videoPlaybackBlocked; },
+        () => { root.dataset.videoPlaybackBlocked = 'true'; },
+      );
+    }
     driveTo(1, DUR, () => {
       if (!shown) return;
       root.dataset.revealState = 'shown';
@@ -378,6 +441,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     // avisa antes de invertir la animación para que ninguna foto seleccionada
     // quede flotando cuando producto, título y ramas ya se ocultaron.
     root.dispatchEvent(new Event('reveal:hide'));
+    reverseNativeVideo();
     driveTo(0, DUR / C.scroll.revRate, () => {
       if (!shown) root.dataset.revealState = 'hidden';
     });
@@ -403,6 +467,8 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // Por eso comprobamos la llegada y, si no se produjo, soltamos el seguro.
   const verifySnapArrival = (target: number, release: () => void) => {
     clearTimeout(snapVerifyTimer);
+    stopVideoReverse();
+    nativeVideo?.pause();
     snapVerifyTimer = setTimeout(() => {
       const missed = Math.abs(window.scrollY - target) > SNAP_ARRIVAL_TOLERANCE;
       if (!missed) {
@@ -423,7 +489,6 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const snapToRevealIfNeeded = (
     rect: DOMRect,
     scrollable: number,
-    compact: boolean,
   ) => {
     const currentScrollY = window.scrollY;
     const movingDown = currentScrollY > previousScrollY + SNAP_DIRECTION_EPSILON;
@@ -437,8 +502,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     if (rect.bottom < window.innerHeight - triggerLine - SNAP_RESET_MARGIN) upwardSnapDone = false;
 
     if (
-      !compact
-      && !downwardSnapDone
+      !downwardSnapDone
       && movingDown
       && scrollable > 0
       && rect.top <= triggerLine
@@ -450,8 +514,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       window.scrollTo({ top: target, behavior: 'smooth' });
       verifySnapArrival(target, () => { downwardSnapDone = false; });
     } else if (
-      !compact
-      && !upwardSnapDone
+      !upwardSnapDone
       && movingUp
       && scrollable > 0
       && rect.bottom >= window.innerHeight - triggerLine
@@ -482,7 +545,12 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     // y se desvanece mientras Beneficios empieza a entrar, sin dejar un lienzo
     // negro con los controles flotando.
     const compact = compactViewport.matches;
-    snapToRevealIfNeeded(rect, scrollable, compact);
+    snapToRevealIfNeeded(rect, scrollable);
+    // El producto (incluido el MP4) se queda fijo. Solo una veladura muy tenue
+    // se desplaza sobre el fondo durante el sticky para dar profundidad sin
+    // mover mandala, etiquetas ni contenido central.
+    const parallax = compact ? 0 : (p - 0.5);
+    root.style.setProperty('--reveal-gradient-shift', `${(parallax * 20).toFixed(2)}px`);
     const compactEntryLine = window.innerHeight * 0.28;
     const compactExitLead = Math.min(120, window.innerHeight * 0.14);
     const isCompactFocus =

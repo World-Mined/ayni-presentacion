@@ -25,6 +25,7 @@ if (!cfg) {
 }
 const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
 const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
+const hasNativeVideo = Boolean(cfg.video);
 const circleStyle = [
   `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
   `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
@@ -48,10 +49,13 @@ const previousProduct = PRODUCT_DETAILS[
 const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length];
 ---
 
+{cfg.background && <link rel="preload" href={cfg.background} as="image" type="image/webp" />}
+
 <div
   class="reveal-track"
   data-reveal={product}
   data-row-count={rowCount}
+  data-native-video={hasNativeVideo ? '' : undefined}
   style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
 >
   <div class="reveal-pin">
@@ -127,19 +131,31 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
       )}
       <div
         class="reveal-product-wrap"
-        data-product-tilt={product === 'capucci' ? '' : undefined}
+        data-product-tilt={product === 'capucci' && !cfg.video ? '' : undefined}
       >
         <div class="reveal-product-tilt">
-          <img
-            class="reveal-product"
-            src={`${cfg.frames.dir}/frame-01.webp`}
-            alt={cfg.title.main}
-            width="700"
-            height="700"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
+          {cfg.video ? (
+            <video
+              class="reveal-product reveal-product-video"
+              src={cfg.video.src}
+              aria-label={`Animación de ${cfg.title.main}`}
+              autoplay
+              muted
+              playsinline
+              preload="auto"
+            ></video>
+          ) : (
+            <img
+              class="reveal-product"
+              src={`${cfg.frames.dir}/frame-01.webp`}
+              alt={cfg.title.main}
+              width="700"
+              height="700"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          )}
         </div>
       </div>
       <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
@@ -350,22 +366,47 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
   /* La textura del mandala que el diseño pone detrás de la animación. Va como
      capa aparte y no en el `background` de arriba para que el degradado siga
      mandando en el centro, donde se apoya el producto. */
-  .reveal-track[style*='--reveal-bg'] .reveal-pin::before {
+  .reveal-pin::before {
     position: absolute;
     z-index: 0;
     inset: 0;
-    background-image: var(--reveal-bg);
+    /* Es una capa permanente. Antes dependía de `[style*='--reveal-bg']`,
+       un selector que podía dejar de coincidir mientras el navegador
+       recomponía la capa de video. El fallback cubre también el demo. */
+    background-image: var(--reveal-bg, url('/reveal/mandala.webp'));
     background-position: center;
     background-size: cover;
+    background-repeat: no-repeat;
     content: '';
     pointer-events: none;
   }
-  .reveal-track[style*='--reveal-bg'] .reveal-stage { z-index: 1; }
+  /* Una veladura asimétrica, casi transparente. Se desplaza apenas sobre el
+     mandala durante el sticky: añade profundidad sin mover la textura ni el
+     video del producto. */
+  .reveal-pin::after {
+    position: absolute;
+    z-index: 0;
+    inset: -2% -10%;
+    background: linear-gradient(90deg,
+      rgba(0, 0, 0, .14) 0%,
+      rgba(0, 0, 0, .08) 42%,
+      rgba(0, 0, 0, .025) 66%,
+      rgba(0, 0, 0, .06) 100%);
+    content: '';
+    pointer-events: none;
+    transform: translate3d(var(--reveal-gradient-shift, 0px), 0, 0);
+    will-change: transform;
+  }
+  .reveal-stage { z-index: 1; }
 
   .reveal-stage {
     position: relative;
     width: min(94vw, 1120px);
     aspect-ratio: 1920 / 1080;
+    /* El círculo y el overlay viven en este lienzo (no en todo el viewport).
+       Las unidades `cqw` de las descripciones deben usar esta misma referencia
+       para que no crezcan al pasar del máximo de 1120 px. */
+    container-type: inline-size;
   }
 
   /* En desktop el header ocupa la franja superior del viewport. Este pequeño
@@ -484,6 +525,25 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     user-select: none;
     -webkit-user-drag: none;
   }
+  /* Los MP4 entregados vienen en H.264 (sin transparencia) sobre negro. Al
+     mezclar por pantalla, el negro deja ver el fondo de la sección y los
+     elementos luminosos de la animación conservan su color. */
+  .reveal-product-video {
+    filter: none;
+    pointer-events: none;
+    mix-blend-mode: normal;
+  }
+  /* `transform` crea una capa de composición. Si `screen` vive en el `<video>`
+     se mezcla contra esa capa vacía y, de forma intermitente, reaparece el
+     rectángulo negro codificado en H.264. Mezclamos el grupo completo contra
+     el fondo real de la escena para que el negro permanezca transparente. */
+  .reveal-track[data-native-video] .reveal-product-tilt { mix-blend-mode: screen; }
+  .reveal-track[data-native-video] .reveal-product-wrap { width: 50%; }
+  .reveal-track[data-native-video] .reveal-halo { display: none; }
+  /* El MP4 ya trae su anillo en el estado normal. Durante el hover el video
+     se oculta para revelar la foto, así que recuperamos el anillo SVG solo
+     entonces: un único borde dorado, sin duplicarlo en reposo. */
+  .reveal-track[data-native-video]:not([data-active]) .reveal-ring { display: none; }
 
   .reveal-halo {
     position: absolute;
@@ -549,6 +609,51 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     transition: opacity .32s ease;
     pointer-events: none;
   }
+  /* Reset replica el componente de Figma: Poppins Light 24/28 y una caja de
+     460 px dentro de su círculo de 643 px. El padding es solo un seguro para
+     no rozar el filete dorado al adaptar el tamaño del círculo. */
+  .reveal-track[data-reveal='reset'] .reveal-phrase {
+    box-sizing: border-box;
+    width: 71.54%;
+    padding-block: clamp(8px, .7vw, 14px);
+    font-family: 'Poppins', system-ui, sans-serif;
+    /* 24 / 643 = 3.73% del diámetro en Figma. Como este círculo mide
+       41.04vw del lienzo, 1.53vw conserva esa proporción al escalar. */
+    font-size: clamp(16px, 1.53cqw, 24px);
+    font-weight: 300;
+    line-height: 1.1667;
+    white-space: pre-line;
+    /* Figma usa una caja de texto fija. `balance` acortaba artificialmente
+       cada línea y cambiaba por completo la composición de referencia. */
+    text-wrap: wrap;
+    text-shadow: none;
+  }
+  /* Moravi usa la variante Medium 24/28 del mismo componente de Figma. */
+  .reveal-track[data-reveal='moravi'] .reveal-phrase {
+    width: 71.54%;
+    padding-block: clamp(8px, .7vw, 14px);
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: clamp(16px, 1.53cqw, 24px);
+    font-weight: 500;
+    line-height: 1.1667;
+    white-space: pre-line;
+    text-wrap: wrap;
+    text-shadow: none;
+  }
+  /* Capucci usa el mismo componente de Figma: Poppins Medium 24/28 dentro
+     de una caja de 460 px. Ganoderma es la única variante con caja de 490 px. */
+  .reveal-track[data-reveal='capucci'] .reveal-phrase {
+    width: 71.54%;
+    padding-block: clamp(8px, .7vw, 14px);
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: clamp(16px, 1.53cqw, 24px);
+    font-weight: 500;
+    line-height: 1.1667;
+    white-space: pre-line;
+    text-wrap: wrap;
+    text-shadow: none;
+  }
+  .reveal-track[data-reveal='capucci'] [data-phrase='ganoderma'] { width: 76.2%; }
   [data-media][data-selected],
   [data-phrase][data-selected] { opacity: 1; }
   .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-media,
@@ -715,6 +820,13 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     .reveal-product-wrap {
       width: clamp(158px, 58.462vw, 251px);
     }
+    /* Los MP4 ya contienen el anillo: su área útil equivale al 82% del
+       fotograma. Escalamos el video para que ese anillo coincida con el
+       diámetro móvil y ocultamos el anillo CSS duplicado. */
+    .reveal-track[data-native-video] .reveal-product-wrap {
+      width: clamp(232px, 85.6vw, 368px);
+    }
+    .reveal-track[data-native-video] .reveal-mobile-ring { display: none; }
     .reveal-halo {
       width: clamp(224px, 82.051vw, 353px);
     }
@@ -891,6 +1003,19 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
       width: 84%;
       font-size: clamp(13px, 4.5vw, 21px);
     }
+    /* Cada producto tiene una tipografía de escritorio propia. Aquí se
+       normaliza únicamente la escala táctil: no se fija altura ni se recorta,
+       así `top: 50%` + `translateY(-50%)` centra el bloque por su contenido
+       real, igual que en escritorio. */
+    .reveal-track[data-reveal='capucci'] .reveal-phrase,
+    .reveal-track[data-reveal='capucci'] [data-phrase='ganoderma'],
+    .reveal-track[data-reveal='moravi'] .reveal-phrase,
+    .reveal-track[data-reveal='reset'] .reveal-phrase {
+      width: 82%;
+      padding-block: 2px;
+      font-size: clamp(10px, 3.2vw, 14px);
+      line-height: 1.17;
+    }
   }
 
   /* Esta variante es exclusivamente horizontal. Sin `orientation`, las barras
@@ -911,6 +1036,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     .reveal-product-wrap,
     .reveal-halo { top: 58%; }
     .reveal-product-wrap { width: clamp(118px, 38.64svh, 168px); }
+    .reveal-track[data-native-video] .reveal-product-wrap { width: clamp(220px, 64svh, 290px); }
     .reveal-halo { width: clamp(165px, 53.66svh, 233px); }
     .reveal-mobile-controls {
       top: calc(58% + var(--reveal-mobile-half-circle) + 8px);

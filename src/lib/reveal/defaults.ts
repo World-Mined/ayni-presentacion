@@ -46,7 +46,9 @@ export const DEFAULT_GEOMETRY: GeometryConfig = {
 };
 
 export const DEFAULT_SCROLL: ScrollConfig = {
-  trackVH: 175,   // 75vh fijados: punto medio entre la retención original y la corta
+  // Un tramo de 60vh deja percibir el microparallax sin convertir el
+  // reveal en una pantalla larga retenida.
+  trackVH: 160,
   showAt: 0.12,   // % para aparecer. MENOR → con menos scroll
   hideAt: 0.08,   // % para desaparecer (⚠ debe ser < showAt)
   revRate: 1.9,   // velocidad original de la animación inversa

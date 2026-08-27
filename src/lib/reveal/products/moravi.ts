@@ -6,9 +6,16 @@ export const moravi: RevealConfig = {
   // Figma rotula "La fórmula 6 en 1" pero lista siete ingredientes; se
   // mantiene el rótulo del diseño.
   title: { main: 'MORAVI 360', sub: 'La fórmula 6 en 1' },
-  // TODO(assets): igual que Reset, faltan los frames de la rotación.
+  // Video final entregado por diseño: conserva entrada y anillo originales.
   frames: { dir: '/reveal/moravi', count: 1 },
+  // Adelantamos las ramas apenas antes del cierre visual del MP4 para evitar
+  // el vacío que queda entre el anillo y el primer ingrediente.
+  video: { src: 'https://ayni.s3.us-east-1.amazonaws.com/videos/moravi.mp4', labelsStart: 1550, playbackRate: 1.25 },
   background: '/reveal/mandala.webp',
+  scroll: { revRate: 3 },
+  timing: { labelsStagger: 12, labelsDur: 90 },
+  // El anillo del video es mayor que el del reveal de Capucci.
+  geometry: { ringRadius: 394 },
 
   labels: [
     { id: 'acai', name: 'Acaí Berry', side: 'right', row: 0, icon: 'berry' },

@@ -26,6 +26,14 @@ export interface FramesConfig {
   ext?: string;         // por defecto 'webp'
 }
 
+/** Animación compuesta de entrada y anillo, entregada en video. */
+export interface VideoConfig {
+  src: string;
+  /** Momento, en ms, en que aparecen las ramas de ingredientes. */
+  labelsStart: number;
+  playbackRate?: number;
+}
+
 /** Tiempos y curvas de la secuencia (todo opcional: usa DEFAULT_TIMING). */
 export interface TimingConfig {
   // 1) ENTRADA
@@ -67,6 +75,7 @@ export interface RevealConfig {
   id: string;
   title: { main: string; sub: string };
   frames: FramesConfig;
+  video?: VideoConfig;
   labels: LabelDef[];
   /** Fondo de la sección (ruta en /public). Sin él queda solo el degradado. */
   background?: string;
@@ -80,6 +89,7 @@ export interface ResolvedConfig {
   id: string;
   title: { main: string; sub: string };
   frames: Required<FramesConfig>;
+  video?: VideoConfig;
   labels: LabelDef[];
   background?: string;
   timing: TimingConfig;

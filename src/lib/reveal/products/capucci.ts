@@ -7,6 +7,8 @@ export const capucci: RevealConfig = {
   id: 'capucci',
   title: { main: 'CAPUCCI 360', sub: 'La fórmula 7 en 1' },
   frames: { dir: '/reveal/capucci', count: 47 }, // /public/reveal/capucci/frame-01.webp …
+  // El MP4 conserva la animación entregada y los frames quedan como respaldo.
+  video: { src: 'https://ayni.s3.us-east-1.amazonaws.com/videos/capucci.mp4', labelsStart: 1550, playbackRate: 1.25 },
   background: '/reveal/mandala.webp',
 
   // Ingredientes impresos en el empaque. El orden de la lista = orden de aparición
@@ -21,6 +23,7 @@ export const capucci: RevealConfig = {
     { id: 'colageno', name: 'Colágeno', side: 'left', row: 2, icon: 'mol' },
   ],
 
-  // Overrides opcionales (si no, usa DEFAULT_TIMING). Ejemplo:
-  // timing: { ringEndFrame: 39, riseDur: 700 },
+  scroll: { revRate: 3 },
+  timing: { labelsStagger: 15, labelsDur: 100 },
+  geometry: { ringRadius: 394 },
 };

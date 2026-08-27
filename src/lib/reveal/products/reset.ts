@@ -4,15 +4,18 @@ import type { RevealConfig } from '../types';
 export const reset: RevealConfig = {
   id: 'reset',
   title: { main: 'RESET 360', sub: 'La fórmula 8 en 1' },
-  // TODO(assets): faltan los frames de la rotación. Con `count: 1` el motor
-  // repite frame-01 y la secuencia se queda sin giro, pero la entrada, el
-  // círculo y las ramas funcionan igual. Cuando lleguen los frames, súbelos a
-  // /public/reveal/reset y pon aquí el número real.
+  // Video final entregado por diseño: conserva entrada y anillo originales.
   frames: { dir: '/reveal/reset', count: 1 },
+  // Adelantamos las ramas apenas antes del cierre visual del MP4 para evitar
+  // el vacío que queda entre el anillo y el primer ingrediente.
+  video: { src: 'https://ayni.s3.us-east-1.amazonaws.com/videos/reset.mp4', labelsStart: 1550, playbackRate: 1.25 },
   background: '/reveal/mandala.webp',
+  scroll: { revRate: 3 },
+  timing: { labelsStagger: 15, labelsDur: 100 },
+  geometry: { ringRadius: 394 },
 
-  // Ingredientes impresos en el empaque. El orden de la lista = orden de
-  // aparición: primero la columna derecha, después la izquierda.
+  // Ingredientes y orden actualizados desde Figma (nodo 932:18023). El orden
+  // de la lista define la ráfaga: primero la columna derecha, luego izquierda.
   labels: [
     { id: 'amalaki', name: 'Amalaki', side: 'right', row: 0, icon: 'berry' },
     { id: 'chia', name: 'Chía', side: 'right', row: 1, icon: 'bean' },
