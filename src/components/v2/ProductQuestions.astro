@@ -1,0 +1,177 @@
+---
+import { Image } from 'astro:assets';
+import type { ProductDetail } from '../../data/products';
+import faqResetEffect from '../../assets/v2/product-faq-reset-effect.png';
+import faqNeutralEffect from '../../assets/v2/products-reveal-mandala.webp';
+import faqToggle from '../../assets/v2/product-faq-toggle.svg';
+import MotionCta from './MotionCta.astro';
+
+interface Props {
+  product: ProductDetail;
+}
+
+const { product } = Astro.props;
+const isReset = product.questions.visual === 'reset';
+---
+
+<section class:list={['product-questions', isReset && 'product-questions--reset']} data-reset-questions={isReset ? 'true' : undefined} aria-labelledby={`questions-${product.slug}`}>
+  {!isReset && (
+    <div class="product-questions__art" aria-hidden="true">
+      <Image
+        src={faqNeutralEffect}
+        alt=""
+        loading="lazy"
+        widths={[768, 1440]}
+        sizes="(max-width: 767px) 100vw, 56vw"
+      />
+    </div>
+  )}
+
+  <div class="product-questions__inner">
+    {isReset ? (
+      <div class="product-questions__stage">
+        <div class="product-questions__art" aria-hidden="true">
+          <img
+            src={faqResetEffect.src}
+            alt=""
+            width={faqResetEffect.width}
+            height={faqResetEffect.height}
+            loading="eager"
+            decoding="sync"
+            fetchpriority="high"
+          />
+        </div>
+        <div class="product-questions__intro">
+          <h2 id={`questions-${product.slug}`}>Preguntas</h2>
+          {product.questions.intro.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+    ) : (
+      <div class="product-questions__intro">
+        <h2 id={`questions-${product.slug}`}>Preguntas</h2>
+        {product.questions.intro.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    )}
+
+    <div class="product-questions__accordion">
+      {product.questions.items.map((item, index) => (
+        <details class:list={[item.hideOnMobile && 'product-questions__item--mobile-hidden']} data-open-on-mobile={item.openOnMobile ? 'true' : undefined} open={index === 0 || item.openOnMobile}>
+          <summary>
+            <span class="product-questions__title">{item.title}</span>
+            {item.mobileTitle && <span class="product-questions__title--mobile">{item.mobileTitle}</span>}
+            <Image class="product-questions__toggle" src={faqToggle} alt="" width={24} height={24} />
+          </summary>
+          <div class="product-questions__answer">
+            {item.body.map((paragraph) => <p>{paragraph}</p>)}
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <MotionCta class="product-questions__cta" href={product.benefits.ctaHref} target="_blank" rel="noopener">
+    <span>Ver tabla nutricional</span>
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+    <span class="product-questions__sr-only">de {product.name}, se abre en otra pestaña</span>
+  </MotionCta>
+</section>
+
+<script>
+  const resetQuestions = document.querySelector('[data-reset-questions]');
+
+  if (resetQuestions) {
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const setDefaultQuestions = () => {
+      const isMobile = mobileQuery.matches;
+      resetQuestions.querySelectorAll('details').forEach((item, index) => {
+        item.open = !isMobile || index === 0 || item.dataset.openOnMobile === 'true';
+      });
+    };
+
+    setDefaultQuestions();
+    mobileQuery.addEventListener('change', setDefaultQuestions);
+  }
+</script>
+
+<style>
+  .product-questions { position:relative;isolation:isolate;overflow:hidden;padding:clamp(48px,5.556vw,80px);background:#000; }
+  .product-questions__art { position:absolute;z-index:0;top:0;bottom:0;left:0;width:min(56%,800px);opacity:.18;pointer-events:none; }
+  .product-questions__art :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:left center; }
+  .product-questions__inner { position:relative;z-index:1;display:grid;width:min(100%,1280px);min-height:clamp(560px,55.833vw,804px);margin:0 auto;grid-template-columns:minmax(380px,1fr) minmax(400px,635px);gap:clamp(48px,8.333vw,120px);align-items:center; }
+  .product-questions__intro { max-width:525px;padding-left:40px;color:#fff9ec; }
+  .product-questions__intro h2 { margin:0 0 24px;color:#f9cb69;font-family:var(--font-title);font-size:clamp(30px,2.5vw,40px);line-height:1.2; }
+  .product-questions__intro p { margin:0;color:#fff9ec;font-family:var(--font-title);font-size:clamp(16px,1.667vw,24px);font-weight:400;line-height:1.1667; }
+  .product-questions__intro p + p { margin-top:24px; }
+  /* Reset: el pack y el texto viven juntos en una "escena" (container query) para
+     que el texto quede impreso sobre el producto y lo siga si la escena cambia de
+     tamaño, en vez de sincronizar dos elementos independientes a mano. Los
+     coeficientes en cqw son la posición/tamaño ya confirmados contra Figma a 1440
+     (art 800x804, intro a offset 68/164 con 525px de ancho, texto a 24px),
+     re-expresados como % del propio ancho de la escena. */
+  .product-questions--reset .product-questions__stage { --stage-w:clamp(500px,62vw,800px);position:relative;z-index:0;width:var(--stage-w);min-width:0;aspect-ratio:800/804;container-type:inline-size;margin-left:calc(var(--stage-w) * -0.085); }
+  .product-questions--reset .product-questions__stage .product-questions__art { position:static;width:100%;height:100%;opacity:1; }
+  .product-questions--reset .product-questions__stage .product-questions__art :global(img) { width:100%;height:100%;object-fit:cover;object-position:center; }
+  .product-questions--reset .product-questions__stage .product-questions__intro { position:absolute;top:20.5cqw;left:8.5cqw;width:65.625cqw;max-width:none;padding-left:5cqw; }
+  .product-questions--reset .product-questions__stage .product-questions__intro h2 { display:none; }
+  .product-questions--reset .product-questions__stage .product-questions__intro p { font-size:3cqw; }
+  .product-questions--reset .product-questions__stage .product-questions__intro p + p { margin-top:3cqw; }
+  .product-questions__accordion { position:relative;z-index:1;max-height:758px;overflow:auto;scrollbar-color:#4a4741 transparent; }
+  .product-questions details { border-top:1px solid #333; }
+  .product-questions details:last-child { border-bottom:1px solid #333; }
+  .product-questions summary { display:flex;min-height:76px;align-items:center;justify-content:space-between;gap:20px;padding:24px 16px;cursor:pointer;color:#f9cb69;font-family:var(--font-title);font-size:clamp(18px,1.667vw,24px);font-weight:600;line-height:1.1667;list-style:none; }
+  .product-questions summary::-webkit-details-marker { display:none; }
+  .product-questions__toggle { flex:none;transition:transform .2s ease; }
+  .product-questions details:not([open]) .product-questions__toggle { transform:rotate(180deg); }
+  .product-questions__title--mobile { display:none; }
+  .product-questions__answer { padding:0 16px 24px;color:#fef2d4;font-family:var(--font-title);font-size:clamp(16px,1.389vw,20px);line-height:1.2; }
+  .product-questions__answer p { margin:0; }
+  .product-questions__answer p + p { margin-top:0; }
+  .product-questions :global(.product-questions__cta) { position:relative;z-index:1;display:flex;width:max-content;max-width:100%;margin:48px auto 0;--cta-color:#987c40;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185deg,rgba(135,116,79,.2),rgba(43,43,43,.14)); }
+  .product-questions :global(.product-questions__cta svg) { fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .product-questions__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+  @media (min-width:1100px) and (max-width:1439px) {
+    /* Tramo intermedio: no hay espacio para que el pack mantenga su tamaño de
+       1440 sin tocar la columna de preguntas. En vez de calcular a mano cuánto
+       "cabe" (frágil, como ya vimos), el pack simplemente llena lo que le queda
+       de su propia columna del grid — nunca puede invadir la de al lado. */
+    .product-questions--reset { padding-inline:35px; }
+    .product-questions--reset .product-questions__inner { grid-template-columns:minmax(0,1fr) 480px;gap:16px; }
+    .product-questions--reset .product-questions__stage { width:100%;margin-left:0; }
+    .product-questions--reset .product-questions__accordion { margin-left:-100px; }
+  }
+  @media (max-width:1099px) {
+    .product-questions__inner { display:block;min-height:auto; }
+    .product-questions--reset .product-questions__stage { --stage-w:clamp(660px,68vw,800px);margin-left:auto;margin-right:auto;left:calc(var(--stage-w) * 0.067); }
+    .product-questions__accordion { width:100%;max-height:none;overflow:visible;margin-top:24px; }
+  }
+  @media (max-width:767px) {
+    .product-questions { padding:56px 16px 40px; }
+    .product-questions__art { top:auto;bottom:90px;width:100%;height:440px;opacity:.12; }
+    .product-questions__inner { display:flex;min-height:0;flex-direction:column;gap:40px;align-items:stretch; }
+    .product-questions__intro { max-width:520px;padding:0; }
+    .product-questions__intro h2 { font-size:32px; }
+    .product-questions__intro p { font-size:17px;line-height:1.45; }
+    .product-questions__accordion { max-height:none;overflow:visible; }
+    .product-questions summary { min-height:64px;padding:18px 0;font-size:18px; }
+    .product-questions__answer { padding:0 0 20px;font-size:16px;line-height:1.45; }
+    .product-questions :global(.product-questions__cta) { width:100%;margin-top:40px; }
+    .product-questions--reset { display:block;min-height:0;height:auto;padding:0 12px 28px; }
+    .product-questions--reset .product-questions__inner { position:static;padding-top:246px;gap:56px; }
+    .product-questions--reset .product-questions__stage { display:contents; }
+    .product-questions--reset .product-questions__stage .product-questions__art { position:absolute;top:0;bottom:auto;left:50%;width:270px;height:240px;opacity:1;transform:translateX(-50%); }
+    .product-questions--reset .product-questions__stage .product-questions__art :global(img) { width:112%;height:112%;object-fit:contain;transform:translate(-6%,-10%); }
+    .product-questions--reset .product-questions__stage .product-questions__intro { position:static;top:auto;left:auto;width:auto;max-width:326px;padding-left:0;margin:0 auto;text-align:center; }
+    .product-questions--reset .product-questions__stage .product-questions__intro h2 { display:none; }
+    .product-questions--reset .product-questions__stage .product-questions__intro p { font-size:15px;line-height:1.28; }
+    .product-questions--reset .product-questions__stage .product-questions__intro p + p { margin-top:25px; }
+    .product-questions--reset .product-questions__accordion { width:100%; }
+    .product-questions--reset .product-questions__item--mobile-hidden { display:none; }
+    .product-questions--reset .product-questions__title--mobile { display:inline; }
+    .product-questions--reset .product-questions__title:has(+ .product-questions__title--mobile) { display:none; }
+    .product-questions--reset details:not([open]) summary { color:#858585; }
+    .product-questions--reset details[data-open-on-mobile] summary { color:#858585; }
+    .product-questions--reset summary { min-height:0;padding:18px 12px;font-size:18px; }
+    .product-questions--reset .product-questions__answer { padding:0 12px 18px;font-size:15px;line-height:1.18; }
+    .product-questions--reset :global(.product-questions__cta) { display:none; }
+  }
+</style>

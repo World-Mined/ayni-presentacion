@@ -3,7 +3,9 @@ import ProductReveal from '../../components/reveal/ProductReveal.astro';
 import HomeFooter from '../../components/v2/HomeFooter.astro';
 import OtherProductsBanner from '../../components/v2/OtherProductsBanner.astro';
 import ProductBenefits from '../../components/v2/ProductBenefits.astro';
+import ProductEntrepreneur from '../../components/v2/ProductEntrepreneur.astro';
 import ProductHero from '../../components/v2/ProductHero.astro';
+import ProductQuestions from '../../components/v2/ProductQuestions.astro';
 import SiteHeader from '../../components/v2/SiteHeader.astro';
 import { PRODUCT_INGREDIENTS } from '../../data/product-ingredients';
 import { PRODUCT_DETAILS, otherProducts } from '../../data/products';
@@ -33,6 +35,8 @@ const ingredients = PRODUCT_INGREDIENTS[product.revealId];
       alt={`Ingredientes de ${product.name} sobre una mesa de madera`}
     />
     <ProductReveal product={product.revealId} scene={ingredients} />
+    <ProductQuestions product={product} />
+    <ProductEntrepreneur product={product} />
     <ProductBenefits
       subtitle={product.benefits.subtitle}
       items={product.benefits.items}

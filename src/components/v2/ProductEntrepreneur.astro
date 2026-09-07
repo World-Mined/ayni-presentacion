@@ -1,0 +1,74 @@
+---
+import { Image } from 'astro:assets';
+import type { ProductDetail } from '../../data/products';
+import background from '../../assets/v2/product-entrepreneur-background.png';
+import people from '../../assets/v2/product-entrepreneur-people.png';
+import peopleMobile from '../../assets/v2/product-entrepreneur-people-mobile.png';
+import gradient from '../../assets/v2/product-entrepreneur-gradient.png';
+import MotionCta from './MotionCta.astro';
+
+interface Props {
+  product: ProductDetail;
+}
+
+const { product } = Astro.props;
+const highlightedDescription = product.entrepreneur.descriptionHighlight;
+const [descriptionStart, descriptionEnd] = highlightedDescription
+  ? product.entrepreneur.description.split(highlightedDescription)
+  : [product.entrepreneur.description, ''];
+---
+
+<section class="product-entrepreneur" aria-labelledby={`entrepreneur-${product.slug}`}>
+  <Image class="product-entrepreneur__background" src={background} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+  <picture class="product-entrepreneur__people" aria-hidden="true">
+    <source media="(max-width: 767px)" srcset={peopleMobile.src} />
+    <Image src={people} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+  </picture>
+  <div class="product-entrepreneur__gradient" aria-hidden="true">
+    <Image src={gradient} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+  </div>
+  <div class="product-entrepreneur__inner">
+    <div class="product-entrepreneur__content">
+      <h2 id={`entrepreneur-${product.slug}`}>{product.entrepreneur.heading}</h2>
+      <p>
+        {descriptionStart}
+        {highlightedDescription && <strong>{highlightedDescription}</strong>}
+        {descriptionEnd}
+      </p>
+      <MotionCta class="product-entrepreneur__cta" href="/embajadores">
+        <span>Quiero emprender</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </MotionCta>
+    </div>
+  </div>
+</section>
+
+<style>
+  .product-entrepreneur { position:relative;display:grid;min-height:480px;overflow:hidden;background:#090806;isolation:isolate; }
+  .product-entrepreneur__background,.product-entrepreneur__people,.product-entrepreneur__gradient { position:absolute;inset:0;display:block;pointer-events:none; }
+  .product-entrepreneur__background { z-index:0; }
+  .product-entrepreneur__people { z-index:1; }
+  .product-entrepreneur__gradient { z-index:2; }
+  .product-entrepreneur__background,.product-entrepreneur__people :global(img),.product-entrepreneur__gradient :global(img) { display:block;width:100%;height:100%;object-fit:cover; }
+  .product-entrepreneur__gradient :global(img) { object-position:right center; }
+  .product-entrepreneur__inner { position:relative;z-index:3;display:flex;width:min(100%,1280px);padding:80px;align-items:center;justify-content:flex-end;margin:auto; }
+  .product-entrepreneur__content { display:flex;width:min(100%,547px);flex-direction:column;align-items:flex-start;gap:24px; }
+  .product-entrepreneur__content h2 { margin:0;color:#f9cb69;font-family:var(--font-title);font-size:clamp(30px,2.778vw,40px);font-weight:600;line-height:1.2; }
+  .product-entrepreneur__content p { margin:0;color:#c4bba8;font-family:var(--font-title);font-size:18px;font-weight:300;line-height:26px; }
+  .product-entrepreneur__content p strong { color:#fff;font-weight:700; }
+  .product-entrepreneur__content p::first-line { color:#c4bba8; }
+  .product-entrepreneur :global(.product-entrepreneur__cta) { --cta-color:#987c40;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185deg,rgba(135,116,79,.2),rgba(43,43,43,.14)); }
+  .product-entrepreneur :global(.product-entrepreneur__cta svg) { fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  @media (max-width:767px) {
+    .product-entrepreneur { min-height:520px; }
+    .product-entrepreneur__background { display:none; }
+    .product-entrepreneur__people { inset:auto 0 0;height:170px; }
+    .product-entrepreneur__people :global(img) { width:100%;height:100%;object-fit:contain;object-position:center bottom; }
+    .product-entrepreneur__gradient { background:linear-gradient(180deg,#090806 0%,rgba(9,8,6,.9) 48%,rgba(9,8,6,.1) 100%); }
+    .product-entrepreneur__gradient :global(img) { display:none; }
+    .product-entrepreneur__inner { width:100%;padding:56px 24px 170px;align-items:flex-start;justify-content:flex-start; }
+    .product-entrepreneur__content { width:100%;gap:16px; }
+    .product-entrepreneur__content h2 { font-size:32px; }
+    .product-entrepreneur__content p { font-size:17px;line-height:25px; }
+  }
+</style>

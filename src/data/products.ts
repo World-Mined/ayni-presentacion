@@ -25,6 +25,15 @@ export interface ProductBenefit {
   image: ImageMetadata;
 }
 
+export interface ProductFaqItem {
+  title: string;
+  body: string[];
+  /** El diseño móvil condensa algunos rótulos y omite el ritual duplicado. */
+  mobileTitle?: string;
+  hideOnMobile?: boolean;
+  openOnMobile?: boolean;
+}
+
 export interface ProductDetail {
   slug: string;
   /** Id en el registro de `ProductReveal` (lib/reveal/products). */
@@ -44,6 +53,18 @@ export interface ProductDetail {
     items: [ProductBenefit, ProductBenefit, ProductBenefit, ProductBenefit];
     /** Ficha del producto; en Figma el CTA abre Drive en otra pestaña. */
     ctaHref: string;
+  };
+  questions: {
+    /** El arte de Reset lleva su empaque integrado; no se reutiliza en las
+        demás fórmulas para evitar mostrar un producto equivocado. */
+    visual: 'reset' | 'neutral';
+    intro: string[];
+    items: ProductFaqItem[];
+  };
+  entrepreneur: {
+    heading: string;
+    description: string;
+    descriptionHighlight?: string;
   };
   /** Bolsa que se muestra cuando este producto sale en "Otros Productos". */
   pack: ImageMetadata;
@@ -73,6 +94,23 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
       ],
       ctaHref: 'https://drive.google.com/drive/folders/1qqpVehTQ8gFzSL0MmrUZroLa_i-j_L4f?usp=sharing',
     },
+    questions: {
+      visual: 'neutral',
+      intro: [
+        'Moravi 360 reúne superalimentos pensados para acompañar tu bienestar desde adentro y sumar vitalidad a tu rutina.',
+        'Su fórmula integra brócoli, amalaki, moringa, acaí berry, plátano verde y limón.',
+        'Una combinación consciente para quienes buscan sostener sus hábitos de bienestar día a día.',
+      ],
+      items: [
+        { title: '¿Qué puedes esperar?', body: ['Acompañar tus hábitos de bienestar.', 'Sentirte con energía para tu día.', 'Sumar superalimentos a tu rutina.'] },
+        { title: '¿Cómo integrarlo a tu rutina?', body: ['Sigue siempre las indicaciones de consumo que figuran en el empaque y consulta a un profesional de la salud si tienes alguna condición particular.'] },
+        { title: 'Ingredientes destacados', body: ['Brócoli, amalaki, moringa, acaí berry, plátano verde y limón.'] },
+      ],
+    },
+    entrepreneur: {
+      heading: 'Ya conoces el poder de Moravi 360.',
+      description: 'Comparte bienestar consciente y construye una fuente de ingresos a tu propio ritmo.',
+    },
     pack: moraviPack,
   },
   {
@@ -96,6 +134,23 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
       ],
       ctaHref: 'https://drive.google.com/drive/folders/1qqpVehTQ8gFzSL0MmrUZroLa_i-j_L4f?usp=sharing',
     },
+    questions: {
+      visual: 'neutral',
+      intro: [
+        'Capucci 360 transforma un momento cotidiano en una experiencia de café funcional con superalimentos.',
+        'Su fórmula combina café, ganoderma, maca, colágeno, moringa, amalaki y espirulina.',
+        'Una alternativa para acompañar tus pausas, tu enfoque y el ritmo de cada día.',
+      ],
+      items: [
+        { title: '¿Qué puedes esperar?', body: ['Disfrutar una experiencia de café funcional.', 'Acompañar tus momentos de enfoque.', 'Sumar superalimentos a tu rutina diaria.'] },
+        { title: '¿Cómo integrarlo a tu rutina?', body: ['Sigue siempre las indicaciones de consumo que figuran en el empaque y consulta a un profesional de la salud si tienes alguna condición particular.'] },
+        { title: 'Ingredientes destacados', body: ['Café, ganoderma, maca, colágeno, moringa, amalaki y espirulina.'] },
+      ],
+    },
+    entrepreneur: {
+      heading: 'Ya conoces el poder de Capucci 360.',
+      description: 'Comparte una nueva forma de vivir el café y construye una fuente de ingresos a tu propio ritmo.',
+    },
     pack: capucciPack,
   },
   {
@@ -118,6 +173,31 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
         { title: 'Bienestar total', description: 'Equilibrio y armonía integral.', image: benefitReset4 },
       ],
       ctaHref: 'https://drive.google.com/file/d/14TYJGrDY6_zLtsUprFRDGqNBnwvbn6dv/view?usp=sharing',
+    },
+    questions: {
+      visual: 'reset',
+      intro: [
+        'Hay momentos en los que el cuerpo pide soltar lo que pesa y recuperar su ritmo. RESET 360 representa ese regreso al centro: un sistema avanzado de bienestar con una potente fórmula 8 en 1, creado para acompañar los procesos naturales de limpieza del organismo, favorecer la digestión y ayudarte a recuperar ligereza, energía y equilibrio.',
+        'Su fórmula reúne superalimentos y extractos naturales con fibras, prebióticos, probióticos y vitaminas.',
+        'Una combinación pensada como un escudo activo que acompaña tu bienestar desde adentro.',
+      ],
+      items: [
+        { title: '¿Qué puedes esperar?', body: ['Limpia tu organismo.', 'Siéntete más ligero.', 'Mejora tu digestión.', 'Recupera tu energía.'] },
+        { title: 'El ritual: ¿Cómo tomarlo?', hideOnMobile: true, body: ['Para aprovechar al máximo sus beneficios digestivos y nutricionales, se recomienda consumir de 1 a 2 sobres al día. Por su contenido de fibras activas, como la chía y los FOS, además de minerales, esta es la cantidad indicada en la fórmula original para acompañar el equilibrio de tu sistema.', 'Si padeces alguna condición de salud específica o estás bajo tratamiento médico, consulta con tu especialista antes de incorporarlo a tu rutina diaria.'] },
+        { title: 'Consejo de uso', body: ['Por prevención, se sugiere evitar su consumo en los siguientes casos:', 'Madres gestantes (embarazadas).', 'Madres en periodo de lactancia.', 'Niños menores de 5 años.'] },
+        { title: '¿Cómo tomarlo?', body: ['Para aprovechar al máximo sus beneficios digestivos y nutricionales, te recomendamos consumir 1 a 2 sobres al día. Al estar formulado con un alto contenido de fibras activas (como la chía y los FOS) y minerales, esta es la cantidad ideal para mantener tu sistema equilibrado.', 'Si padeces alguna condición de salud específica o estás bajo tratamiento médico, te sugerimos consultar con tu especialista antes de sumarlo a tu rutina diaria.'] },
+        { title: '¿Para quién es este ritual?', mobileTitle: '¿Para quién es el producto?', body: ['Está pensado para cualquier persona mayor de 5 años que busque sumar sus beneficios a su día a día, siempre y cuando no se encuentre en etapa de embarazo, lactancia o tenga restricciones médicas preexistentes.'] },
+        { title: 'Ingredientes', body: ['• Súper alimentos y extractos naturales: Piña, chía, ciruela, coco, papaya, calabaza, alcachofa y amalaki.', '• Probióticos y Vitaminas: Cultivos probióticos y mix de vitaminas.', '• Fibras y Prebióticos: Fructooligosacáridos (FOS) y fibra de acacia.', '• Sabor y dulzor natural: Sabor a piña-coco y Stevia (glicósidos de esteviol).', '• Otros ingredientes: Goma xantana (espesante) y ácido cítrico (acidulante).', '• Información sobre alérgenos: Contiene derivados lácteos, presentes en los cultivos probióticos.'] },
+        { title: 'Preguntas frecuentes', body: ['1. ¿Qué es exactamente RESET 360 y cuál es su función principal?', 'Es un sistema integral de bienestar con una potente fórmula 8 en 1 (que incluye amalaki, ciruela, chía, piña, acai berry, coco, calabaza y papaya) potenciada con magnesio, zinc y probióticos. Su función principal es favorecer el tránsito intestinal, reducir la inflamación y apoyar los procesos naturales de depuración de tu cuerpo, ayudándote a restaurar tu equilibrio interno de forma suave y efectiva.', '2. ¿Tiene azúcar o muchas calorías?', 'No, RESET 360 es cero azúcar (está endulzado naturalmente con Stevia) y es bajo en calorías, por lo que se adapta perfectamente a cualquier plan de alimentación y a un estilo de vida saludable.', '3. ¿Cuáles son los principales malestares de los que me ayuda a liberarme?', 'Es tu gran aliado para despedirte de la pesadez, el tránsito intestinal lento y la molesta hinchazón digestiva. Además, gracias a ingredientes como la piña y la alcachofa, favorece la reducción de líquidos retenidos, devolviéndote tu energía y una sensación de ligereza real a lo largo del día.'] },
+        { title: 'Contenido', body: ['Cada doypack contiene un peso neto de 280 g, lo que rinde para 28 porciones (tomas de 7 g cada una).'] },
+        { title: 'Certificación de calidad', openOnMobile: true, body: [] },
+        { title: 'Registro sanitario', body: ['P2889625N/NAQAMX'] },
+      ],
+    },
+    entrepreneur: {
+      heading: 'Ya conoces el poder de Reset 360.',
+      description: 'Comparte lo que ya conoces y construye una fuente de ingresos a tu propio ritmo.',
+      descriptionHighlight: 'construye una fuente de ingresos',
     },
     pack: resetPack,
   },
