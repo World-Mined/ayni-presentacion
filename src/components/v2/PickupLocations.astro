@@ -18,8 +18,7 @@ const DEFAULT_PREVIEW_ZOOM = 15;
   <div class="pickup-locations__layout">
     <div class="pickup-locations__sidebar">
       <h1 id="pickup-locations-title">
-        <span class="pickup-locations__title-desktop">Puntos de recojo</span>
-        <span class="pickup-locations__title-mobile">Ubícanos</span>
+        Ubícanos
       </h1>
 
       <label class="pickup-search">
@@ -69,13 +68,13 @@ const DEFAULT_PREVIEW_ZOOM = 15;
               data-pickup-location={location.id}
               data-pickup-country={country.id}
             >
-              <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
               <span class="pickup-card__copy">
                 <span class="pickup-card__title">{location.name}</span>
                 <span class="pickup-card__line">{location.address}</span>
                 <span class="pickup-card__line">{location.schedule[0]}</span>
                 <span class="pickup-card__line">{location.schedule[1]}</span>
               </span>
+              <img class="pickup-card__icon" src={infoIcon.src} width="24" height="24" alt="" aria-hidden="true" />
             </button>
           ))}
 
@@ -182,10 +181,6 @@ const DEFAULT_PREVIEW_ZOOM = 15;
                 </div>
               )}
 
-              <div class="pickup-map-view__caption">
-                <strong>{location.name}</strong>
-                <span>{location.address}</span>
-              </div>
             </div>
           ))}
         </div>
@@ -330,8 +325,8 @@ const DEFAULT_PREVIEW_ZOOM = 15;
   .pickup-locations__glow { position:absolute;z-index:-1;top:0;left:50%;width:min(88.889vw,1280px);height:211px;transform:translateX(-50%);background:radial-gradient(ellipse 43% 142% at 47.2% -98.6%,rgba(249,203,105,1) 0%,rgba(206,168,86,.75) 25%,rgba(163,133,68,.5) 50%,rgba(77,62,30,0) 100%);pointer-events:none; }
   .pickup-locations__layout { display:grid;width:min(100%,1280px);height:960px;margin-inline:auto;grid-template-columns:410px minmax(0,846px);gap:24px; }
   .pickup-locations__sidebar { display:grid;min-width:0;height:960px;grid-template-rows:44px 60px minmax(0,816px); }
-  .pickup-locations h1 { margin:0;color:#f9cb69;font-size:36px;font-weight:600;line-height:44px;letter-spacing:0; }
-  .pickup-locations__title-mobile,.pickup-search { display:none; }
+  .pickup-locations h1 { margin:0;color:#ae8e4a;font-size:36px;font-weight:600;line-height:44px;letter-spacing:0; }
+  .pickup-search { display:none; }
   .pickup-locations__status { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
   .pickup-locations__empty { margin:8px 0 0;padding:0 4px;color:#c4bba8;font:300 16px/24px Poppins,sans-serif; }
   .pickup-locations__empty[hidden] { display:none; }
@@ -340,18 +335,18 @@ const DEFAULT_PREVIEW_ZOOM = 15;
   .pickup-tabs__tab::after { content:"";position:absolute;right:0;bottom:0;left:0;height:2px;background:transparent; }
   .pickup-tabs__tab.is-active { color:#f9cb69;font-weight:600; }
   .pickup-tabs__tab.is-active::after { background:#f9cb69; }
-  .pickup-locations__list { min-height:0;padding:24px 16px 0 0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:rgba(196,187,168,.5) transparent;scrollbar-width:thin; }
+  .pickup-locations__list { min-height:0;padding:24px 0 0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:rgba(196,187,168,.5) transparent;scrollbar-width:thin; }
   .pickup-locations__list[hidden],.pickup-map-panel[hidden] { display:none; }
   .pickup-card[hidden] { display:none; }
-  .pickup-card { display:grid;width:100%;min-height:168px;margin:0 0 12px;padding:24px;grid-template-columns:24px minmax(0,1fr);gap:16px;border:.5px solid transparent;border-radius:12px;background:rgba(67,54,26,.08);color:inherit;font:inherit;text-align:left;cursor:default;appearance:none;transition:border-color .18s ease,background-color .18s ease,box-shadow .18s ease,transform .18s ease; }
+  .pickup-card { display:grid;width:100%;margin:0 0 12px;padding:12px;grid-template-columns:minmax(0,1fr) 24px;gap:16px;border:.5px solid transparent;border-radius:12px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:default;appearance:none;transition:border-color .18s ease,background-color .18s ease,transform .18s ease; }
   .pickup-card[data-pickup-card] { cursor:pointer; }
-  .pickup-card.is-active { border-color:#f9cb69;background:rgba(67,54,26,.2);box-shadow:inset 3px 0 0 rgba(249,203,105,.92); }
+  .pickup-card.is-active { border-color:#f9cb69;background:rgba(67,54,26,.2); }
   .pickup-card:focus-visible { outline:2px solid rgba(249,203,105,.88);outline-offset:2px; }
-  .pickup-card__icon { display:block;width:24px;height:24px;margin-top:1px; }
+  .pickup-card__icon { display:block;width:24px;height:24px;margin-top:1px;grid-column:2;grid-row:1; }
   .pickup-card__copy,.pickup-card__title,.pickup-card__line { display:block;min-width:0; }
   .pickup-card__title { margin:0 0 8px;color:#ae8e4a;font-size:18px;font-weight:600;line-height:26px;letter-spacing:0; }
   .pickup-card__line { margin:0;color:#c4bba8;font-size:16px;font-weight:300;line-height:24px; }
-  .pickup-card--delivery { min-height:202px;margin-bottom:0;background:rgba(67,54,26,.2); }
+  .pickup-card--delivery { margin-bottom:0;background:rgba(67,54,26,.2); }
   .pickup-card__action { position:relative;display:inline-flex;height:48px;align-items:center;justify-content:center;gap:0;margin-top:24px;padding:12px 16px;border:.75px solid #b1a58d;border-radius:60px;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,.6)),linear-gradient(188deg,rgba(135,116,79,.2),rgba(43,43,43,.14));color:#987c40;font-size:16px;line-height:24px; }
   .pickup-card__action svg { width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
   .pickup-locations__maps { min-width:0;padding-top:104px; }
@@ -365,9 +360,6 @@ const DEFAULT_PREVIEW_ZOOM = 15;
   .pickup-map-view :global(.pickup-map-view__art) { position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center; }
   .pickup-map-view__embed { display:block;width:100%;height:100%;border:0; }
   .pickup-map-view__placeholder { position:absolute;inset:0;display:grid;place-items:center;padding:32px;background:radial-gradient(circle at center,rgba(152,124,64,.15),rgba(0,0,0,.92) 68%);color:#c4bba8;text-align:center; }
-  .pickup-map-view__caption { position:absolute;z-index:3;right:24px;bottom:24px;left:24px;display:flex;max-width:420px;flex-direction:column;gap:3px;padding:14px 16px;border:1px solid rgba(249,203,105,.32);border-radius:12px;background:rgba(0,0,0,.74);box-shadow:0 10px 30px rgba(0,0,0,.28);backdrop-filter:blur(8px); }
-  .pickup-map-view__caption strong { color:#f9cb69;font-size:17px;line-height:24px; }
-  .pickup-map-view__caption span { color:#c4bba8;font-size:14px;line-height:20px; }
   .pickup-map-panel--peru :global(.pickup-map-panel__art) { inset:0;width:100%;height:100%;object-fit:cover;object-position:center; }
   .pickup-map-panel--bolivia :global(.pickup-map-panel__art) { top:0;right:0;width:224.35%;height:auto;opacity:.14; }
   .pickup-map-panel--bolivia::after { content:"";position:absolute;z-index:1;inset:0;border-radius:inherit;background:rgba(0,0,0,.92); }
@@ -389,7 +381,7 @@ const DEFAULT_PREVIEW_ZOOM = 15;
     .pickup-locations__sidebar { height:min(960px,calc(100vh - 144px));min-height:720px;grid-template-rows:44px 60px minmax(0,1fr); }
     .pickup-locations__maps { padding-top:104px; }
     .pickup-map-panel { height:auto;aspect-ratio:846/856; }
-    .pickup-card { padding:20px 16px;gap:12px; }
+    .pickup-card { padding:12px;gap:12px; }
     .pickup-card__line { font-size:14px;line-height:21px; }
   }
 
@@ -398,8 +390,6 @@ const DEFAULT_PREVIEW_ZOOM = 15;
     .pickup-locations__glow { width:160vw;height:170px; }
     .pickup-locations__layout { display:flex;width:min(100%,358px);height:960px;flex-direction:column;margin-inline:auto; }
     .pickup-locations__sidebar { display:contents; }
-    .pickup-locations__title-desktop { display:none; }
-    .pickup-locations__title-mobile { display:inline; }
     .pickup-locations h1 { color:#ae8e4a;font-size:32px;line-height:38px; }
     .pickup-search { position:relative;display:flex;width:100%;height:36px;flex:0 0 36px;align-items:center;order:3;margin-top:24px;padding:1px 9px;border:1px solid #87744f;border-radius:12px; }
     .pickup-search__label { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
@@ -420,9 +410,6 @@ const DEFAULT_PREVIEW_ZOOM = 15;
     .pickup-map-panel { width:100%;height:100%;min-height:0;aspect-ratio:auto;border-radius:24px; }
     .pickup-map-panel--peru :global(.pickup-map-panel__art) { top:-62%;right:auto;bottom:auto;left:-100%;width:286%;height:auto;object-fit:unset; }
     .pickup-map-panel--bolivia :global(.pickup-map-panel__art) { inset:0;width:100%;height:100%;object-fit:cover; }
-    .pickup-map-view__caption { right:12px;bottom:12px;left:12px;padding:10px 12px; }
-    .pickup-map-view__caption strong { font-size:15px;line-height:20px; }
-    .pickup-map-view__caption span { font-size:12px;line-height:17px; }
     .pickup-map-panel__unavailable p { font-size:24px;line-height:30px; }
   }
 

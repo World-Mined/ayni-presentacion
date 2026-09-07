@@ -1,4 +1,4 @@
-// Datos del video de portada (`public/media/ayni-home.mp4`).
+// Datos del video de portada alojado en S3.
 //
 // El archivo no está versionado —pesa ~10 MB y vive en `.gitignore`, ver
 // `public/media/README.md`—, así que todo lo que depende de su montaje concreto

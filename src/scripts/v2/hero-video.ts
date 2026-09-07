@@ -164,6 +164,7 @@ export function initializeHeroSafeFrame(hero: HTMLElement) {
   if (!video || !canvas) return;
 
   let animation = 0;
+  let canvasReadable = true;
   // El tamaño del hero se remide en los eventos discretos —`timeupdate` llega
   // unas cuatro veces por segundo— y dentro del bucle de dibujo se usa el valor
   // cacheado. Medirlo en cada fotograma forzaba un layout por frame mientras
@@ -206,6 +207,11 @@ export function initializeHeroSafeFrame(hero: HTMLElement) {
   };
 
   const draw = () => {
+    if (!canvasReadable) {
+      clear();
+      return;
+    }
+
     const mode = getMode();
     if (mode === 'none') {
       clear();
@@ -225,8 +231,20 @@ export function initializeHeroSafeFrame(hero: HTMLElement) {
     if (!context) return;
     context.clearRect(0, 0, width, height);
 
-    if (mode === 'collage') drawCollage(context, video, width, height);
-    else drawTitle(context, video, width, height);
+    try {
+      if (mode === 'collage') drawCollage(context, video, width, height);
+      else drawTitle(context, video, width, height);
+    } catch (error) {
+      // Un video remoto puede reproducirse aunque el bucket no permita usarlo
+      // como fuente de canvas. En ese caso conservamos el encuadre normal y
+      // evitamos dejar activo un lienzo transparente durante el cierre.
+      if (error instanceof DOMException && error.name === 'SecurityError') {
+        canvasReadable = false;
+        clear();
+        return;
+      }
+      throw error;
+    }
 
     animation = video.paused ? 0 : requestAnimationFrame(draw);
   };

@@ -12,6 +12,7 @@ aquí a mano antes de levantar el sitio.
 | archivo | usado por | notas |
 | --- | --- | --- |
 | `ayni-home.mp4` | `src/components/v2/HeroSection.astro` | fondo de la portada |
+| `ayni-about.mp4` | CTA “Conoce más” de `HomeOverview.astro` | presentación de “¿Qué es AYNI?”; sustituir `/media/ayni-about.mp4` por su URL de S3 al publicarla |
 
 ## `ayni-home.mp4` tiene medidas tomadas a mano
 
