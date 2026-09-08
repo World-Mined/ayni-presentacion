@@ -86,6 +86,9 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     .other-products__packs:has(.other-products__pack:hover) .other-products__pack-art { transform:scale(.98); }
     .other-products__packs:has(.other-products__pack:hover) .other-products__pack:hover .other-products__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
   }
+  @media(prefers-reduced-motion:reduce){
+    .other-products__pack-art { transition:none; }
+  }
 
   @media(max-width:767px){
     .other-products { --plank-h:clamp(80px,24vw,120px);min-height:clamp(420px,120vw,600px);padding-inline:20px;box-shadow:none; }

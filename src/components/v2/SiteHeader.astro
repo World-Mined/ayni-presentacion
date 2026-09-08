@@ -147,4 +147,7 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     .site-header__actions a { font-size:13px; }
     .site-nav { padding-inline:32px; }
   }
+  @media(prefers-reduced-motion:reduce){
+    .site-nav>a,.site-header__actions a,.menu-trigger span,.site-nav { transition:none; }
+  }
 </style>

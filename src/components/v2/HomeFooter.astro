@@ -55,7 +55,7 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
         <span class="home-footer__book" aria-hidden="true"></span>
       </a>
       <span>FAQ'S</span>
-      <img class="home-footer__seal" src={footerIso9001.src} width="88" height="96" alt="Certificación ISO 9001" />
+      <Image class="home-footer__seal" src={footerIso9001} width={88} height={96} format="webp" quality={80} alt="Certificación ISO 9001" />
     </section>
   </div>
   <div class="home-footer__bottom">
@@ -252,6 +252,12 @@ import { ROUTES, SECTION_IDS } from '../../data/v2';
     .home-footer__book-link:focus-visible .home-footer__book {
       background-color: #f9cb69;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-footer a,
+    .home-footer__list a,
+    .home-footer__book { transition:none; }
   }
 
   .home-footer__seal {

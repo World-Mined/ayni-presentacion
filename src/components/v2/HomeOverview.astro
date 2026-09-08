@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import aboutBackground from '../../assets/v2/about-background.webp';
 import aboutEarth from '../../assets/v2/about-earth.webp';
 import aboutGradient from '../../assets/v2/about-gradient.webp';
@@ -14,6 +14,8 @@ import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../data/v2';
 import MotionCta from './MotionCta.astro';
 import PickupMap from './PickupMap.astro';
 import VideoPlayer from './VideoPlayer.astro';
+
+const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width: 1280, format: 'webp', quality: 78 });
 ---
 
 <section
@@ -66,7 +68,7 @@ import VideoPlayer from './VideoPlayer.astro';
     <div class="about-video-modal__player">
       <VideoPlayer
         src="/media/ayni-about.mp4"
-        poster={aboutVideoPoster.src}
+        poster={optimizedAboutVideoPoster.src}
         ariaLabel="Video: ¿Qué es AYNI?"
       />
     </div>

@@ -166,6 +166,15 @@ const PACK_ENTRY_ORDER = [0, 2, 1];
        la madera: crece hacia arriba y la base no se despega de la mesa. */
     .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack:hover .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
   }
+  /* Foco por teclado: cada bolsa es un <a>, así que Tab ya las recorre en
+     orden — lo que faltaba era mostrarlo. Fuera de `@media(hover:hover)` a
+     propósito: el foco no depende de si el dispositivo tiene puntero con
+     hover, tiene que verse igual en cualquier caso. Replica el mismo
+     escalado+sombra que el hover para que "seleccionada por tab" se lea
+     como la misma señal visual que "seleccionada por mouse". */
+  .products-banner__pack:focus-visible { outline:2px solid #f9cb69;outline-offset:6px;border-radius:4px; }
+  .products-banner__packs:has(.products-banner__pack:focus-visible) .products-banner__pack-art { transform:scale(.98); }
+  .products-banner__packs:has(.products-banner__pack:focus-visible) .products-banner__pack:focus-visible .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
 
   @keyframes products-title-in {
     from { opacity:0;transform:translateY(14px); }
