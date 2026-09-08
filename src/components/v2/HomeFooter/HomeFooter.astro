@@ -60,11 +60,17 @@ import { ROUTES, SECTION_IDS } from '../../../data/v2';
   </div>
   <div class="home-footer__bottom">
     <p>Copyright © AYNI 2026 - Todos los derechos reservados.</p>
-    <div class="home-footer__social" aria-label="Redes sociales">
-      <img src={socialFacebook.src} width="24" height="24" alt="Facebook" />
-      <img src={socialLinkedin.src} width="24" height="24" alt="LinkedIn" />
-      <img src={socialInstagram.src} width="24" height="24" alt="Instagram" />
-      <img src={socialYoutube.src} width="24" height="24" alt="YouTube" />
+    <!-- Todavía no hay URLs de las redes, así que los iconos no son enlaces.
+         Mientras no lo sean van como decoración: un lector de pantalla que
+         anuncia «Facebook, LinkedIn, Instagram, YouTube» sin nada que activar
+         solo añade ruido. Al recibir las URLs, envolver cada uno en un <a> con
+         `aria-label` y cambiar este <div> por un <nav aria-label="Redes
+         sociales">; el `aria-label` sobre un <div> sin rol se ignora. -->
+    <div class="home-footer__social">
+      <img src={socialFacebook.src} width="24" height="24" alt="" aria-hidden="true" />
+      <img src={socialLinkedin.src} width="24" height="24" alt="" aria-hidden="true" />
+      <img src={socialInstagram.src} width="24" height="24" alt="" aria-hidden="true" />
+      <img src={socialYoutube.src} width="24" height="24" alt="" aria-hidden="true" />
     </div>
   </div>
 </footer>
