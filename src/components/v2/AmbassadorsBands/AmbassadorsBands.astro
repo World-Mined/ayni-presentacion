@@ -1,215 +1,118 @@
 ---
 import { Image } from 'astro:assets';
+import bonusesBackground from '../../../assets/v2/ambassadors-bonuses-background.png';
+import residualFlareTop from '../../../assets/v2/residual-flare-top.svg';
+import residualFlareBottom from '../../../assets/v2/residual-flare-bottom.svg';
 import bonusFocus from '../../../assets/v2/ambassadors-bonus-focus.webp';
-import bonusGlow from '../../../assets/v2/ambassadors-bonus-glow.webp';
-import bonusSponsorship from '../../../assets/v2/ambassadors-bonus-sponsorship.webp';
 import star1 from '../../../assets/v2/ambassadors-star-1.webp';
 import star2 from '../../../assets/v2/ambassadors-star-2.webp';
 import star3 from '../../../assets/v2/ambassadors-star-3.webp';
 import star4 from '../../../assets/v2/ambassadors-star-4.webp';
 
-// Las cuatro variantes de «Beneficios AYNI» en Figma sólo se diferencian en la
-// foto: el titular y el texto son idénticos en todas. Así que el carrusel rota
-// la imagen y deja el contenido quieto encima.
+const RESIDUAL_BONUS = [
+  ['GEN 350', '1,200 pts', '400 pts', '300 pts', '$175', '$350'], ['GEN 1000', '4,800 pts', '1,700 pts', '1,000 pts', '$500', '$1,000'], ['GEN 3000', '22,000 pts', '6,500 pts', '3,700 pts', '$1,500', '$3,000'], ['GEN 5000', '43,500 pts', '13,900 pts', '6,200 pts', '$2,500', '$5,000'], ['GEN 10K', '70,000 pts', '26,000 pts', '10,000 pts', '$5,000', '$10,000'], ['GEN 30K', '200,000 pts', '90,000 pts', '35,000 pts', '$15,000', '$30,000'], ['GEN 60K', '600,000 pts', '190,000 pts', '80,000 pts', '$30,000', '$60,000'], ['GEN 100K', '950,000 pts', '320,000 pts', '125,000 pts', '$50,000', '$100,000'], ['GEN 300K', '3,500,000 pts', '1,200,000 pts', '500,000 pts', '$150,000', '$300,000'], ['GEN 1M', '14,500,000 pts', '5,000,000 pts', '2,000,000 pts', '$500,000', '$1,000,000'],
+];
 const STAR_PHOTOS = [star1, star2, star3, star4];
-const STAR_INTERVAL = 4500;
-const STAR_FADE = 1100;
 ---
 
 <div class="ambassadors-bands">
-  <section class="ambassadors-band ambassadors-band--sponsorship" aria-labelledby="bonus-sponsorship-title" data-band-reveal>
-    <div class="ambassadors-band__backdrop" aria-hidden="true">
-      <Image src={bonusSponsorship} alt="" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" />
-      <span class="ambassadors-band__glaze"></span>
-      <span class="ambassadors-band__glow">
-        <Image src={bonusGlow} alt="" loading="lazy" widths={[768, 1440]} sizes="65vw" />
-      </span>
-    </div>
-    <div class="ambassadors-band__text">
-      <h2 id="bonus-sponsorship-title">Bono Patrocinio</h2>
-      <p>Gana el 15% del puntaje por la primera compra de tu nuevo socio y un 10% en sus reconsumos.</p>
+  <section class="ambassadors-bonuses" aria-labelledby="bonuses-title">
+    <Image class="ambassadors-bonuses__background" src={bonusesBackground} alt="" aria-hidden="true" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" />
+    <div class="ambassadors-bonuses__content">
+      <header class="bonuses-intro"><h2 id="bonuses-title">Bonos AYNI</h2><p class="reconsumption-bonus"><span>Bono<br />Reconsumo</span><strong>15%</strong></p></header>
+      <section class="residual-bonus" aria-labelledby="residual-bonus-title">
+        <h3 id="residual-bonus-title">Bono de ingreso residual</h3>
+        <div class="residual-bonus__table-shell">
+          <div class="residual-bonus__table-wrap" tabindex="0" role="region" aria-label="Rangos y ganancias del bono residual">
+            <table>
+              <colgroup><col class="rank-column" /><col span="3" class="team-column" /><col span="2" class="earnings-column" /></colgroup>
+              <thead>
+                <tr>
+                  <th rowspan="2" scope="col"><span class="th-title">Rangos</span></th>
+                  <th rowspan="2" scope="col"><span class="th-title">Binario<br />2 EQUIPOS</span></th>
+                  <th rowspan="2" scope="col"><span class="th-title">Trinario<br />3 EQUIPOS</span></th>
+                  <th rowspan="2" scope="col"><span class="th-title">Tretanario<br />4 EQUIPOS</span></th>
+                  <th colspan="2" scope="colgroup"><span class="th-title">Ganancias</span></th>
+                </tr>
+                <tr><th scope="col">Quincenales</th><th scope="col">Mensuales</th></tr>
+              </thead>
+              <tbody>{RESIDUAL_BONUS.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+          <img class="residual-bonus__flare residual-bonus__flare--top" src={residualFlareTop.src} alt="" aria-hidden="true" />
+          <img class="residual-bonus__flare residual-bonus__flare--bottom" src={residualFlareBottom.src} alt="" aria-hidden="true" />
+        </div>
+        <p class="residual-bonus__note">*Los puntajes mostrados han sido calculados en base a un equipo TRINARIO y TETRANARIO.</p>
+      </section>
+      <section class="sponsorship-bonus" aria-labelledby="sponsorship-bonus-title">
+        <h3 id="sponsorship-bonus-title">Bono patrocinio</h3><p>Convierte tus patrocinados en <strong>recompensas</strong></p>
+        <div class="sponsorship-plan" aria-label="Tres equipos patrocinados de 400 puntos generan 60 dólares por equipo y 180 puntos de bono de patrocinio al llegar a GEN 350."><h4>Embajador AYNI</h4><div class="sponsorship-plan__teams">{[1, 2, 3].map((team) => <div class="sponsorship-plan__team"><span class:list={['sponsorship-plan__arrow', `sponsorship-plan__arrow--${team}`]} aria-hidden="true">↘</span><strong>400 pts.</strong><span class="sponsorship-plan__down" aria-hidden="true">↓</span><b>$ 60,00</b></div>)}</div><div class="sponsorship-plan__result"><strong>GEN 350</strong><span aria-hidden="true">↓</span><b>$180 pts.<small>de bono de patrocinio</small></b></div></div>
+      </section>
     </div>
   </section>
 
   <section class="ambassadors-band ambassadors-band--focus" aria-labelledby="bonus-focus-title" data-band-reveal>
-    <div class="ambassadors-band__backdrop" aria-hidden="true">
-      <Image src={bonusFocus} alt="" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" />
-      <span class="ambassadors-band__glaze"></span>
-    </div>
-    <div class="ambassadors-band__text">
-      <h2 id="bonus-focus-title">Bono Enfoque</h2>
-      <p>
-        Al cerrar el año, AYNI te recompensa con un 10% adicional acumulado de tus comisiones. Solo
-        debes mantener tu membresía IBO y estado «Activo» ininterrumpidamente, con un rango menor a
-        GEN 5000 en cada ciclo.
-      </p>
-    </div>
+    <div class="ambassadors-band__backdrop" aria-hidden="true"><Image src={bonusFocus} alt="" loading="eager" widths={[768, 1440, 2880]} sizes="100vw" /><span></span></div>
+    <div class="ambassadors-band__text"><h2 id="bonus-focus-title">Bono Enfoque</h2><p>Al cerrar el año, AYNI te recompensa con un 10% adicional acumulado de tus comisiones. Solo debes mantener tu membresía IBO y estado “Activo” ininterrumpidamente, con un rango menor a GEN 3000 en cada ciclo.</p></div>
   </section>
 
-  <section class="ambassadors-star" aria-labelledby="ayni-star-title">
-    <div class="ambassadors-star__backdrop" aria-hidden="true" data-star-carousel data-star-interval={STAR_INTERVAL} data-star-fade={STAR_FADE}>
-      {STAR_PHOTOS.map((photo, index) => (
-        <Image
-          src={photo}
-          alt=""
-          loading="lazy"
-          widths={[768, 1440, 2880]}
-          sizes="100vw"
-          data-star-slide
-          data-active={index === 0 ? 'initial' : 'false'}
-        />
-      ))}
-      <span class="ambassadors-star__fade"></span>
-    </div>
-    <div class="ambassadors-star__text">
-      <h2 id="ayni-star-title">AYNI Estrella</h2>
-      <p>
-        Tu constancia tiene recompensa. Disfruta de una experiencia de viaje única en nuestra región
-        al consolidar tu liderazgo por 24 ciclos de negocio ininterrumpidos.
-      </p>
-    </div>
-  </section>
+  <section class="ambassadors-star" aria-labelledby="ayni-star-title"><div class="ambassadors-star__backdrop" aria-hidden="true">{STAR_PHOTOS.map((photo, index) => <Image src={photo} alt="" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" data-star-slide data-active={index === 0 ? 'true' : 'false'} />)}<span></span></div><div class="ambassadors-star__text"><h2 id="ayni-star-title">AYNI Estrella</h2><p>Tu constancia tiene recompensa. Disfruta de una experiencia de viaje única en nuestra región al consolidar tu liderazgo por 24 ciclos de negocio ininterrumpidos.</p></div></section>
 </div>
 
 <style>
-  /* Las tres bandas son el mismo bloque escalado: en Figma el frame móvil (390)
-     es el de escritorio (1440) multiplicado por 0,2708, tipografías incluidas.
-     Por eso aquí no hay un solo breakpoint —todo sale de `--w`, el ancho de
-     referencia del diseño— y los coeficientes son la medida de Figma partida
-     por 1440: 40px de titular son 0,02778.
-
-     `--w` no es sólo el ancho del viewport. Como la banda conserva su
-     proporción, crecer a lo ancho la hace crecer a lo alto: a 1920 la de AYNI
-     Estrella pedía 1067px y no cabía en pantalla. Así que el ancho de
-     referencia lo limita también la altura disponible —una banda 2:1 sólo puede
-     medir 200svh de ancho antes de pasarse, y la 1,8:1, 180svh—, y con él
-     encogen a la vez altura, tipografía y posiciones. La imagen sigue ocupando
-     el 100% del ancho: lo que sobra lo recorta `cover`.
-
-     Se parte de `vh` y `svh` entra por `@supports`: en una custom property las
-     dos declaraciones parsean y ganaría la segunda, así que sin esa guarda un
-     navegador sin `svh` dejaría `--w` con un valor inválido y la banda a cero. */
-  .ambassadors-band { --w:min(100vw,1920px,200vh);position:relative;height:calc(var(--w) / 2);overflow:hidden;background:#000;isolation:isolate; }
-  .ambassadors-star { --w:min(100vw,1920px,180vh);position:relative;height:calc(var(--w) / 1.8);overflow:hidden;background:#000;isolation:isolate; }
-  @supports (height:100svh){
-    .ambassadors-band { --w:min(100vw,1920px,200svh); }
-    .ambassadors-star { --w:min(100vw,1920px,180svh); }
+  .ambassadors-bonuses { --w:min(100vw,1440px);position:relative;isolation:isolate;min-height:calc(var(--w) * 1.52);overflow:hidden;background:#050504; }.ambassadors-bonuses__background { position:absolute;z-index:-1;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:center top; }.ambassadors-bonuses__content { display:flex;min-height:calc(var(--w) * 1.52);width:min(100%,1440px);margin:auto;padding:calc(var(--w) * .05556) calc(var(--w) * .05556) calc(var(--w) * .1);flex-direction:column;align-items:center; }h2,h3,h4,p { margin:0; }.bonuses-intro { display:flex;flex-direction:column;align-items:center;gap:calc(var(--w) * .04167); }.bonuses-intro h2,.residual-bonus h3,.sponsorship-bonus h3 { color:#f3c864;font-family:var(--font-title);font-weight:600;text-align:center;letter-spacing:-.035em; }.bonuses-intro h2 { font-size:calc(var(--w) * .04444);line-height:1.2; }.reconsumption-bonus { position:relative;display:flex;min-width:calc(var(--w) * .18056);padding:calc(var(--w) * .01111);flex-direction:column;align-items:center;border:1px solid #f3c864;border-radius:8px;background:linear-gradient(135deg,rgba(219,168,59,.72),rgba(0,0,0,.48) 23%,rgba(0,0,0,.48) 80%,rgba(219,168,59,.72));color:#f9cb69;font-family:var(--font-title);font-size:calc(var(--w) * .02222);font-weight:700;line-height:1.18;text-align:center; }.reconsumption-bonus::before,.reconsumption-bonus::after { position:absolute;left:50%;width:calc(var(--w) * .068);height:3px;content:'';transform:translateX(-50%);background:radial-gradient(ellipse,rgba(249,203,105,.95),rgba(249,203,105,0) 70%); }.reconsumption-bonus::before { top:-2px; }.reconsumption-bonus::after { bottom:-2px; }.reconsumption-bonus strong { color:#fff9ec;font-size:calc(var(--w) * .01944); }/* Figma 3253:28162: 1280px wide, 94px header and ten 56px rows. */
+  .residual-bonus {
+    --gold-text:linear-gradient(90deg,#6e582b 10.512%,#f9cb69 50.363%,#f0c365 58.373%,#d8b05a 69.587%,#b29049 85.607%,#7d6431 103.23%,#6e582b 108.03%);
+    -webkit-font-smoothing:antialiased;display:flex;width:100%;margin-top:calc(var(--w) * .075);flex-direction:column;align-items:center;
   }
-
-  .ambassadors-band__backdrop,.ambassadors-star__backdrop { position:absolute;z-index:0;inset:0;pointer-events:none; }
-  .ambassadors-band__backdrop :global(img) { display:block;width:100%;height:100%;object-fit:cover; }
-  /* Velo dorado radial anclado al borde derecho. El original es un rect al 20%
-     sobre un radial de 1440×2880, que en relativo son 100% del ancho por 400%
-     del alto; las paradas ya llevan ese 20% multiplicado. */
-  .ambassadors-band__glaze { position:absolute;inset:0;background:radial-gradient(100% 400% at 100% 50%,rgba(110,88,43,.2) 0%,rgba(83,66,32,.15) 25%,rgba(55,44,22,.1) 50%,rgba(0,0,0,0) 100%); }
-  .ambassadors-band__glow { position:absolute;right:0;bottom:0;width:64.72%;height:100%;overflow:hidden;opacity:.9; }
-  .ambassadors-band__glow :global(img) { position:absolute;top:-.04%;left:-19.93%;width:119.93%;height:100.08%;max-width:none;object-fit:cover; }
-
-  /* El bloque de texto va centrado en las tres: en Figma el de AYNI Estrella
-     arranca en 138 y mide 1166, que es el mismo centrado con 1px de redondeo. */
-  .ambassadors-band__text,.ambassadors-star__text { position:absolute;z-index:1;left:50%;display:flex;width:calc(var(--w) * .8097);flex-direction:column;transform:translateX(-50%); }
-  .ambassadors-band__text { gap:calc(var(--w) * .005556); }
-  .ambassadors-band h2 { margin:0;color:#f9cb69;font-family:Poppins,sans-serif;font-size:calc(var(--w) * .027778);font-weight:600;line-height:1.2;letter-spacing:0;white-space:nowrap; }
-  .ambassadors-band p { width:calc(var(--w) * .3646);margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .013889);font-weight:400;line-height:1.2; }
-  .ambassadors-band--sponsorship .ambassadors-band__text { top:47.08%;align-items:flex-end;text-align:right; }
-  .ambassadors-band--focus .ambassadors-band__text { top:50%;align-items:flex-start;transform:translate(-50%,-50%); }
-
-  /* Entrada en látigo. Figma la guarda como una tercera variante de cada banda
-     —«Component 148»— que es el mismo bloque colocado fuera del encuadre y en
-     blanco: Patrocinio empieza en x=1070 y Enfoque en x=-830, cada uno saliendo
-     del borde hacia el lado donde acaba, y los dos 128px más arriba de su sitio.
-     Los recorridos van en fracción de `--w` (933/1440, 967/1440…) para que
-     escalen igual que el resto de la banda.
-
-     El estado por defecto es el de llegada, y es el script el que marca
-     `data-revealed="false"` al cargar: así, sin JS o sin `IntersectionObserver`,
-     el texto simplemente está en su sitio en vez de quedarse fuera para
-     siempre. Como las bandas viven muy por debajo del pliegue, no hay parpadeo.
-
-     El párrafo lleva un pelo de retraso y de recorrido extra sobre el titular:
-     es lo que da el chasquido, la cola llegando después que la punta.
-     Las transiciones cuelgan del estado de llegada y no del elemento: así el
-     viaje de ida se anima y la vuelta —cuando la banda sale de pantalla y se
-     rearma— es instantánea. Si no, al volver a subir rápido se alcanzaría a ver
-     el texto retrocediendo. Por el mismo motivo, colocar el estado inicial al
-     cargar tampoco anima nada. */
-  .ambassadors-band { --whip:1.35s;--whip-ease:cubic-bezier(.16,1,.3,1);--whip-lag:.1s; }
-  .ambassadors-band[data-revealed='true'] .ambassadors-band__text { transition:transform var(--whip) var(--whip-ease); }
-  .ambassadors-band[data-revealed='true'] .ambassadors-band__text p { transition:transform calc(var(--whip) + .1s) var(--whip-ease) var(--whip-lag); }
-  .ambassadors-band[data-revealed='true'] h2 { transition:color .9s ease .5s; }
-  .ambassadors-band[data-revealed='true'] .ambassadors-band__glow { transition:opacity 1.1s ease .45s; }
-
-  .ambassadors-band[data-revealed='false'] h2 { color:#fff; }
-  .ambassadors-band[data-revealed='false'] .ambassadors-band__glow { opacity:0; }
-  .ambassadors-band--sponsorship[data-revealed='false'] .ambassadors-band__text { transform:translate(calc(-50% + var(--w) * .64792),calc(var(--w) * -.14653)); }
-  .ambassadors-band--sponsorship[data-revealed='false'] .ambassadors-band__text p { transform:translateX(calc(var(--w) * .06)); }
-  .ambassadors-band--focus[data-revealed='false'] .ambassadors-band__text { transform:translate(calc(-50% + var(--w) * -.67153),calc(-50% + var(--w) * -.10833)); }
-  .ambassadors-band--focus[data-revealed='false'] .ambassadors-band__text p { transform:translateX(calc(var(--w) * -.06)); }
-
-  /* Las cuatro fotos van apiladas y sólo se ve la marcada como activa. El 101%
-     de alto es el 808/800 del original: el sobrante lo recorta la banda.
-
-     Mientras está a la vista, la foto activa deriva muy despacio —un punto de
-     zoom y un roce lateral— para que la banda respire en vez de quedarse como
-     una lámina quieta. La deriva dura lo que la foto en pantalla (el intervalo
-     más el fundido) y va en lineal a propósito: cualquier curva se notaría como
-     un arranque o un frenazo. El sentido se alterna entre fotos para que no
-     parezca un tic mecánico.
-
-     El `transform` sólo transiciona en el estado activo: al desactivarse, la
-     foto vuelve a su encuadre de golpe —invisible, porque ya está a opacidad
-     cero— y la siguiente vuelta arranca otra vez desde el principio. La
-     opacidad sí transiciona en los dos sentidos, que para eso es un cruce. */
-  .ambassadors-star__backdrop { --fade:1.1s;--drift:5.6s; }
-  .ambassadors-star__backdrop :global(img) { position:absolute;top:0;left:0;z-index:0;display:block;width:100%;height:101%;opacity:0;object-fit:cover;object-position:bottom;transform:scale(1);transition:opacity var(--fade) linear; }
-  /* La primera foto se pinta visible pero todavía quieta. Al entrar la banda en
-     pantalla el script la pasa a `true`, y así también ella recorre la deriva
-     completa en vez de nacer ya colocada en su fotograma final. */
-  .ambassadors-star__backdrop :global(img[data-active='initial']) { z-index:2;opacity:1;transform:scale(1);transition:none; }
-  /* La entrante se funde por encima de una foto que sigue opaca debajo, así que
-     el cruce no pasa nunca por el fondo negro —cosa que sí ocurría al volver de
-     la última a la primera, cuando el orden del DOM dejaba la entrante debajo—.
-     Por eso el fundido va en lineal: al no haber mezcla de semitransparencias,
-     cualquier curva sólo se notaría como un tirón al arrancar o al frenar. */
-  .ambassadors-star__backdrop :global(img[data-active='true']) { z-index:2;opacity:1;transform:scale(1.06) translateX(-1%);transition:opacity var(--fade) linear,transform var(--drift) linear; }
-  /* Estado de salida: aguanta debajo, con su deriva intacta, hasta que la
-     entrante la ha tapado del todo; sólo entonces desaparece (opacidad con
-     duración cero y retraso igual al fundido). Sin este paso intermedio, la
-     saliente pegaba el tirón de volver a su encuadre a plena vista. */
-  .ambassadors-star__backdrop :global(img[data-active='leaving']) { z-index:1;opacity:0;transform:scale(1.06) translateX(-1%);transition:opacity 0s linear var(--fade),transform var(--drift) linear; }
-  .ambassadors-star__backdrop :global(img:nth-child(even)[data-active='true']),.ambassadors-star__backdrop :global(img:nth-child(even)[data-active='leaving']) { transform:scale(1.06) translateX(1%); }
-  @media(prefers-reduced-motion:reduce){
-    .ambassadors-star__backdrop :global(img),.ambassadors-star__backdrop :global(img[data-active='true']),.ambassadors-star__backdrop :global(img[data-active='leaving']) { transform:none;transition:none; }
+  .residual-bonus h3 { width:min(100%,806px);margin-bottom:48px;font-size:40px;line-height:60px;letter-spacing:0;background:var(--gold-text);background-clip:text;color:transparent;text-align:center; }
+  .sponsorship-bonus h3 { font-size:calc(var(--w) * .02778);line-height:1.2; }
+  .residual-bonus__table-shell { position:relative;width:100%; }
+  .residual-bonus__table-wrap { width:100%;overflow-x:auto;border-radius:8px; }
+  .residual-bonus__table-wrap:focus-visible { outline:2px solid #f3c864;outline-offset:4px; }
+  table { width:100%;min-width:1000px;border-spacing:0;table-layout:fixed;color:#fff9ec;background:rgba(20,20,20,.75);font-family:var(--font-title);text-align:center; }
+  .rank-column { width:10.9375%; }.team-column { width:17.708333%; }.earnings-column { width:17.96875%; }
+  th,td { border:0;border-left:1px solid #f3c864;border-bottom:1px solid #f3c864; }
+  tr > :last-child { border-right:1px solid #f3c864; }
+  .th-title { display:block;background:var(--gold-text);background-clip:text;-webkit-background-clip:text;color:transparent; }
+  thead { background:linear-gradient(rgba(48,35,10,.1),rgba(48,35,10,.1)); }
+  thead tr:first-child th { height:54px;border-top:1px solid #f3c864;padding:0 16px;background:linear-gradient(130deg,rgba(219,168,59,.8) -21.916%,rgba(0,0,0,.4) 21.243%,rgba(0,0,0,.48) 50.231%,rgba(0,0,0,.4) 80%,rgba(219,168,59,.8) 180%);font-size:24px;font-weight:700;line-height:28px; }
+  thead tr:first-child th[rowspan] { height:94px; }
+  thead tr:first-child th:first-child { border-top-left-radius:8px; }
+  thead tr:first-child th:last-child { padding-top:12px;border-top-right-radius:8px;background:linear-gradient(130deg,rgba(219,168,59,.8) -21.916%,rgba(0,0,0,.4) 21.243%,rgba(0,0,0,.48) 50.231%,rgba(0,0,0,.4) 80%,rgba(219,168,59,.8) 180%); }
+  thead tr:last-child th { height:40px;padding:0 8px;background:rgba(0,0,0,.4);font-size:20px;font-weight:500;line-height:24px; }
+  tbody td { height:56px;padding:0 16px;background:rgba(48,35,10,.2);font-size:16px;font-weight:500;line-height:24px;white-space:nowrap; }
+  tbody tr:last-child td:first-child { border-bottom-left-radius:8px; }
+  tbody tr:last-child td:last-child { border-bottom-right-radius:8px; }
+  .residual-bonus__flare { position:absolute;z-index:1;display:block;pointer-events:none; }
+  .residual-bonus__flare--top { top:-9px;left:0;width:10.9375%;height:18px; }
+  .residual-bonus__flare--bottom { bottom:-10px;right:0;width:20.234375%;height:20px; }
+  .residual-bonus__note { width:100%;margin-top:24px;color:#c4bba8;font-family:var(--font-title);font-size:18px;font-weight:400;line-height:26px;text-align:center; }
+  @media (max-width:1100px) {
+    .residual-bonus h3 { margin-bottom:32px;font-size:clamp(24px,3.5vw,40px);line-height:1.5; }
+    .residual-bonus__note { font-size:14px;line-height:22px; }
+    .residual-bonus__flare--bottom { display:none; }
   }
-  .ambassadors-star__fade { position:absolute;z-index:3;right:0;bottom:0;left:0;height:68%;background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.95) 100%); }
-  .ambassadors-star__text { top:73.25%;align-items:flex-end;gap:calc(var(--w) * .01111);text-align:right; }
-  .ambassadors-star h2 { margin:0;color:#f9cb69;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .027778);font-weight:700;line-height:1.2;letter-spacing:-.05em;white-space:nowrap; }
-  .ambassadors-star p { width:calc(var(--w) * .3646);margin:0;color:#fff;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .0125);font-weight:400;line-height:1.444; }
+  .sponsorship-bonus { display:flex;width:100%;margin-top:calc(var(--w) * .10417);flex-direction:column;align-items:center;gap:calc(var(--w) * .01111); }.sponsorship-bonus > p { color:#c4bba8;font-family:var(--font-body);font-size:calc(var(--w) * .01667); }.sponsorship-bonus > p strong { color:#fff9ec; }.sponsorship-plan { display:grid;width:calc(var(--w) * .8125);margin-top:calc(var(--w) * .02222);padding:calc(var(--w) * .02222);grid-template-columns:1fr auto;grid-template-rows:auto 1fr;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(5,5,4,.22); }.sponsorship-plan h4 { grid-column:1;grid-row:1;color:#fff9ec;font-family:var(--font-title);font-size:calc(var(--w) * .02778);font-weight:700;line-height:1.2;text-align:center; }.sponsorship-plan__teams { display:grid;grid-column:1;grid-row:2;padding-top:calc(var(--w) * .02222);grid-template-columns:repeat(3,1fr);gap:calc(var(--w) * .01389); }.sponsorship-plan__team { display:flex;flex-direction:column;align-items:center; }.sponsorship-plan__arrow { height:calc(var(--w) * .06);color:#f3c864;font-family:Arial,sans-serif;font-size:calc(var(--w) * .06);line-height:.58; }.sponsorship-plan__arrow--2 { transform:rotate(45deg); }.sponsorship-plan__arrow--3 { transform:scaleX(-1); }.sponsorship-plan__team strong,.sponsorship-plan__team b { display:flex;width:100%;height:calc(var(--w) * .04444);align-items:center;justify-content:center;border:1px solid #f3c864;border-radius:8px;background:linear-gradient(135deg,rgba(219,168,59,.55),rgba(0,0,0,.52) 28%,rgba(0,0,0,.52) 76%,rgba(219,168,59,.55));font-family:var(--font-title);font-size:calc(var(--w) * .02222);font-weight:700;line-height:1;color:#f3c864; }.sponsorship-plan__team b { color:#fff9ec; }.sponsorship-plan__down { height:calc(var(--w) * .052);padding-top:calc(var(--w) * .012);color:#f3c864;font-size:calc(var(--w) * .03);line-height:1; }.sponsorship-plan__result { display:flex;grid-column:2;grid-row:1 / span 2;min-width:calc(var(--w) * .125);padding-left:calc(var(--w) * .02222);flex-direction:column;align-items:center;justify-content:space-around;border-left:2px solid #f3c864;color:#f3c864;font-family:var(--font-title);text-align:center; }.sponsorship-plan__result strong,.sponsorship-plan__result b { font-size:calc(var(--w) * .02222);font-weight:700; }.sponsorship-plan__result > span { font-size:calc(var(--w) * .028); }.sponsorship-plan__result small { display:block;font-size:calc(var(--w) * .00833);font-weight:600;white-space:nowrap; }
+  .ambassadors-band,.ambassadors-star { --w:min(100vw,1920px,200svh);position:relative;height:calc(var(--w)/2);overflow:hidden;background:#000;isolation:isolate; }.ambassadors-star { --w:min(100vw,1920px,180svh);height:calc(var(--w)/1.8); }.ambassadors-band__backdrop,.ambassadors-star__backdrop { position:absolute;inset:0; }.ambassadors-band__backdrop :global(img),.ambassadors-star__backdrop :global(img) { display:block;width:100%;height:100%;object-fit:cover; }.ambassadors-band__backdrop span { position:absolute;inset:0;background:radial-gradient(100% 400% at 100% 50%,rgba(110,88,43,.2),rgba(0,0,0,0) 70%); }.ambassadors-band__text,.ambassadors-star__text { position:absolute;z-index:1;left:50%;display:flex;width:calc(var(--w) * .8097);flex-direction:column;transform:translate(-50%,-50%); }.ambassadors-band__text { top:50%;align-items:flex-start;gap:calc(var(--w) * .005556); }.ambassadors-band h2 { color:#f9cb69;font-family:Poppins,sans-serif;font-size:calc(var(--w) * .027778);font-weight:600;line-height:1.2; }.ambassadors-band p { width:calc(var(--w) * .3646);color:#fefaf0;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .013889);line-height:1.2; }
+  .ambassadors-band--focus { --whip:1.35s;--whip-ease:cubic-bezier(.16,1,.3,1);--whip-lag:.1s; }.ambassadors-band--focus[data-revealed='true'] .ambassadors-band__text { transition:transform var(--whip) var(--whip-ease); }.ambassadors-band--focus[data-revealed='true'] .ambassadors-band__text p { transition:transform calc(var(--whip) + .1s) var(--whip-ease) var(--whip-lag); }.ambassadors-band--focus[data-revealed='true'] h2 { transition:color .9s ease .5s; }.ambassadors-band--focus[data-revealed='false'] h2 { color:#fff; }.ambassadors-band--focus[data-revealed='false'] .ambassadors-band__text { transform:translate(calc(-50% + var(--w) * -.67153),calc(-50% + var(--w) * -.10833)); }.ambassadors-band--focus[data-revealed='false'] .ambassadors-band__text p { transform:translateX(calc(var(--w) * -.06)); }
+  .ambassadors-star__backdrop :global(img) { position:absolute;opacity:0;transition:opacity 1.1s linear; }.ambassadors-star__backdrop :global(img[data-active='true']) { opacity:1; }.ambassadors-star__backdrop span { position:absolute;z-index:1;right:0;bottom:0;left:0;height:68%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.95)); }.ambassadors-star__text { top:73.25%;align-items:flex-end;gap:calc(var(--w) * .01111);text-align:right; }.ambassadors-star h2 { color:#f9cb69;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .027778);font-weight:700;line-height:1.2;letter-spacing:-.05em; }.ambassadors-star p { width:calc(var(--w) * .3646);color:#fff;font-family:Montserrat,sans-serif;font-size:calc(var(--w) * .0125);line-height:1.444; }
+  @media (max-width:767px) { .sponsorship-plan { width:100%;padding:calc(var(--w) * .017);border-radius:8px; }.sponsorship-plan__result { min-width:calc(var(--w) * .12);padding-left:calc(var(--w) * .012); }.sponsorship-plan__team strong,.sponsorship-plan__team b { border-radius:4px; }.residual-bonus__note { max-width:85%; } }
 </style>
 
 <script>
-  // Entrada en látigo de las dos bandas de bono. El HTML sale ya en su estado
-  // final: es este script el que lo retira fuera del encuadre y sólo si puede
-  // devolverlo, de modo que sin JS, sin `IntersectionObserver` o con el sistema
-  // pidiendo menos movimiento, el texto se queda donde debe.
   const bands = [...document.querySelectorAll<HTMLElement>('[data-band-reveal]')];
-  const quiet = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (bands.length && 'IntersectionObserver' in window && !quiet) {
+  if (bands.length && 'IntersectionObserver' in window && !reducedMotion) {
     for (const band of bands) band.dataset.revealed = 'false';
 
-    // Entra al ocupar el 60% de la banda o de la pantalla y se rearma solo
-    // después de salir por completo, incluso si la banda supera el viewport.
-    const ENTRY = 0.6;
     const reveal = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           const band = entry.target as HTMLElement;
-          const screenful = entry.rootBounds
-            ? entry.intersectionRect.height / entry.rootBounds.height
-            : 0;
-
-          if (entry.intersectionRatio >= ENTRY || screenful >= ENTRY) band.dataset.revealed = 'true';
+          const screenful = entry.rootBounds ? entry.intersectionRect.height / entry.rootBounds.height : 0;
+          if (entry.intersectionRatio >= 0.6 || screenful >= 0.6) band.dataset.revealed = 'true';
           else if (!entry.isIntersecting) band.dataset.revealed = 'false';
         }
       },
@@ -219,68 +122,9 @@ const STAR_FADE = 1100;
     for (const band of bands) reveal.observe(band);
   }
 
-  // El carrusel es decorativo —las cuatro fotos comparten texto— así que no
-  // lleva controles ni anuncia nada: el contenedor ya va con `aria-hidden`.
-  // Sólo corre mientras la banda está a la vista, y no corre en absoluto si el
-  // sistema pide menos movimiento.
-  const carousel = document.querySelector<HTMLElement>('[data-star-carousel]');
-  const slides = carousel ? [...carousel.querySelectorAll<HTMLElement>('[data-star-slide]')] : [];
-
-  if (carousel && slides.length > 1) {
-    const interval = Number(carousel.dataset.starInterval);
-    const fade = Number(carousel.dataset.starFade);
-    // La deriva dura lo que la foto a la vista: se calcula en vez de repetirla
-    // en el CSS, para que tocar el ritmo no deje descolgado el movimiento. Los
-    // valores del CSS quedan de respaldo.
-    carousel.style.setProperty('--fade', `${fade}ms`);
-    carousel.style.setProperty('--drift', `${interval + fade}ms`);
-    const stillness = matchMedia('(prefers-reduced-motion: reduce)');
-    let current = 0;
-    let timer: ReturnType<typeof setInterval> | undefined;
-    let activationFrame: number | undefined;
-    let onScreen = false;
-
-    const advance = () => {
-      // `leaving` mantiene la foto saliente debajo durante el fundido.
-      for (const slide of slides) if (slide.dataset.active === 'leaving') slide.dataset.active = 'false';
-      slides[current].dataset.active = 'leaving';
-      current = (current + 1) % slides.length;
-      slides[current].dataset.active = 'true';
-    };
-
-    const start = () => {
-      if (timer || stillness.matches || !onScreen) return;
-
-      if (slides[current].dataset.active === 'initial') {
-        // Esperar un frame garantiza que el navegador haya pintado el encuadre
-        // neutro antes de activar el zoom y el desplazamiento de la primera foto.
-        activationFrame = requestAnimationFrame(() => {
-          slides[current].dataset.active = 'true';
-          activationFrame = undefined;
-        });
-      }
-
-      timer = setInterval(advance, interval);
-    };
-
-    const stop = () => {
-      clearInterval(timer);
-      timer = undefined;
-      if (activationFrame !== undefined) cancelAnimationFrame(activationFrame);
-      activationFrame = undefined;
-    };
-
-    // La deriva comienza al entrar en pantalla; sin `IntersectionObserver`,
-    // el carrusel usa el arranque inmediato como fallback.
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(([entry]) => {
-        onScreen = entry.isIntersecting;
-        if (onScreen) start(); else stop();
-      }).observe(carousel);
-    } else {
-      onScreen = true;
-      start();
-    }
-    stillness.addEventListener('change', () => (stillness.matches ? stop() : start()));
+  const slides = [...document.querySelectorAll<HTMLElement>('[data-star-slide]')];
+  if (slides.length > 1 && !reducedMotion) {
+    let active = 0;
+    setInterval(() => { slides[active].dataset.active = 'false'; active = (active + 1) % slides.length; slides[active].dataset.active = 'true'; }, 4500);
   }
 </script>
