@@ -63,7 +63,7 @@ export const PICKUP_COUNTRIES: Record<PickupCountry, PickupCountryConfig> = {
       },
       {
         id: 'san-isidro',
-        name: 'San Isidro:',
+        name: 'San Isidro',
         address: 'Av. Javier Prado Este 175',
         schedule: ['L - V 9:00 a.m. - 9:00 p.m.', 'S 9:00 a.m. - 1:00 p.m.'],
       },
@@ -109,12 +109,12 @@ export const PICKUP_COUNTRIES: Record<PickupCountry, PickupCountryConfig> = {
     id: 'bolivia',
     label: 'Bolivia',
     map: pickupLocationsMap,
-    mapAlt: 'Mapa referencial de Bolivia',
+    mapAlt: 'Mapa referencial: todavía no hay puntos de recojo en Bolivia',
     mapAvailable: false,
     locations: [],
     auxiliaryContent: {
       title: 'Envíos a domicilio',
-      description: 'Por el momentos los envíos a Bolivia son directamente a domicilios. Consultar disponibilidad técnica.',
+      description: 'Por el momento los envíos a Bolivia son directamente a domicilio. Consulta la disponibilidad para tu zona.',
       actionLabel: 'Opcional',
     },
   },

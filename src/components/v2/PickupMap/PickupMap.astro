@@ -54,7 +54,7 @@ const countries: readonly CountryState[] = [
     height={MAP_HEIGHT}
   />
 
-  {countries.map(({ id, label, asset }) => (
+  {countries.map(({ id, asset }) => (
     <img
       class:list={['pickup-map__state', `pickup-map__state--${id}`]}
       src={asset.src}
