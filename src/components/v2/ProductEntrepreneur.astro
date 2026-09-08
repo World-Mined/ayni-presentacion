@@ -1,10 +1,15 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import type { ProductDetail } from '../../data/products';
-import background from '../../assets/v2/product-entrepreneur-background.png';
-import people from '../../assets/v2/product-entrepreneur-people.png';
-import peopleMobile from '../../assets/v2/product-entrepreneur-people-mobile.png';
-import gradient from '../../assets/v2/product-entrepreneur-gradient.png';
+import capucciBackground from '../../assets/v2/product-entrepreneur-capucci-background.png';
+import capucciPeople from '../../assets/v2/product-entrepreneur-capucci-people.png';
+import moraviBackground from '../../assets/v2/product-entrepreneur-moravi-background.png';
+import moraviPeople from '../../assets/v2/product-entrepreneur-moravi-people.png';
+import moraviGradient from '../../assets/v2/product-entrepreneur-moravi-gradient.png';
+import resetBackground from '../../assets/v2/product-entrepreneur-background.png';
+import resetPeople from '../../assets/v2/product-entrepreneur-people.png';
+import resetPeopleMobile from '../../assets/v2/product-entrepreneur-people-mobile.png';
+import sharedGradient from '../../assets/v2/product-entrepreneur-gradient.png';
 import MotionCta from './MotionCta.astro';
 
 interface Props {
@@ -12,20 +17,26 @@ interface Props {
 }
 
 const { product } = Astro.props;
+const entrepreneurArt = {
+  capucci: { background: capucciBackground, people: capucciPeople, peopleMobile: capucciPeople, gradient: sharedGradient },
+  moravi: { background: moraviBackground, people: moraviPeople, peopleMobile: moraviPeople, gradient: moraviGradient },
+  reset: { background: resetBackground, people: resetPeople, peopleMobile: resetPeopleMobile, gradient: sharedGradient },
+}[product.revealId];
 const highlightedDescription = product.entrepreneur.descriptionHighlight;
 const [descriptionStart, descriptionEnd] = highlightedDescription
   ? product.entrepreneur.description.split(highlightedDescription)
   : [product.entrepreneur.description, ''];
+const optimizedPeopleMobile = await getImage({ src: entrepreneurArt.peopleMobile, widths: [390, 767], format: 'webp', quality: 78 });
 ---
 
-<section class="product-entrepreneur" aria-labelledby={`entrepreneur-${product.slug}`}>
-  <Image class="product-entrepreneur__background" src={background} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+<section class:list={['product-entrepreneur', `product-entrepreneur--${product.revealId}`]} aria-labelledby={`entrepreneur-${product.slug}`}>
+  <Image class="product-entrepreneur__background" src={entrepreneurArt.background} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
   <picture class="product-entrepreneur__people" aria-hidden="true">
-    <source media="(max-width: 767px)" srcset={peopleMobile.src} />
-    <Image src={people} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+    <source media="(max-width: 767px)" srcset={optimizedPeopleMobile.srcSet.attribute} sizes="100vw" />
+    <Image src={entrepreneurArt.people} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
   </picture>
   <div class="product-entrepreneur__gradient" aria-hidden="true">
-    <Image src={gradient} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
+    <Image src={entrepreneurArt.gradient} alt="" loading="lazy" widths={[768, 1440]} sizes="100vw" />
   </div>
   <div class="product-entrepreneur__inner">
     <div class="product-entrepreneur__content">
@@ -64,6 +75,8 @@ const [descriptionStart, descriptionEnd] = highlightedDescription
     .product-entrepreneur__background { display:none; }
     .product-entrepreneur__people { inset:auto 0 0;height:170px; }
     .product-entrepreneur__people :global(img) { width:100%;height:100%;object-fit:contain;object-position:center bottom; }
+    .product-entrepreneur--capucci .product-entrepreneur__people :global(img),
+    .product-entrepreneur--moravi .product-entrepreneur__people :global(img) { object-fit:cover;object-position:left bottom; }
     .product-entrepreneur__gradient { background:linear-gradient(180deg,#090806 0%,rgba(9,8,6,.9) 48%,rgba(9,8,6,.1) 100%); }
     .product-entrepreneur__gradient :global(img) { display:none; }
     .product-entrepreneur__inner { width:100%;padding:56px 24px 170px;align-items:flex-start;justify-content:flex-start; }
