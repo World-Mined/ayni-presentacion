@@ -581,6 +581,9 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);
     clearTimeout(snapVerifyTimer);
+    // El reverso del MP4 corre en su propio rAF, fuera de la timeline: sin
+    // esto seguía escribiendo `currentTime` sobre un video ya desmontado.
+    stopVideoReverse();
     driveAnim?.pause();
     tl.pause();
     root.classList.remove('reveal-initialized');
