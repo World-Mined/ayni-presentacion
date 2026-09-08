@@ -1,10 +1,11 @@
 ---
+import { mediaUrl } from '../../data/media';
 import { SECTION_IDS } from '../../data/v2';
 ---
 
 <section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI" data-safe-frame="none">
   <video class="video-hero__media" autoplay muted loop playsinline preload="metadata" data-home-video>
-    <source src="https://ayni.s3.us-east-1.amazonaws.com/videos/video-naturaleza-ayni.mp4" type="video/mp4" />
+    <source src={mediaUrl('video-naturaleza-ayni.mp4')} type="video/mp4" />
   </video>
   <canvas class="video-hero__safe-frame" aria-hidden="true" data-title-safe-frame></canvas>
   <div class="video-hero__shade" aria-hidden="true"></div>

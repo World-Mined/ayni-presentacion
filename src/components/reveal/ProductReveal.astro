@@ -144,7 +144,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
               playsinline
               preload="auto"
             ></video>
-          ) : (
+          ) : cfg.frames ? (
             <img
               class="reveal-product"
               src={`${cfg.frames.dir}/frame-01.webp`}
@@ -155,7 +155,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
               fetchpriority="high"
               decoding="async"
             />
-          )}
+          ) : null}
         </div>
       </div>
       <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
@@ -373,7 +373,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     /* Es una capa permanente. Antes dependía de `[style*='--reveal-bg']`,
        un selector que podía dejar de coincidir mientras el navegador
        recomponía la capa de video. El fallback cubre también el demo. */
-    background-image: var(--reveal-bg, url('/reveal/mandala.webp'));
+    background-image: var(--reveal-bg, none);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;

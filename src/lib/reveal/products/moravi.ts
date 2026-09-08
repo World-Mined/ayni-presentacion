@@ -1,4 +1,5 @@
 import type { RevealConfig } from '../types';
+import { mediaUrl, REVEAL_BACKGROUND_URL } from '../../../data/media';
 
 // Datos de Moravi 360 (Figma "Productos 1.3 Moravi 360", nodo 1066:24297).
 export const moravi: RevealConfig = {
@@ -7,11 +8,10 @@ export const moravi: RevealConfig = {
   // mantiene el rótulo del diseño.
   title: { main: 'MORAVI 360', sub: 'La fórmula 6 en 1' },
   // Video final entregado por diseño: conserva entrada y anillo originales.
-  frames: { dir: '/reveal/moravi', count: 1 },
   // Adelantamos las ramas apenas antes del cierre visual del MP4 para evitar
   // el vacío que queda entre el anillo y el primer ingrediente.
-  video: { src: 'https://ayni.s3.us-east-1.amazonaws.com/videos/moravi.mp4', labelsStart: 1550, playbackRate: 1.25 },
-  background: '/reveal/mandala.webp',
+  video: { src: mediaUrl('moravi.mp4'), labelsStart: 1550, playbackRate: 1.25 },
+  background: REVEAL_BACKGROUND_URL,
   scroll: { revRate: 3 },
   timing: { labelsStagger: 12, labelsDur: 90 },
   // El anillo del video es mayor que el del reveal de Capucci.

@@ -74,7 +74,8 @@ export interface ScrollConfig {
 export interface RevealConfig {
   id: string;
   title: { main: string; sub: string };
-  frames: FramesConfig;
+  /** Fuente alternativa para productos configurados sin video nativo. */
+  frames?: FramesConfig;
   video?: VideoConfig;
   labels: LabelDef[];
   /** Fondo de la sección (ruta en /public). Sin él queda solo el degradado. */

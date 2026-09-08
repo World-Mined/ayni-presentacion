@@ -1,4 +1,4 @@
-import type { TimingConfig, GeometryConfig, ScrollConfig } from './types';
+import type { TimingConfig, GeometryConfig, ScrollConfig, FramesConfig } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DEFAULTS — el "feel" afinado. Cada producto solo sobreescribe lo que necesite;
@@ -54,4 +54,4 @@ export const DEFAULT_SCROLL: ScrollConfig = {
   revRate: 1.9,   // velocidad original de la animación inversa
 };
 
-export const DEFAULT_FRAMES = { prefix: 'frame-', pad: 2, ext: 'webp' };
+export const DEFAULT_FRAMES: Required<FramesConfig> = { dir: '', count: 0, prefix: 'frame-', pad: 2, ext: 'webp' };
