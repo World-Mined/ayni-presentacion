@@ -41,7 +41,7 @@ const questionsArt = {
 
     <div class="product-questions__accordion">
       {product.questions.items.map((item, index) => (
-        <details class:list={[item.hideOnMobile && 'product-questions__item--mobile-hidden']} data-open-on-mobile={item.openOnMobile ? 'true' : undefined} open={index === 0 || item.openOnMobile}>
+        <details class:list={[item.hideOnMobile && 'product-questions__item--mobile-hidden']} data-open-on-mobile={item.openOnMobile ? 'true' : undefined} open>
           <summary>
             <span class="product-questions__title">{item.title}</span>
             {item.mobileTitle && <span class="product-questions__title--mobile">{item.mobileTitle}</span>}
@@ -65,17 +65,22 @@ const questionsArt = {
 <script>
   const productQuestions = document.querySelector('[data-product-questions]');
 
+  // El marcado sale con todas las secciones abiertas: es el estado de
+  // escritorio y, además, lo que deja la página legible sin JS. Aquí solo se
+  // pliega lo que sobra en móvil, donde el acordeón sí actúa como tal. Antes
+  // el servidor abría únicamente la primera y el script las abría todas al
+  // hidratar, así que en escritorio se veía el salto.
   if (productQuestions) {
     const mobileQuery = window.matchMedia('(max-width: 767px)');
-    const setDefaultQuestions = () => {
+    const applyBreakpointDefaults = () => {
       const isMobile = mobileQuery.matches;
       productQuestions.querySelectorAll('details').forEach((item, index) => {
         item.open = !isMobile || index === 0 || item.dataset.openOnMobile === 'true';
       });
     };
 
-    setDefaultQuestions();
-    mobileQuery.addEventListener('change', setDefaultQuestions);
+    applyBreakpointDefaults();
+    mobileQuery.addEventListener('change', applyBreakpointDefaults);
   }
 </script>
 
