@@ -10,6 +10,7 @@ import productsJungle from '../../../assets/v2/products-jungle-ayni.webp';
 import productsBgBlur from '../../../assets/v2/products-bg-blur.svg';
 import productsPlank from '../../../assets/v2/products-plank.webp';
 import productsShade from '../../../assets/v2/products-shade.webp';
+import { mediaUrl } from '../../../data/media';
 import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../../data/v2';
 import MotionCta from '../MotionCta/MotionCta.astro';
 import PickupMap from '../PickupMap/PickupMap.astro';
@@ -59,7 +60,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
   </div>
 </section>
 
-<dialog class="about-video-modal" aria-labelledby="about-video-title" data-about-video-modal>
+<dialog id="about-video" class="about-video-modal" aria-labelledby="about-video-title" data-about-video-modal>
   <div class="about-video-modal__content">
     <h2 id="about-video-title" class="sr-only">Video: ¿Qué es AYNI?</h2>
     <button class="about-video-modal__close" type="button" data-about-video-close aria-label="Cerrar video">
@@ -67,7 +68,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
     </button>
     <div class="about-video-modal__player">
       <VideoPlayer
-        src="/media/ayni-about.mp4"
+        src={mediaUrl('ayni-about.mp4')}
         poster={optimizedAboutVideoPoster.src}
         ariaLabel="Video: ¿Qué es AYNI?"
       />

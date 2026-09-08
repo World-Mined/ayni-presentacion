@@ -9,10 +9,16 @@ Pesan más de lo que conviene guardar en git (`ayni-home.mp4` son ~10 MB), así
 que están ignorados en `.gitignore`. Quien clone el repo tiene que colocarlos
 aquí a mano antes de levantar el sitio.
 
-| archivo | usado por | notas |
+> **Nota:** ya no queda ningún `.mp4` servido desde esta carpeta. Todos los
+> videos del sitio se piden a S3 a través de `mediaUrl()` (`src/data/media.ts`),
+> cuyo origen se puede sobreescribir con `PUBLIC_MEDIA_BASE_URL`. Esta carpeta
+> se conserva solo como copia local de trabajo.
+
+| archivo | servido desde | notas |
 | --- | --- | --- |
-| `ayni-home.mp4` | `src/components/v2/HeroSection.astro` | fondo de la portada |
-| `ayni-about.mp4` | CTA “Conoce más” de `HomeOverview.astro` | presentación de “¿Qué es AYNI?”; sustituir `/media/ayni-about.mp4` por su URL de S3 al publicarla |
+| `video-naturaleza-ayni.mp4` | S3 | fondo de la portada (`HeroSection/HeroSection.astro`) |
+| `ayni-about.mp4` | S3 | presentación de “¿Qué es AYNI?”, en el CTA “Conoce más” de `HomeOverview.astro` |
+| `ayni-home.mp4` | — | máster local sobre el que se midieron los cortes de `home-video.ts`. **Verificar que el archivo de S3 es este mismo encode**: los tiempos no los valida nada en el build. |
 
 ## `ayni-home.mp4` tiene medidas tomadas a mano
 

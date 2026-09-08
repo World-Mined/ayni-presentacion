@@ -168,7 +168,16 @@ const { src, poster, ariaLabel } = Astro.props;
 
     const togglePlayback = async () => {
       if (video.paused) {
-        try { await video.play(); } catch { error.hidden = false; }
+        try {
+          await video.play();
+        } catch (cause) {
+          // `NotAllowedError` es el navegador negando el gesto, no un fallo de
+          // descarga: el overlay de error diría algo que no ha pasado y taparía
+          // los controles con los que el usuario puede reintentar.
+          if (!(cause instanceof DOMException && cause.name === 'NotAllowedError')) {
+            error.hidden = false;
+          }
+        }
       } else video.pause();
     };
 
@@ -201,12 +210,18 @@ const { src, poster, ariaLabel } = Astro.props;
     const toggleFullscreen = async () => {
       const scope = document as FullscreenDocument;
       const target = player as FullscreenElement;
-      if (fullscreenElement()) {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        else await scope.webkitExitFullscreen?.();
-      } else if (target.requestFullscreen) await target.requestFullscreen();
-      else if (target.webkitRequestFullscreen) await target.webkitRequestFullscreen();
-      else if ('webkitEnterFullscreen' in video) (video as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen();
+      try {
+        if (fullscreenElement()) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else await scope.webkitExitFullscreen?.();
+        } else if (target.requestFullscreen) await target.requestFullscreen();
+        else if (target.webkitRequestFullscreen) await target.webkitRequestFullscreen();
+        else if ('webkitEnterFullscreen' in video) (video as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen();
+      } catch {
+        // Safari en iOS rechaza la pantalla completa sobre cualquier elemento
+        // que no sea el propio <video>. No hay nada que reportar al usuario:
+        // el reproductor sigue igual de usable en línea.
+      }
     };
 
     const updateFullscreen = () => {
