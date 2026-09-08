@@ -1,19 +1,19 @@
 ---
 import { Image, getImage } from 'astro:assets';
-import aboutBackground from '../../assets/v2/about-background.webp';
-import aboutEarth from '../../assets/v2/about-earth.webp';
-import aboutGradient from '../../assets/v2/about-gradient.webp';
-import aboutTree from '../../assets/v2/about-tree.webp';
-import aboutVideoClose from '../../assets/v2/about-video-close.svg';
-import aboutVideoPoster from '../../assets/v2/about-video-poster.png';
-import productsJungle from '../../assets/v2/products-jungle-ayni.webp';
-import productsBgBlur from '../../assets/v2/products-bg-blur.svg';
-import productsPlank from '../../assets/v2/products-plank.webp';
-import productsShade from '../../assets/v2/products-shade.webp';
-import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../data/v2';
-import MotionCta from './MotionCta.astro';
-import PickupMap from './PickupMap.astro';
-import VideoPlayer from './VideoPlayer.astro';
+import aboutBackground from '../../../assets/v2/about-background.webp';
+import aboutEarth from '../../../assets/v2/about-earth.webp';
+import aboutGradient from '../../../assets/v2/about-gradient.webp';
+import aboutTree from '../../../assets/v2/about-tree.webp';
+import aboutVideoClose from '../../../assets/v2/about-video-close.svg';
+import aboutVideoPoster from '../../../assets/v2/about-video-poster.png';
+import productsJungle from '../../../assets/v2/products-jungle-ayni.webp';
+import productsBgBlur from '../../../assets/v2/products-bg-blur.svg';
+import productsPlank from '../../../assets/v2/products-plank.webp';
+import productsShade from '../../../assets/v2/products-shade.webp';
+import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../../data/v2';
+import MotionCta from '../MotionCta/MotionCta.astro';
+import PickupMap from '../PickupMap/PickupMap.astro';
+import VideoPlayer from '../VideoPlayer/VideoPlayer.astro';
 
 const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width: 1280, format: 'webp', quality: 78 });
 ---
@@ -262,7 +262,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
        alto del escenario, 44.872vw los 175px del grupo de empaques y 8.205vw
        los 32px del titular. Los `clamp()` sólo acotan ese escalado en los
        extremos; el término central es la medida original.
-       (Misma convención documentada en ProductsBanner.astro.) */
+       (Misma convención documentada en el componente `ProductsBanner`.) */
     .home-band--products { --products-mobile-height:clamp(438px,144.359vw,690px);--products-mobile-group-h:clamp(136px,44.872vw,240px);--products-mobile-gap:clamp(32px,10.256vw,48px);--products-copy-width:100%;--products-copy-right:0;--products-sink:0;min-height:0;padding:0;overflow-x:clip; }
     .home-band__products-stage { display:grid;height:var(--products-mobile-height);min-height:0;aspect-ratio:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto var(--products-mobile-group-h);row-gap:var(--products-mobile-gap);align-content:center;justify-items:center; }
     .home-band__products-scene :global(img) { object-position:center; }
@@ -325,7 +325,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
 </style>
 
 <script>
-  import '../../scripts/v2/cta-motion';
+  import '../../../scripts/v2/cta-motion';
 
   document.querySelectorAll<HTMLElement>('.home-band--about').forEach((section) => {
     const trigger = section.querySelector<HTMLAnchorElement>('[data-motion-cta]');

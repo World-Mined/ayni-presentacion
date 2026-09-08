@@ -1,0 +1,10 @@
+@media (prefers-reduced-motion: reduce) {
+  .reveal-product-tilt {
+    transform: none !important;
+    transition: none;
+  }
+  .reveal-product { transition: none; }
+  .reveal-mobile-ring__circle,
+  .reveal-label::before,
+  .reveal-mobile-txt { transition: none !important; }
+}

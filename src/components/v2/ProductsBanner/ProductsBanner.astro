@@ -1,9 +1,9 @@
 ---
 import { Image, getImage } from 'astro:assets';
-import banner from '../../assets/v2/products-banner.webp';
-import bannerPortrait from '../../assets/v2/products-jungle.webp';
-import plank from '../../assets/v2/products-plank.webp';
-import { PRODUCT_LINE } from '../../data/v2';
+import banner from '../../../assets/v2/products-banner.webp';
+import bannerPortrait from '../../../assets/v2/products-jungle.webp';
+import plank from '../../../assets/v2/products-plank.webp';
+import { PRODUCT_LINE } from '../../../data/v2';
 
 // Art direction real, no el mismo archivo reescalado: en vertical el diseño
 // usa un encuadre más cerrado de la misma foto. Los dos tienen la misma
@@ -111,36 +111,14 @@ const PACK_ENTRY_ORDER = [0, 2, 1];
   .products-banner__content { position:relative;z-index:3;display:flex;width:min(100%,1280px);margin-inline:auto;flex-direction:column;align-items:center;justify-content:flex-end;gap:clamp(48px,8.333vw,120px);padding:clamp(40px,5.556vw,80px) 0 var(--pack-seat); }
   .products-banner h1 { margin:0;color:#fefaf0;font-family:Montserrat,sans-serif;font-size:clamp(28px,3.333vw,48px);font-weight:700;line-height:1.209;letter-spacing:0;text-align:center;text-transform:uppercase;animation:products-title-in .38s .04s cubic-bezier(.22,.61,.36,1) both; }
   .products-banner__packs { display:flex;width:100%;align-items:flex-end;justify-content:center; }
-  /* Dos cajas por bolsa, y la separación es deliberada:
-     `__pack` es la ZONA SENSIBLE. Mide el paso completo entre bolsas (292 de
-     1280) sin márgenes, así las tres particionan la fila sin huecos ni
-     solapes y el relevo ocurre justo en el punto medio entre dos bolsas.
-     Nunca se transforma. Antes la escala del hover se aplicaba a esta misma
-     caja, así que la bolsa activa agrandaba su propia zona un 4% y encima se
-     ponía por delante con z-index: al pasar a la vecina seguías dentro del
-     área de la anterior y el hover no se soltaba hasta salir de ese margen.
-     `__pack-art` es la caja VISIBLE: el arte ocupa el 19.4%–80.6% horizontal
-     y el 7.5%–94.4% vertical del cuadrado de 1080, y el resto del PNG es
-     transparente. Al recortarla a eso, su borde inferior ES la base de la
-     bolsa y el asiento sobre la mesa se controla directo. Esta es la que
-     escala. */
+  /* `__pack` mantiene fija la zona sensible entre bolsas; solo `__pack-art`
+     se transforma y recorta el espacio transparente del PNG. */
   .products-banner__pack { position:relative;z-index:1;display:block;width:22.813%;aspect-ratio:292/396.2; }
-  /* `pointer-events:none` es la otra mitad del arreglo. El PNG mide 456px y
-     sobresale 88px por cada lado de la caja del arte —todo transparente—,
-     pero el hit-testing no mira el alfa: esos 88px capturaban el ratón igual.
-     Las imágenes de bolsas contiguas se solapaban 164px, así que la frontera
-     real caía donde empezaba el PNG vecino y no en el punto medio. Dejando
-     solo `__pack` como diana, el relevo es exacto y no depende del z-index. */
+  /* El arte ignora eventos para que sus píxeles transparentes no alteren el
+     límite de interacción definido por `__pack`. */
   .products-banner__pack-art { position:absolute;display:block;inset:0 2.226%;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;animation:products-pack-in .32s cubic-bezier(.22,.61,.36,1) both;pointer-events:none; }
-  /* La entrada termina en el centro para dirigir la mirada a Capucci sin
-     convertir la banda en otro carrusel. Se anima `translate` en el arte y no
-     `transform` en el enlace: así el escalado del hover conserva su propia
-     transición y la zona sensible nunca cambia de tamaño.
-
-     El turno de cada bolsa llega por `--pack-order`, escrito en el marcado
-     desde `PACK_ENTRY_ORDER`. Antes iba en tres reglas `:nth-child` con los
-     índices desordenados: no se leía que el centro entraba último y se rompía
-     ante cualquier hermano que no fuera una bolsa. */
+  /* La entrada anima el arte sin transformar la zona sensible. `--pack-order`
+     conserva el turno declarado en `PACK_ENTRY_ORDER`. */
   .products-banner__pack-art { animation-delay:calc(var(--pack-entry-base) + var(--pack-order,0) * var(--pack-entry-step)); }
   /* `left` sí resuelve el porcentaje contra el ancho, pero `top` lo haría
      contra el alto de la caja —que aquí es 1.42× el ancho— y dejaba la bolsa
@@ -150,28 +128,13 @@ const PACK_ENTRY_ORDER = [0, 2, 1];
   .products-banner__pack-art :global(img) { position:absolute;bottom:-6.44%;left:-31.7%;display:block;width:163.4%;height:auto;max-width:none; }
 
   @media(hover:hover){
-    /* El contenedor ocupa los 1280px de la fila, pero el grupo de bolsas solo
-       876: quedan ~200px muertos a cada lado, a la misma altura que ellas.
-       Con `:hover` a secas, entrar por ahí encogía las tres sin destacar
-       ninguna. `:has()` ata la regla a que haya una bolsa realmente activa.
-       Si el navegador no soporta `:has()` descarta solo esta regla: las
-       vecinas no se encogen y el resto del efecto sigue igual. */
+    /* Las bolsas vecinas se reducen solo cuando una bolsa está activa. */
     .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack-art { transform:scale(.98); }
-    /* La condición `:has()` se repite a propósito en vez de dejar solo
-       `.pack:hover .pack-art`: `:has()` hereda la especificidad de su
-       argumento, así que la regla de encoger pesa (0,4,0) y le ganaba a la de
-       destacar (0,3,0) — la bolsa activa se encogía con las demás. Repetirla
-       la sube a (0,5,0) y el resultado deja de depender del orden.
-       La escala nace en el borde inferior, que es justo donde la bolsa toca
-       la madera: crece hacia arriba y la base no se despega de la mesa. */
+    /* Se repite `:has()` para que la especificidad de la bolsa activa supere
+       la regla de sus vecinas; el origen inferior mantiene la base apoyada. */
     .products-banner__packs:has(.products-banner__pack:hover) .products-banner__pack:hover .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
   }
-  /* Foco por teclado: cada bolsa es un <a>, así que Tab ya las recorre en
-     orden — lo que faltaba era mostrarlo. Fuera de `@media(hover:hover)` a
-     propósito: el foco no depende de si el dispositivo tiene puntero con
-     hover, tiene que verse igual en cualquier caso. Replica el mismo
-     escalado+sombra que el hover para que "seleccionada por tab" se lea
-     como la misma señal visual que "seleccionada por mouse". */
+  /* El foco replica el hover y permanece visible aunque no exista puntero. */
   .products-banner__pack:focus-visible { outline:2px solid #f9cb69;outline-offset:6px;border-radius:4px; }
   .products-banner__packs:has(.products-banner__pack:focus-visible) .products-banner__pack-art { transform:scale(.98); }
   .products-banner__packs:has(.products-banner__pack:focus-visible) .products-banner__pack:focus-visible .products-banner__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }

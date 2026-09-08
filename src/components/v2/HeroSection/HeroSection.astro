@@ -1,6 +1,6 @@
 ---
-import { mediaUrl } from '../../data/media';
-import { SECTION_IDS } from '../../data/v2';
+import { mediaUrl } from '../../../data/media';
+import { SECTION_IDS } from '../../../data/v2';
 ---
 
 <section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI" data-safe-frame="none">
@@ -25,7 +25,7 @@ import { SECTION_IDS } from '../../data/v2';
   // El reencuadre del cierre vive aparte: es un motor de composición con
   // geometría propia, del mismo tipo que `cta-motion`. Aquí sólo quedan los
   // controles, que sí pertenecen a este componente.
-  import '../../scripts/v2/hero-video';
+  import '../../../scripts/v2/hero-video';
 
   document.querySelectorAll<HTMLElement>('.video-hero').forEach((hero) => {
     const video = hero.querySelector<HTMLVideoElement>('[data-home-video]');

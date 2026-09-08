@@ -1,0 +1,399 @@
+/* Global and namespaced because the reveal engine creates its SVG nodes at runtime. */
+.reveal-track {
+  --reveal-gold: #f9cb69;
+  position: relative;
+}
+
+.reveal-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 90% at 50% 42%, #14110b 0%, #0a0805 48%, #000 100%);
+}
+
+/* La textura del mandala que el diseño pone detrás de la animación. Va como
+   capa aparte y no en el `background` de arriba para que el degradado siga
+   mandando en el centro, donde se apoya el producto. */
+.reveal-pin::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  /* El fallback cubre el demo y evita depender de la composición del video. */
+  background-image: var(--reveal-bg, none);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  content: '';
+  pointer-events: none;
+}
+/* Una veladura asimétrica, casi transparente. Se desplaza apenas sobre el
+   mandala durante el sticky: añade profundidad sin mover la textura ni el
+   video del producto. */
+.reveal-pin::after {
+  position: absolute;
+  z-index: 0;
+  inset: -2% -10%;
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, .14) 0%,
+    rgba(0, 0, 0, .08) 42%,
+    rgba(0, 0, 0, .025) 66%,
+    rgba(0, 0, 0, .06) 100%);
+  content: '';
+  pointer-events: none;
+  transform: translate3d(var(--reveal-gradient-shift, 0px), 0, 0);
+  will-change: transform;
+}
+.reveal-stage { z-index: 1; }
+
+.reveal-stage {
+  position: relative;
+  width: min(94vw, 1120px);
+  aspect-ratio: 1920 / 1080;
+  /* El círculo y el overlay viven en este lienzo (no en todo el viewport).
+     Las unidades `cqw` de las descripciones deben usar esta misma referencia
+     para que no crezcan al pasar del máximo de 1120 px. */
+  container-type: inline-size;
+}
+
+/* En desktop el header ocupa la franja superior del viewport. Este pequeño
+   desplazamiento centra ópticamente la composición en el espacio visible
+   restante, sin alterar la geometría interna ni el disparo del sticky. */
+@media (min-width: 768px) {
+  .reveal-stage { transform: translateY(clamp(52px, 8vh, 72px)); }
+}
+
+/* Se centra con `left/right` + flex y NO con `translateX(-50%)`: la timeline
+   anima `scale` sobre este mismo nodo (engine.ts, `tl.add(titleblock, …)`) y
+   cualquier transform propio lo pisaría anime.js en el primer fotograma. */
+.reveal-title {
+  position: absolute;
+  z-index: 5;
+  top: 3%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Los 12 px de separación del diseño sobre el lienzo de 1440. En % no vale:
+     el `row-gap` porcentual de un flex column de alto automático resuelve
+     contra cero. */
+  gap: clamp(4px, 0.78vw, 9px);
+  text-align: center;
+  opacity: 0;
+}
+/* La entrada del título pertenece a la timeline, pero al salir de foco no
+   debe esperar a que toda la secuencia se rebobine hasta su primer tramo.
+   El estado del reveal lo apaga desde el inicio de la reversa; producto,
+   anillo y ramas continúan recorriendo normalmente el camino inverso. */
+.reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-title {
+  opacity: 0 !important;
+  transition: opacity .26s ease-out;
+}
+
+/* Título de texto: solo queda como respaldo cuando el componente se usa sin
+   escena, que hoy es únicamente `reveal-demo.astro`. */
+.reveal-title h2 {
+  margin: 0;
+  color: var(--reveal-gold);
+  font-weight: 600;
+  font-size: clamp(24px, 3.4vw, 48px);
+  line-height: 1.1;
+}
+.reveal-title p {
+  margin: 4px 0 0;
+  color: #c4bba8;
+  font-weight: 600;
+  font-size: clamp(12px, 1.4vw, 18px);
+}
+
+/* El h2 hace de cabecera del diseño (521/1440 del ancho de sección) y dentro
+   el logotipo ocupa lo suyo, así cada producto conserva su tamaño relativo.
+   Los selectores repiten `h2`/`p` a propósito: con la clase suelta perderían
+   contra `.reveal-title h2`, y el logotipo heredaría `font-size: 48px`. */
+.reveal-title h2.reveal-title__mark {
+  display: block;
+  width: 36.18%;
+  margin: 0;
+  line-height: 0;
+}
+/* Nunca fijar también el alto: estos SVG llevan `preserveAspectRatio="none"`
+   y se estirarían sin avisar. */
+.reveal-logo {
+  display: block;
+  width: var(--reveal-logo-w);
+  height: auto;
+  margin-inline: auto;
+}
+
+/* Poppins Light + SemiBold para el número, como el nodo de Figma. El fallback
+   literal de la familia hace falta porque `reveal-demo.astro` no carga v2.css
+   y allí `--font-title` no existe. */
+.reveal-title p.reveal-formula {
+  margin: 0;
+  color: #c4bba8;
+  font-family: var(--font-title, 'Poppins', system-ui, sans-serif);
+  font-size: clamp(12px, 1.57vw, 19px);
+  font-weight: 300;
+  line-height: 1.0834;
+}
+.reveal-title p.reveal-formula strong { font-weight: 600; }
+
+.reveal-product-wrap {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 55%;
+  width: 32%;
+  transform: translate(-50%, -50%);
+  transition: opacity .32s ease;
+  perspective: 900px;
+}
+.reveal-product-tilt {
+  transform: rotateY(var(--reveal-product-tilt, 0deg));
+  transform-origin: center;
+  transform-style: preserve-3d;
+  transition: transform .28s cubic-bezier(.22, .61, .36, 1);
+  will-change: transform;
+}
+.reveal-product-wrap[data-tilting] .reveal-product-tilt {
+  transition-duration: .08s;
+}
+.reveal-product {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(var(--reveal-product-shadow-x, 0) 24px 40px rgba(0, 0, 0, 0.6));
+  /* El primer frame debe nacer en el mismo estado inicial de la timeline.
+     Si llega visible y JS lo oculta después, aparece un flash antes del popup. */
+  opacity: 0;
+  transition: filter .12s ease-out;
+  will-change: transform, opacity, filter;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* Los MP4 entregados vienen en H.264 (sin transparencia) sobre negro. Al
+   mezclar por pantalla, el negro deja ver el fondo de la sección y los
+   elementos luminosos de la animación conservan su color. */
+.reveal-product-video {
+  filter: none;
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+/* `transform` crea una capa de composición. Si `screen` vive en el `<video>`
+   se mezcla contra esa capa vacía y, de forma intermitente, reaparece el
+   rectángulo negro codificado en H.264. Mezclamos el grupo completo contra
+   el fondo real de la escena para que el negro permanezca transparente. */
+.reveal-track[data-native-video] .reveal-product-tilt { mix-blend-mode: screen; }
+.reveal-track[data-native-video] .reveal-product-wrap { width: 50%; }
+.reveal-track[data-native-video] .reveal-halo { display: none; }
+/* El MP4 ya trae su anillo en el estado normal. Durante el hover el video
+   se oculta para revelar la foto, así que recuperamos el anillo SVG solo
+   entonces: un único borde dorado, sin duplicarlo en reposo. */
+.reveal-track[data-native-video]:not([data-active]) .reveal-ring { display: none; }
+
+.reveal-halo {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 55%;
+  width: 40%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(249, 203, 105, 0.22) 0%, rgba(249, 203, 105, 0) 66%);
+}
+
+/* Las fotos del hover ocupan exactamente el interior del anillo que dibuja
+   la animación. No existe un segundo círculo ni una segunda composición. */
+.reveal-media-circle {
+  position: absolute;
+  z-index: 2;
+  left: var(--reveal-circle-x);
+  top: var(--reveal-circle-y);
+  width: var(--reveal-circle-size);
+  aspect-ratio: 1;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  isolation: isolate;
+  pointer-events: none;
+}
+.reveal-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity .32s ease;
+  /* Las fotos de Figma vienen con su propio filete dorado horneado en el
+     borde —3 px de 700, el 0.43% del ancho—. Sin recortarlo se sumaba al
+     anillo que dibuja la animación y el borde engordaba justo al entrar el
+     hover, que es lo que hacía parecer que aparecía un segundo círculo.
+     Este escalado mínimo lo empuja fuera del recorte y deja un solo anillo:
+     el de la animación, que nunca se mueve. */
+  transform: scale(1.012);
+}
+.reveal-phrase {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 82%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: clamp(15px, 2.5vw, 36px);
+  font-weight: 700;
+  line-height: 1.22;
+  text-align: center;
+  text-wrap: balance;
+  opacity: 0;
+  transition: opacity .32s ease;
+  pointer-events: none;
+}
+/* Reset replica el componente de Figma: Poppins Light 24/28 y una caja de
+   460 px dentro de su círculo de 643 px. El padding es solo un seguro para
+   no rozar el filete dorado al adaptar el tamaño del círculo. */
+.reveal-track[data-reveal='reset'] .reveal-phrase {
+  box-sizing: border-box;
+  width: 71.54%;
+  padding-block: clamp(8px, .7vw, 14px);
+  font-family: 'Poppins', system-ui, sans-serif;
+  /* 24 / 643 = 3.73% del diámetro en Figma. Como este círculo mide
+     41.04vw del lienzo, 1.53vw conserva esa proporción al escalar. */
+  font-size: clamp(16px, 1.53cqw, 24px);
+  font-weight: 300;
+  line-height: 1.1667;
+  white-space: pre-line;
+  /* Figma usa una caja de texto fija. `balance` acortaba artificialmente
+     cada línea y cambiaba por completo la composición de referencia. */
+  text-wrap: wrap;
+  text-shadow: none;
+}
+/* Moravi usa la variante Medium 24/28 del mismo componente de Figma. */
+.reveal-track[data-reveal='moravi'] .reveal-phrase {
+  width: 71.54%;
+  padding-block: clamp(8px, .7vw, 14px);
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: clamp(16px, 1.53cqw, 24px);
+  font-weight: 500;
+  line-height: 1.1667;
+  white-space: pre-line;
+  text-wrap: wrap;
+  text-shadow: none;
+}
+/* Capucci usa el mismo componente de Figma: Poppins Medium 24/28 dentro
+   de una caja de 460 px. Ganoderma es la única variante con caja de 490 px. */
+.reveal-track[data-reveal='capucci'] .reveal-phrase {
+  width: 71.54%;
+  padding-block: clamp(8px, .7vw, 14px);
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: clamp(16px, 1.53cqw, 24px);
+  font-weight: 500;
+  line-height: 1.1667;
+  white-space: pre-line;
+  text-wrap: wrap;
+  text-shadow: none;
+}
+.reveal-track[data-reveal='capucci'] [data-phrase='ganoderma'] { width: 76.2%; }
+[data-media][data-selected],
+[data-phrase][data-selected] { opacity: 1; }
+.reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-media,
+.reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-phrase {
+  opacity: 0 !important;
+  transition: none;
+}
+.reveal-track[data-active] .reveal-product-wrap { opacity: 0; }
+
+.reveal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.reveal-mobile-ring { display: none; }
+.reveal-mobile-controls,
+.reveal-icon-sources { display: none; }
+.reveal-ring,
+.reveal-stem {
+  fill: none;
+  stroke: var(--reveal-gold);
+  stroke-linecap: round;
+}
+/* En reposo el anillo y las ramas quedan con el `stroke-dashoffset` igual a su
+   longitud, o sea con el trazo visible a cero. Pero `stroke-linecap: round`
+   sigue pintando el remate: un punto por cada rama y otro en el arranque del
+   anillo que además arrastra su `drop-shadow`. Eso era la mancha que quedaba
+   al desaparecer. Se apagan solo en el estado oculto —el inicial y el de
+   después del reverso—, así que la animación no se entera. */
+.reveal-track[data-reveal-state='hidden'] .reveal-ring,
+.reveal-track[data-reveal-state='hidden'] .reveal-stem {
+  visibility: hidden;
+}
+.reveal-ring {
+  filter: drop-shadow(0 0 5px rgba(249, 203, 105, 0.45));
+}
+
+.reveal-label {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fcfcfb;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-size: clamp(13px, 1.6vw, 22px);
+  transform: translateY(-50%);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  margin-block: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.reveal-label.left {
+  flex-direction: row-reverse;
+  transform: translate(-100%, -50%);
+}
+.reveal-label .reveal-ico {
+  width: 1.35em;
+  height: 1.35em;
+  opacity: 0;
+  flex: none;
+  color: var(--reveal-gold);
+}
+.reveal-label .reveal-txt span {
+  display: inline-block;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.reveal-mobile-txt { display: none; }
+.reveal-label:focus-visible {
+  outline: 2px solid var(--reveal-gold);
+  outline-offset: 7px;
+  border-radius: 3px;
+}
+.reveal-track[data-reveal-state='shown'] .reveal-label:not(:disabled) {
+  cursor: pointer;
+  pointer-events: auto;
+}
+.reveal-track[data-active] .reveal-label { opacity: .25; }
+.reveal-track[data-active] .reveal-label[data-selected] { opacity: 1; }
+
+/* La composición compacta no reduce el lienzo 16:9 de escritorio. Se
+   reconstruye dentro del alto visible para que título, anillo e ingredientes
+   sigan siendo legibles en vertical y en teléfonos girados. */

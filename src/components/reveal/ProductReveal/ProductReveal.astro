@@ -1,0 +1,348 @@
+---
+import { Image } from 'astro:assets';
+import revealChevronLeft from '../../../assets/v2/reveal-chevron-left.svg';
+import revealChevronRight from '../../../assets/v2/reveal-chevron-right.svg';
+import revealProductSwitch from '../../../assets/v2/reveal-product-switch.svg';
+import type { IngredientsScene } from '../../../data/product-ingredients';
+import { PRODUCT_DETAILS } from '../../../data/products';
+import { DEFAULT_GEOMETRY } from '../../../lib/reveal/defaults';
+import { PRODUCTS } from '../../../lib/reveal/products';
+import type { ProductId } from '../../../lib/reveal/products';
+import './product-reveal.css';
+import './product-reveal-responsive.css';
+import './product-reveal-motion.css';
+
+interface Props {
+  /** id del producto registrado en lib/reveal/products/index.ts */
+  product: ProductId;
+  /** Fotos y frases que ocupan el mismo círculo al interactuar. */
+  scene?: IngredientsScene;
+}
+
+const { product, scene } = Astro.props;
+const cfg = PRODUCTS[product];
+if (!cfg) {
+  throw new Error(
+    `<ProductReveal>: producto desconocido "${product}". Regístralo en src/lib/reveal/products/index.ts`,
+  );
+}
+const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
+const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
+const hasNativeVideo = Boolean(cfg.video);
+const circleStyle = [
+  `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
+  `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
+  `--reveal-circle-size:${((geometry.ringRadius * 2) / 1920) * 100}%`,
+].join(';');
+
+// El wordmark se dimensiona en dos pasos, igual que en Figma: el `h2` hace de
+// cabecera y mide 521/1440 del ancho de sección, y dentro el logotipo ocupa
+// `anchoDelSVG / 521`. Se saca del propio asset en vez de un dato aparte porque
+// así no hay nada que mantener sincronizado: si cambia el SVG, cambia el ancho.
+const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` : undefined;
+// Los atributos width/height de HTML solo admiten enteros y estos SVG miden
+// 370.999×56.0007: sin redondear, el navegador descarta la dimensión, se pierde
+// la relación de aspecto implícita y el bloque salta de alto mientras carga.
+const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
+const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
+const productIndex = PRODUCT_DETAILS.findIndex((item) => item.revealId === product);
+const previousProduct = PRODUCT_DETAILS[
+  (productIndex - 1 + PRODUCT_DETAILS.length) % PRODUCT_DETAILS.length
+];
+const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length];
+---
+
+{cfg.background && <link rel="preload" href={cfg.background} as="image" type="image/webp" />}
+
+<div
+  class="reveal-track"
+  data-reveal={product}
+  data-row-count={rowCount}
+  data-native-video={hasNativeVideo ? '' : undefined}
+  style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
+>
+  <div class="reveal-pin">
+    <div class="reveal-stage" aria-label={`Animación de ${cfg.title.main}`}>
+      {scene ? (
+        <div class="reveal-title" style={logoStyle}>
+          <h2 class="reveal-title__mark">
+            <img
+              class="reveal-logo"
+              src={scene.logo.src}
+              width={logoWidth}
+              height={logoHeight}
+              alt={scene.logoAlt}
+              decoding="async"
+            />
+          </h2>
+          <p class="reveal-formula">{scene.formula.lead} <strong>{scene.formula.strong}</strong></p>
+        </div>
+      ) : (
+        /* Sin escena no hay logotipo que pintar: queda el título de texto, que
+           es la ruta que usa `reveal-demo.astro`. */
+        <div class="reveal-title">
+          <h2>{cfg.title.main}</h2>
+          <p>{cfg.title.sub}</p>
+        </div>
+      )}
+      <div class="reveal-halo"></div>
+      <svg class="reveal-mobile-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="reveal-mobile-ring__circle" cx="50" cy="50" r="49"></circle>
+      </svg>
+      <nav class="reveal-mobile-controls" aria-label="Cambiar producto">
+        <a href={`/productos/${previousProduct.slug}`} aria-label={`Ver ${previousProduct.name}`}>
+          <Image src={revealChevronLeft} alt="" width={25} height={24} />
+        </a>
+        <a class="reveal-mobile-controls__all" href="/productos" aria-label="Ver todos los productos">
+          <Image src={revealProductSwitch} alt="" width={32} height={32} />
+        </a>
+        <a href={`/productos/${nextProduct.slug}`} aria-label={`Ver ${nextProduct.name}`}>
+          <Image src={revealChevronRight} alt="" width={25} height={24} />
+        </a>
+      </nav>
+      {scene && (
+        <div class="reveal-icon-sources" aria-hidden="true">
+          {scene.items.map((item) => (
+            <img src={item.icon.src} alt="" data-mobile-icon={item.id} />
+          ))}
+        </div>
+      )}
+      {scene && (
+        <div class="reveal-media-circle" style={circleStyle} aria-live="polite">
+          {scene.items.map((item) => (
+            <Image
+              class="reveal-media"
+              data-media={item.id}
+              src={item.photo}
+              alt=""
+              widths={[550, 700]}
+              sizes="38vw"
+              quality={78}
+              loading="lazy"
+            />
+          ))}
+          {scene.items.map((item) => (
+            <p
+              class="reveal-phrase"
+              id={`reveal-phrase-${product}-${item.id}`}
+              data-phrase={item.id}
+            >
+              {item.phrase}
+            </p>
+          ))}
+        </div>
+      )}
+      <div
+        class="reveal-product-wrap"
+        data-product-tilt={product === 'capucci' && !cfg.video ? '' : undefined}
+      >
+        <div class="reveal-product-tilt">
+          {cfg.video ? (
+            <video
+              class="reveal-product reveal-product-video"
+              src={cfg.video.src}
+              aria-label={`Animación de ${cfg.title.main}`}
+              autoplay
+              muted
+              playsinline
+              preload="auto"
+            ></video>
+          ) : cfg.frames ? (
+            <img
+              class="reveal-product"
+              src={`${cfg.frames.dir}/frame-01.webp`}
+              alt={cfg.title.main}
+              width="700"
+              height="700"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          ) : null}
+        </div>
+      </div>
+      <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+</div>
+
+<noscript>
+  <style is:global>
+    .reveal-product { opacity: 1 !important; }
+    /* La opacidad del título la levanta la timeline. Sin JS eso dejaba oculto el
+       logotipo de marca, que es justo lo que nombra la sección. */
+    .reveal-title { opacity: 1 !important; }
+  </style>
+</noscript>
+
+<script>
+  import { createReveal } from '../../../lib/reveal/engine';
+  import { PRODUCTS } from '../../../lib/reveal/products';
+
+  const cleanups = new Map<HTMLElement, () => void>();
+  const bindIngredientInteraction = (root: HTMLElement) => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const items = root.querySelectorAll<HTMLButtonElement>('[data-item]');
+    const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
+    const circle = root.querySelector<HTMLElement>('.reveal-media-circle');
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    if (!circle || !layers.length) return () => controller.abort();
+
+    const activate = (id: string | null) => {
+      // Los botones siguen en el DOM mientras Anime.js los desvanece. Sin
+      // esta compuerta el navegador puede lanzar otro pointerenter sobre un
+      // botón ya invisible y volver a encender su foto durante el reverso.
+      if (id && root.dataset.revealState !== 'shown') return;
+      if (id) root.dataset.active = id;
+      else delete root.dataset.active;
+      if (id) root.dispatchEvent(new Event('reveal:ingredient'));
+
+      items.forEach((item) => {
+        const selected = item.dataset.item === id;
+        item.setAttribute('aria-pressed', String(selected));
+        item.toggleAttribute('data-selected', selected);
+      });
+      layers.forEach((layer) => {
+        const selected = layer.dataset.media === id || layer.dataset.phrase === id;
+        layer.toggleAttribute('data-selected', selected);
+      });
+    };
+
+    const isNearInteraction = (x: number, y: number) => {
+      const elements = [circle, ...items];
+      const rects = elements
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (!rects.length) return false;
+
+      const padding = Math.min(64, Math.max(24, circle.getBoundingClientRect().width * 0.08));
+      const left = Math.min(...rects.map((rect) => rect.left)) - padding;
+      const right = Math.max(...rects.map((rect) => rect.right)) + padding;
+      const top = Math.min(...rects.map((rect) => rect.top)) - padding;
+      const bottom = Math.max(...rects.map((rect) => rect.bottom)) + padding;
+      return x >= left && x <= right && y >= top && y <= bottom;
+    };
+
+    items.forEach((item) => {
+      const id = item.dataset.item!;
+      item.addEventListener('pointerenter', () => {
+        if (hoverCapable.matches) activate(id);
+      }, options);
+      item.addEventListener('focus', () => {
+        // Un toque enfoca el botón antes de disparar `click`. Si se activara
+        // también aquí, ese mismo click lo apagaría de inmediato. El foco solo
+        // adelanta la selección cuando procede del teclado.
+        if (item.matches(':focus-visible')) activate(id);
+      }, options);
+      item.addEventListener('click', () => {
+        if (!hoverCapable.matches) activate(root.dataset.active === id ? null : id);
+      }, options);
+    });
+
+    window.addEventListener('pointermove', (event) => {
+      if (hoverCapable.matches && root.dataset.active && !isNearInteraction(event.clientX, event.clientY)) {
+        activate(null);
+      }
+    }, options);
+    window.addEventListener('blur', () => activate(null), options);
+    root.addEventListener('reveal:hide', () => activate(null), options);
+    root.addEventListener('focusout', (event) => {
+      if (!root.contains(event.relatedTarget as Node | null)) activate(null);
+    }, options);
+
+    return () => {
+      activate(null);
+      controller.abort();
+    };
+  };
+
+  const bindProductTilt = (root: HTMLElement) => {
+    const wrap = root.querySelector<HTMLElement>('[data-product-tilt]');
+    const tilt = wrap?.querySelector<HTMLElement>('.reveal-product-tilt');
+    if (!wrap || !tilt) return () => {};
+
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let animationFrame = 0;
+    let horizontalPosition = 0;
+
+    const paint = () => {
+      animationFrame = 0;
+      tilt.style.setProperty('--reveal-product-tilt', `${(horizontalPosition * 5.5).toFixed(2)}deg`);
+      tilt.style.setProperty('--reveal-product-shadow-x', `${(-horizontalPosition * 14).toFixed(2)}px`);
+    };
+
+    const reset = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+      horizontalPosition = 0;
+      delete wrap.dataset.tilting;
+      tilt.style.removeProperty('--reveal-product-tilt');
+      tilt.style.removeProperty('--reveal-product-shadow-x');
+    };
+
+    wrap.addEventListener('pointermove', (event) => {
+      if (
+        !hoverCapable.matches
+        || reduceMotion.matches
+        || root.dataset.revealState !== 'shown'
+        || root.dataset.active
+      ) {
+        reset();
+        return;
+      }
+
+      const rect = wrap.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      horizontalPosition = Math.max(-1, Math.min(1, (event.clientX - center) / (rect.width / 2)));
+      wrap.dataset.tilting = '';
+      if (!animationFrame) animationFrame = requestAnimationFrame(paint);
+    }, options);
+
+    wrap.addEventListener('pointerleave', reset, options);
+    root.addEventListener('reveal:ingredient', reset, options);
+    root.addEventListener('reveal:hide', reset, options);
+    window.addEventListener('blur', reset, options);
+
+    return () => {
+      reset();
+      controller.abort();
+    };
+  };
+
+  const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const el = entry.target as HTMLElement;
+      if (!entry.isIntersecting || cleanups.has(el)) return;
+      const product = el.dataset.reveal as keyof typeof PRODUCTS;
+      const cfg = PRODUCTS[product];
+      if (!cfg) return;
+      const cleanupReveal = createReveal(el, cfg);
+      const cleanupInteraction = bindIngredientInteraction(el);
+      const cleanupProductTilt = bindProductTilt(el);
+      cleanups.set(el, () => {
+        cleanupProductTilt();
+        cleanupInteraction();
+        cleanupReveal();
+      });
+      observer.unobserve(el);
+    });
+  }, { rootMargin: '85% 0px 85%' });
+
+  roots.forEach((el) => {
+    if (!el.dataset.revealObserved) {
+      el.dataset.revealObserved = 'true';
+      observer.observe(el);
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    observer.disconnect();
+    cleanups.forEach((cleanup) => cleanup());
+    cleanups.clear();
+  }, { once: true });
+</script>

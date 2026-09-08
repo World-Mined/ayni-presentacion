@@ -1,12 +1,12 @@
 ---
 import { Image } from 'astro:assets';
-import bonusFocus from '../../assets/v2/ambassadors-bonus-focus.webp';
-import bonusGlow from '../../assets/v2/ambassadors-bonus-glow.webp';
-import bonusSponsorship from '../../assets/v2/ambassadors-bonus-sponsorship.webp';
-import star1 from '../../assets/v2/ambassadors-star-1.webp';
-import star2 from '../../assets/v2/ambassadors-star-2.webp';
-import star3 from '../../assets/v2/ambassadors-star-3.webp';
-import star4 from '../../assets/v2/ambassadors-star-4.webp';
+import bonusFocus from '../../../assets/v2/ambassadors-bonus-focus.webp';
+import bonusGlow from '../../../assets/v2/ambassadors-bonus-glow.webp';
+import bonusSponsorship from '../../../assets/v2/ambassadors-bonus-sponsorship.webp';
+import star1 from '../../../assets/v2/ambassadors-star-1.webp';
+import star2 from '../../../assets/v2/ambassadors-star-2.webp';
+import star3 from '../../../assets/v2/ambassadors-star-3.webp';
+import star4 from '../../../assets/v2/ambassadors-star-4.webp';
 
 // Las cuatro variantes de «Beneficios AYNI» en Figma sólo se diferencian en la
 // foto: el titular y el texto son idénticos en todas. Así que el carrusel rota
@@ -198,17 +198,8 @@ const STAR_FADE = 1100;
   if (bands.length && 'IntersectionObserver' in window && !quiet) {
     for (const band of bands) band.dataset.revealed = 'false';
 
-    // Dos umbrales distintos a propósito: entra cuando la banda ya ocupa la
-    // pantalla de verdad y sólo se rearma cuando ha salido entera. Con un único
-    // umbral el texto entraría y saldría a cada temblor del scroll sobre el
-    // borde; y con el listón bajo, la animación se gastaba mientras la banda
-    // todavía asomaba por abajo y no daba tiempo a verla.
-    //
-    // Se mira por dos caminos porque `intersectionRatio` es la fracción de la
-    // banda visible, no de la pantalla ocupada: si alguna vez una banda acaba
-    // siendo más alta que la ventana, ese ratio no llegaría nunca al 60% y el
-    // texto se quedaría fuera para siempre. La segunda condición —cuánta
-    // pantalla cubre— cierra ese agujero.
+    // Entra al ocupar el 60% de la banda o de la pantalla y se rearma solo
+    // después de salir por completo, incluso si la banda supera el viewport.
     const ENTRY = 0.6;
     const reveal = new IntersectionObserver(
       (entries) => {
@@ -250,10 +241,7 @@ const STAR_FADE = 1100;
     let onScreen = false;
 
     const advance = () => {
-      // La anterior pasa por «leaving» y no directamente a apagada: ahí es
-      // donde aguanta mientras la nueva se funde encima. La de la vuelta pasada
-      // ya cumplió, y al retirarla ahora —invisible desde hace rato— recupera
-      // su encuadre para cuando le toque de nuevo.
+      // `leaving` mantiene la foto saliente debajo durante el fundido.
       for (const slide of slides) if (slide.dataset.active === 'leaving') slide.dataset.active = 'false';
       slides[current].dataset.active = 'leaving';
       current = (current + 1) % slides.length;
@@ -282,15 +270,8 @@ const STAR_FADE = 1100;
       activationFrame = undefined;
     };
 
-    // La primera deriva empieza cuando la sección entra en pantalla, no durante
-    // la carga de la página mientras AYNI Estrella todavía queda fuera de foco.
-    //
-    // Antes se arrancaba de entrada y el observador sólo servía para pausar,
-    // por miedo a que un navegador no entregara nunca el callback y dejara el
-    // carrusel congelado. Ese miedo no aplica: la spec obliga a una primera
-    // notificación con el estado inicial en cuanto se observa el elemento. El
-    // fallback queda entonces sólo para navegadores sin `IntersectionObserver`,
-    // donde damos la banda por visible y conservamos el arranque inmediato.
+    // La deriva comienza al entrar en pantalla; sin `IntersectionObserver`,
+    // el carrusel usa el arranque inmediato como fallback.
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(([entry]) => {
         onScreen = entry.isIntersecting;
@@ -300,8 +281,6 @@ const STAR_FADE = 1100;
       onScreen = true;
       start();
     }
-    // `start` consulta `onScreen` por su cuenta, así que reactivar el
-    // movimiento con la banda fuera de foco ya no la pone a la deriva.
     stillness.addEventListener('change', () => (stillness.matches ? stop() : start()));
   }
 </script>

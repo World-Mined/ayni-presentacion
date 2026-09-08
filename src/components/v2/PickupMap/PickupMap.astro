@@ -1,10 +1,10 @@
 ---
 // Los mapas se importan en vez de referenciarse por ruta pública: así el build
 // falla si uno se renombra, y cada archivo sale con hash de contenido. Es la
-// misma vía que usa el resto de v2 (ver HomeOverview.astro).
-import mapBolivia from '../../assets/v2/pickup-map-bolivia.svg';
-import mapDefault from '../../assets/v2/pickup-map-default.svg';
-import mapPeru from '../../assets/v2/pickup-map-peru.svg';
+// misma vía que usa el resto de v2 (ver el componente `HomeOverview`).
+import mapBolivia from '../../../assets/v2/pickup-map-bolivia.svg';
+import mapDefault from '../../../assets/v2/pickup-map-default.svg';
+import mapPeru from '../../../assets/v2/pickup-map-peru.svg';
 
 /** Los tres mapas comparten lienzo; el intercambio depende de que encajen. */
 const MAP_WIDTH = 395;
