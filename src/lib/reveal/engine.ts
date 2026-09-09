@@ -38,6 +38,10 @@ const SNAP_VERIFY_MS = 700;
  *  —que es a quien hay que ayudar— de «el usuario sigue desplazándose por su
  *  cuenta», a quien reenganchar sería pelearse con él. */
 const SNAP_SETTLE_MS = 180;
+/** El blur móvil empieza un poco antes del destello final y tarda más en
+ * alcanzar su intensidad, para que la luz crezca junto con el cierre del giro. */
+const MOBILE_BLUR_LEAD_MS = 300;
+const MOBILE_BLUR_DURATION_MS = 650;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
@@ -71,6 +75,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const halo = root.querySelector<HTMLElement>('.reveal-halo');
   const productImg = root.querySelector<HTMLImageElement | HTMLVideoElement>('.reveal-product');
   const titleblock = root.querySelector<HTMLElement>('.reveal-title');
+  const mobileBlur = root.querySelector<HTMLElement>('.reveal-mobile-blur');
   if (!stage || !overlay || !halo || !productImg || !titleblock) return () => {};
   const nativeVideo = productImg instanceof HTMLVideoElement ? productImg : undefined;
   // Safari móvil evalúa las políticas de autoplay antes de que Anime.js entre
@@ -321,6 +326,17 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       ? (ringToIdx / centerIdx) * T.riseDur
       : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur
     : T.riseDur + timedRingDur;
+
+  if (mobileBlur) {
+    // `labelsStart` marca el destello final en ambas rutas. El adelanto inicia
+    // el resplandor durante el cierre y el fundido largo lo lleva suavemente a
+    // su intensidad completa justo después de ese marcador.
+    tl.add(
+      mobileBlur,
+      { opacity: [0, 1], duration: MOBILE_BLUR_DURATION_MS, ease: 'outQuad' },
+      Math.max(0, labelsStart - MOBILE_BLUR_LEAD_MS),
+    );
+  }
 
   // RAMAS
   const slots = built.map((_, i) => i);

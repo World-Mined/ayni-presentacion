@@ -46,10 +46,9 @@
   transform: translate3d(var(--reveal-gradient-shift, 0px), 0, 0);
   will-change: transform;
 }
-.reveal-stage { z-index: 1; }
-
 .reveal-stage {
   position: relative;
+  z-index: 1;
   width: min(94vw, 1120px);
   aspect-ratio: 1920 / 1080;
   /* El círculo y el overlay viven en este lienzo (no en todo el viewport).
@@ -89,6 +88,10 @@
    El estado del reveal lo apaga desde el inicio de la reversa; producto,
    anillo y ramas continúan recorriendo normalmente el camino inverso. */
 .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-title {
+  opacity: 0 !important;
+  transition: opacity .26s ease-out;
+}
+.reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-mobile-blur {
   opacity: 0 !important;
   transition: opacity .26s ease-out;
 }
@@ -322,6 +325,8 @@
   pointer-events: none;
 }
 .reveal-mobile-ring { display: none; }
+.reveal-mobile-blur { display: none; }
+.reveal-mobile-swipe-zone { display: none; }
 .reveal-mobile-controls,
 .reveal-icon-sources { display: none; }
 .reveal-ring,

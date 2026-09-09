@@ -1,37 +1,52 @@
+/* En compacto se conserva la entrada del reveal y se recompone únicamente el
+   cierre: título, círculo y tira de ingredientes siguen la geometría del nodo
+   móvil de Figma. Las etiquetas radiales de escritorio permanecen en el DOM
+   para que la timeline pueda invertirse sin mantener dos animaciones. */
 @media (max-width: 767px), (max-width: 1023px) and (max-height: 600px) {
   .reveal-pin {
     top: var(--header-height, 64px);
     height: calc(100svh - var(--header-height, 64px));
+    isolation: isolate;
   }
+
+  .reveal-mobile-blur {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    display: block;
+    width: min(100vw, 394px);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    filter: brightness(1.35) saturate(1.05);
+    opacity: 0;
+    will-change: opacity;
+  }
+  .reveal-mobile-blur img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
   .reveal-stage {
-    /* El máximo anterior correspondía exactamente a 390 px. En móviles más
-       anchos (iPhone Pro Max / Display Zoom) el círculo dejaba de crecer y
-       perdía casi diez puntos porcentuales de presencia. El nuevo techo
-       conserva la misma proporción hasta 430 px sin tocar los teléfonos que
-       ya resolvían correctamente por debajo de 390 px. */
-    --reveal-mobile-circle: clamp(190px, 70.256vw, 302px);
-    --reveal-mobile-half-circle: clamp(95px, 35.128vw, 151px);
-    --reveal-mobile-center-y: clamp(240px, 82.051vw, 320px);
-    /* Safari iOS descarta `calc(var(clamp()) + clamp())` en algunas
-       versiones. Estas posiciones ya vienen resueltas como un solo clamp:
-       conservan exactamente la geometría de 280–390 px sin depender de una
-       operación anidada que pueda devolver los ingredientes a sus filas de
-       escritorio. */
-    --reveal-mobile-row-above: clamp(215px, 73.077vw, 285px);
-    --reveal-mobile-row-upper: clamp(266px, 91.282vw, 356px);
-    --reveal-mobile-row-middle: clamp(310px, 106.923vw, 417px);
-    --reveal-mobile-row-lower: clamp(347px, 120.256vw, 469px);
-    --reveal-mobile-controls-y: clamp(348px, 120.769vw, 471px);
+    --reveal-mobile-content-offset: max(0px, calc((100% - 638px) / 2));
+    --reveal-mobile-circle: clamp(248px, calc(100vw - 32px), 358px);
+    --reveal-mobile-center-y: clamp(252px, 90vw, 351px);
+    --reveal-mobile-controls-y: clamp(396px, 140.513vw, 548px);
+    --reveal-mobile-icon: clamp(28px, 10.256vw, 40px);
+    --reveal-mobile-gap: clamp(7px, 3.077vw, 12px);
     position: relative;
     width: 100%;
     height: 100%;
     aspect-ratio: auto;
     transform: none;
+    z-index: 2;
   }
+
   .reveal-title {
-    top: clamp(28px, 5svh, 40px);
+    top: calc(clamp(28px, 12.821vw, 50px) + var(--reveal-mobile-content-offset));
+    gap: 8px;
     padding-inline: 16px;
-    gap: clamp(12px, 5.128vw, 20px);
   }
   .reveal-title h2.reveal-title__mark {
     display: flex;
@@ -50,7 +65,7 @@
   }
   .reveal-logo {
     width: auto;
-    height: clamp(31px, 10.513vw, 41px);
+    height: clamp(28px, 8.718vw, 34px);
   }
   .reveal-title p.reveal-formula {
     font-size: clamp(18px, 6.154vw, 24px);
@@ -62,28 +77,19 @@
   .reveal-product-wrap,
   .reveal-halo {
     left: 50%;
-    top: var(--reveal-mobile-center-y);
+    top: calc(var(--reveal-mobile-center-y) + var(--reveal-mobile-content-offset));
   }
-  .reveal-media-circle {
-    width: var(--reveal-mobile-circle);
-  }
-  .reveal-product-wrap {
-    width: clamp(158px, 58.462vw, 251px);
-  }
-  /* Los MP4 ya contienen el anillo: su área útil equivale al 82% del
-     fotograma. Escalamos el video para que ese anillo coincida con el
-     diámetro móvil y ocultamos el anillo CSS duplicado. */
+  .reveal-media-circle { width: var(--reveal-mobile-circle); }
+  .reveal-product-wrap { width: clamp(205px, 76.154vw, 297px); }
   .reveal-track[data-native-video] .reveal-product-wrap {
-    width: clamp(232px, 85.6vw, 368px);
+    /* El anillo ocupa aproximadamente el 82% del MP4. */
+    width: clamp(303px, 111.795vw, 436px);
   }
   .reveal-track[data-native-video] .reveal-mobile-ring { display: none; }
-  .reveal-halo {
-    width: clamp(224px, 82.051vw, 353px);
-  }
+  .reveal-halo { width: var(--reveal-mobile-circle); }
 
-  /* El SVG de escritorio conserva intactas sus coordenadas. En compacto se
-     sustituye visualmente por un anillo local, alineado al recorte de fotos. */
-  .reveal-overlay { display: none; }
+  .reveal-overlay,
+  .reveal-label { display: none; }
   .reveal-mobile-ring {
     position: absolute;
     z-index: 3;
@@ -104,15 +110,37 @@
     opacity: 0;
     filter: drop-shadow(0 0 1.5px rgba(249, 203, 105, .55));
   }
+
+  .reveal-mobile-swipe-zone {
+    position: absolute;
+    z-index: 4;
+    top: calc(var(--reveal-mobile-center-y) + var(--reveal-mobile-content-offset));
+    left: 50%;
+    display: block;
+    width: var(--reveal-mobile-circle);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    cursor: grab;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
+  }
+  .reveal-track[data-reveal-state='shown'] .reveal-mobile-swipe-zone {
+    pointer-events: auto;
+  }
+  .reveal-mobile-swipe-zone[data-dragging] { cursor: grabbing; }
+
   .reveal-mobile-controls {
     position: absolute;
     z-index: 5;
-    top: var(--reveal-mobile-controls-y);
+    top: calc(var(--reveal-mobile-controls-y) + var(--reveal-mobile-content-offset));
     left: 50%;
     display: flex;
-    width: 132px;
-    height: 44px;
-    align-items: center;
+    width: min(calc(100vw - 32px), 358px);
+    height: calc(var(--reveal-mobile-icon) + 4px);
+    align-items: flex-start;
     justify-content: space-between;
     transform: translateX(-50%);
     visibility: hidden;
@@ -120,33 +148,86 @@
     pointer-events: none;
     transition: opacity .12s linear, visibility 0s linear .12s;
   }
-  .reveal-mobile-controls a {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border-radius: 50%;
+  .reveal-mobile-arrow,
+  .reveal-mobile-item {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: inherit;
     -webkit-tap-highlight-color: transparent;
   }
-  .reveal-mobile-controls a:focus-visible {
+  .reveal-mobile-arrow {
+    display: grid;
+    width: 25px;
+    height: var(--reveal-mobile-icon);
+    flex: none;
+    place-items: center;
+    cursor: pointer;
+  }
+  .reveal-mobile-arrow img { display: block; width: 25px; height: 24px; }
+  .reveal-mobile-viewport {
+    width: calc(var(--reveal-mobile-icon) * 5 + var(--reveal-mobile-gap) * 4);
+    height: calc(var(--reveal-mobile-icon) + 4px);
+    overflow: hidden;
+  }
+  .reveal-mobile-track {
+    --reveal-mobile-track-shift: 0px;
+    display: flex;
+    width: max-content;
+    gap: var(--reveal-mobile-gap);
+    transform: translateX(var(--reveal-mobile-track-shift));
+    transition: transform .24s cubic-bezier(.22, .61, .36, 1);
+  }
+  .reveal-mobile-item {
+    position: relative;
+    display: grid;
+    width: var(--reveal-mobile-icon);
+    height: calc(var(--reveal-mobile-icon) + 4px);
+    flex: none;
+    place-items: start center;
+    cursor: pointer;
+    opacity: .52;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .reveal-mobile-item img {
+    display: block;
+    width: var(--reveal-mobile-icon);
+    height: var(--reveal-mobile-icon);
+    object-fit: contain;
+  }
+  .reveal-mobile-item::after {
+    position: absolute;
+    right: calc(var(--reveal-mobile-gap) / -2 + .5px);
+    bottom: 0;
+    left: calc(var(--reveal-mobile-gap) / -2 + .5px);
+    height: 2px;
+    background: var(--reveal-gold);
+    content: '';
+    opacity: 0;
+    transform: scaleX(.4);
+    transition: opacity .18s ease, transform .22s ease;
+  }
+  .reveal-mobile-item[data-selected] { opacity: 1; }
+  .reveal-mobile-item[data-selected]::after { opacity: 1; transform: scaleX(1); }
+  .reveal-mobile-arrow:focus-visible,
+  .reveal-mobile-item:focus-visible {
     outline: 2px solid var(--reveal-gold);
     outline-offset: 2px;
+    border-radius: 3px;
   }
-  .reveal-mobile-controls img { display: block;flex: none; }
-  /* En reposo representa el producto actual y se mantiene encendido. Al
-     seleccionar un ingrediente pasa al mismo tono de los demás elementos
-     no seleccionados, sin dar la impresión de estar deshabilitado siempre. */
-  .reveal-mobile-controls__all img { opacity: 1; }
-  .reveal-track[data-active] .reveal-mobile-controls__all img { opacity: .25; }
+
   .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown'])
     .reveal-mobile-controls {
     visibility: visible;
     opacity: 1;
     transition: opacity .18s ease-out 1.45s, visibility 0s linear 1.45s;
   }
-  .reveal-track[data-reveal-state='shown'] .reveal-mobile-controls {
-    pointer-events: auto;
+  .reveal-track[data-reveal-state='shown'] .reveal-mobile-controls { pointer-events: auto; }
+  .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown'])
+    .reveal-mobile-item {
+    animation: reveal-mobile-item-in .2s ease-out both;
+    animation-delay: var(--reveal-mobile-item-delay);
   }
   .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown'])
     .reveal-mobile-ring__circle {
@@ -161,102 +242,8 @@
     transition: stroke-dashoffset .46s linear, opacity .12s ease .34s;
   }
 
-  .reveal-label {
-    width: clamp(24px, 8.205vw, 35px);
-    height: clamp(24px, 8.205vw, 35px);
-    max-width: none;
-    margin-left: 0 !important;
-    min-height: 0;
-    place-items: center;
-    gap: 0;
-    transform: translateY(-50%);
-  }
-  .reveal-label.left,
-  .reveal-label.right { transform: translateY(-50%); }
-  .reveal-label.left[data-side-count='3'][data-row='0'],
-  .reveal-label.left[data-side-count='4'][data-row='1'] {
-    left: calc(50% - clamp(125px, 45.897vw, 197px)) !important;
-    top: var(--reveal-mobile-row-upper) !important;
-  }
-  .reveal-label.left[data-side-count='3'][data-row='1'],
-  .reveal-label.left[data-side-count='4'][data-row='2'] {
-    left: calc(50% - clamp(106px, 38.718vw, 166px)) !important;
-    top: var(--reveal-mobile-row-middle) !important;
-  }
-  .reveal-label.left[data-side-count='3'][data-row='2'],
-  .reveal-label.left[data-side-count='4'][data-row='3'] {
-    left: calc(50% - clamp(65px, 23.846vw, 103px)) !important;
-    top: var(--reveal-mobile-row-lower) !important;
-  }
-  .reveal-label.left[data-side-count='4'][data-row='0'] {
-    left: calc(50% - clamp(123px, 45.128vw, 194px)) !important;
-    top: var(--reveal-mobile-row-above) !important;
-  }
-  .reveal-label.right[data-row='0'] {
-    left: calc(50% + clamp(101px, 36.923vw, 159px)) !important;
-    top: var(--reveal-mobile-row-above) !important;
-  }
-  .reveal-label.right[data-row='1'] {
-    left: calc(50% + clamp(102px, 37.436vw, 161px)) !important;
-    top: var(--reveal-mobile-row-upper) !important;
-  }
-  .reveal-label.right[data-row='2'] {
-    left: calc(50% + clamp(82px, 30vw, 129px)) !important;
-    top: var(--reveal-mobile-row-middle) !important;
-  }
-  .reveal-label.right[data-row='3'] {
-    left: calc(50% + clamp(41px, 15.128vw, 65px)) !important;
-    top: var(--reveal-mobile-row-lower) !important;
-  }
-  .reveal-label .reveal-ico {
-    width: 100%;
-    height: 100%;
-  }
-  .reveal-label .reveal-txt { display: none; }
-  .reveal-mobile-txt { display: none; }
-  .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown']) .reveal-mobile-txt {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity .16s linear 1.54s, transform .2s ease-out 1.54s;
-  }
-  .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-mobile-txt {
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity .08s linear, transform .12s ease-in;
-  }
-
-  /* Las ramas nacen del borde del producto y avanzan rectas hacia el icono.
-     Su estado acompaña al anillo y a los elementos que controla Anime.js. */
-  .reveal-label::before {
-    display: none;
-  }
-  .reveal-label.left::before {
-    right: calc(var(--reveal-mobile-stem) * -1 + 10px);
-    transform-origin: right center;
-  }
-  .reveal-label.right::before {
-    left: calc(var(--reveal-mobile-stem) * -1 + 10px);
-    transform-origin: left center;
-  }
-  .reveal-track:is([data-reveal-state='showing'], [data-reveal-state='shown']) .reveal-label::before {
-    opacity: 1;
-    transform: translateY(-50%) scaleX(1);
-    transition: transform .18s ease-out 1.45s, opacity .08s linear 1.45s;
-  }
-  .reveal-track:is([data-reveal-state='hiding'], [data-reveal-state='hidden']) .reveal-label::before {
-    opacity: 0;
-    transform: translateY(-50%) scaleX(0);
-    transition: transform .12s ease-in, opacity .08s linear .05s;
-  }
-
-  .reveal-phrase {
-    width: 84%;
-    font-size: clamp(13px, 4.5vw, 21px);
-  }
-  /* Cada producto tiene una tipografía de escritorio propia. Aquí se
-     normaliza únicamente la escala táctil: no se fija altura ni se recorta,
-     así `top: 50%` + `translateY(-50%)` centra el bloque por su contenido
-     real, igual que en escritorio. */
+  .reveal-track[data-active] .reveal-product-wrap { opacity: 0; }
+  .reveal-phrase { width: 84%; font-size: clamp(13px, 4.5vw, 21px); }
   .reveal-track[data-reveal='capucci'] .reveal-phrase,
   .reveal-track[data-reveal='capucci'] [data-phrase='ganoderma'],
   .reveal-track[data-reveal='moravi'] .reveal-phrase,
@@ -267,40 +254,39 @@
     line-height: 1.17;
   }
 }
-/* Esta variante es exclusivamente horizontal. Sin `orientation`, las barras
-   de Chrome/Safari podían reducir el viewport de un iPhone en vertical por
-   debajo de 600 px y activar por error el círculo compacto de 200 px. */
+
+@keyframes reveal-mobile-item-in {
+  from { opacity: 0; transform: translateY(5px) scale(.9); }
+}
+
 @media (max-width: 1023px) and (max-height: 600px) and (orientation: landscape) {
   .reveal-stage {
-    --reveal-mobile-circle: clamp(140px, 46svh, 200px);
-    --reveal-mobile-half-circle: clamp(70px, 23svh, 100px);
-    --reveal-mobile-center-y: 58%;
+    --reveal-mobile-content-offset: 0px;
+    --reveal-mobile-circle: clamp(118px, 38svh, 200px);
+    --reveal-mobile-center-y: 56%;
+    --reveal-mobile-controls-y: calc(56% + clamp(59px, 19svh, 100px) + 8px);
+    --reveal-mobile-icon: clamp(22px, 7svh, 32px);
+    --reveal-mobile-gap: clamp(6px, 1.6vw, 10px);
     width: min(100%, 620px);
   }
-  .reveal-title { top: 8px; }
-  .reveal-title h2.reveal-title__mark { width: min(62%, 270px); }
-  .reveal-title p.reveal-formula { font-size: clamp(10px, 2.2vw, 13px); }
-  .reveal-media-circle,
-  .reveal-mobile-ring,
-  .reveal-product-wrap,
-  .reveal-halo { top: 58%; }
-  .reveal-product-wrap { width: clamp(118px, 38.64svh, 168px); }
-  .reveal-track[data-native-video] .reveal-product-wrap { width: clamp(220px, 64svh, 290px); }
-  .reveal-halo { width: clamp(165px, 53.66svh, 233px); }
-  .reveal-mobile-controls {
-    top: calc(58% + var(--reveal-mobile-half-circle) + 8px);
-    width: 80px;
-    transform: translate(-50%, -50%) scale(.82);
+  .reveal-title { top: 8px; gap: 3px; }
+  .reveal-title h2.reveal-title__mark::before { font-size: 7px; line-height: 8px; }
+  .reveal-logo { height: clamp(18px, 6svh, 26px); }
+  .reveal-title p.reveal-formula { font-size: clamp(10px, 2.2vw, 13px); line-height: 15px; }
+  .reveal-product-wrap { width: clamp(98px, 31.5svh, 166px); }
+  .reveal-track[data-native-video] .reveal-product-wrap { width: clamp(144px, 46.3svh, 244px); }
+  .reveal-mobile-controls { width: min(calc(100vw - 32px), 358px); }
+  .reveal-mobile-arrow { width: 20px; }
+  .reveal-mobile-arrow img { width: 20px; height: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-mobile-controls,
+  .reveal-mobile-item,
+  .reveal-mobile-track,
+  .reveal-mobile-ring__circle {
+    animation: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
   }
-  .reveal-label.left { left: calc(50% - var(--reveal-mobile-half-circle) - 24px) !important; }
-  .reveal-label.right { left: calc(50% + var(--reveal-mobile-half-circle) + 8px) !important; }
-  .reveal-track[data-row-count='4'] .reveal-label[data-row='0'] { top: 36% !important; }
-  .reveal-track[data-row-count='4'] .reveal-label[data-row='1'] { top: 50% !important; }
-  .reveal-track[data-row-count='4'] .reveal-label[data-row='2'] { top: 64% !important; }
-  .reveal-track[data-row-count='4'] .reveal-label[data-row='3'] { top: 78% !important; }
-  .reveal-track[data-row-count='3'] .reveal-label[data-row='0'] { top: 42% !important; }
-  .reveal-track[data-row-count='3'] .reveal-label[data-row='1'] { top: 58% !important; }
-  .reveal-track[data-row-count='3'] .reveal-label[data-row='2'] { top: 74% !important; }
-  .reveal-label { width:16px;height:16px;font-size:clamp(9px,1.45vw,11px); }
-  .reveal-label .reveal-ico { width: 16px; height: 16px; }
 }

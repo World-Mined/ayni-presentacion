@@ -2,11 +2,9 @@
 import { Image } from 'astro:assets';
 import revealChevronLeft from '../../../assets/v2/reveal-chevron-left.svg';
 import revealChevronRight from '../../../assets/v2/reveal-chevron-right.svg';
-import revealProductSwitch from '../../../assets/v2/reveal-product-switch.svg';
+import revealMobileBlur from '../../../assets/v2/reveal-mobile-blur.webp';
 import type { IngredientsScene } from '../../../data/product-ingredients';
-import { PRODUCT_DETAILS, productHref } from '../../../data/products';
-import { ROUTES } from '../../../data/v2';
-import { DEFAULT_GEOMETRY } from '../../../lib/reveal/defaults';
+import { DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
 import { PRODUCTS } from '../../../lib/reveal/products';
 import type { ProductId } from '../../../lib/reveal/products';
 import './product-reveal.css';
@@ -46,11 +44,8 @@ const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` :
 // la relación de aspecto implícita y el bloque salta de alto mientras carga.
 const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
 const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
-const productIndex = PRODUCT_DETAILS.findIndex((item) => item.revealId === product);
-const previousProduct = PRODUCT_DETAILS[
-  (productIndex - 1 + PRODUCT_DETAILS.length) % PRODUCT_DETAILS.length
-];
-const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length];
+const mobileLabelsStart = cfg.video?.labelsStart ?? 1450;
+const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsStagger;
 ---
 
 {cfg.background && <link rel="preload" href={cfg.background} as="image" type="image/webp" />}
@@ -64,6 +59,11 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
 >
   <div class="reveal-pin">
     <div class="reveal-stage" aria-label={`Animación de ${cfg.title.main}`}>
+      {scene && (
+        <div class="reveal-mobile-blur" aria-hidden="true">
+          <Image src={revealMobileBlur} alt="" loading="lazy" />
+        </div>
+      )}
       {scene ? (
         <div class="reveal-title" style={logoStyle}>
           <h2 class="reveal-title__mark">
@@ -90,17 +90,34 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
       <svg class="reveal-mobile-ring" viewBox="0 0 100 100" aria-hidden="true">
         <circle class="reveal-mobile-ring__circle" cx="50" cy="50" r="49"></circle>
       </svg>
-      <nav class="reveal-mobile-controls" aria-label="Cambiar producto">
-        <a href={productHref(previousProduct.slug)} aria-label={`Ver ${previousProduct.name}`}>
-          <Image src={revealChevronLeft} alt="" width={25} height={24} />
-        </a>
-        <a class="reveal-mobile-controls__all" href={ROUTES.products} aria-label="Ver todos los productos">
-          <Image src={revealProductSwitch} alt="" width={32} height={32} />
-        </a>
-        <a href={productHref(nextProduct.slug)} aria-label={`Ver ${nextProduct.name}`}>
-          <Image src={revealChevronRight} alt="" width={25} height={24} />
-        </a>
-      </nav>
+      {scene && (
+        <nav class="reveal-mobile-controls" aria-label="Explorar ingredientes">
+          <button type="button" class="reveal-mobile-arrow" data-mobile-ingredient-prev aria-label="Ingrediente anterior">
+            <Image src={revealChevronLeft} alt="" width={25} height={24} />
+          </button>
+          <div class="reveal-mobile-viewport">
+            <div class="reveal-mobile-track" data-mobile-ingredient-track>
+              {scene.items.map((item, index) => (
+                <button
+                  type="button"
+                  class="reveal-mobile-item"
+                  data-item={item.id}
+                  data-mobile-index={index}
+                  style={`--reveal-mobile-item-delay:${mobileLabelsStart + index * mobileLabelsStagger}ms`}
+                  aria-label={item.name}
+                  aria-pressed="false"
+                  aria-describedby={`reveal-phrase-${product}-${item.id}`}
+                >
+                  <img src={item.icon.src} alt="" />
+                </button>
+              ))}
+            </div>
+          </div>
+          <button type="button" class="reveal-mobile-arrow" data-mobile-ingredient-next aria-label="Ingrediente siguiente">
+            <Image src={revealChevronRight} alt="" width={25} height={24} />
+          </button>
+        </nav>
+      )}
       {scene && (
         <div class="reveal-icon-sources" aria-hidden="true">
           {scene.items.map((item) => (
@@ -162,6 +179,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
           ) : null}
         </div>
       </div>
+      {scene && <div class="reveal-mobile-swipe-zone" data-mobile-swipe-zone aria-hidden="true"></div>}
       <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
   </div>
@@ -173,6 +191,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     /* La opacidad del título la levanta la timeline. Sin JS eso dejaba oculto el
        logotipo de marca, que es justo lo que nombra la sección. */
     .reveal-title { opacity: 1 !important; }
+    .reveal-mobile-blur { opacity: 1 !important; }
   </style>
 </noscript>
 
@@ -185,10 +204,40 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     const controller = new AbortController();
     const options = { signal: controller.signal };
     const items = root.querySelectorAll<HTMLButtonElement>('[data-item]');
+    const mobileItems = [...root.querySelectorAll<HTMLButtonElement>('.reveal-mobile-item')];
+    const mobileControls = root.querySelector<HTMLElement>('.reveal-mobile-controls');
+    const mobileTrack = root.querySelector<HTMLElement>('[data-mobile-ingredient-track]');
+    const previousButton = root.querySelector<HTMLButtonElement>('[data-mobile-ingredient-prev]');
+    const nextButton = root.querySelector<HTMLButtonElement>('[data-mobile-ingredient-next]');
+    const swipeZone = root.querySelector<HTMLElement>('[data-mobile-swipe-zone]');
     const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
     const circle = root.querySelector<HTMLElement>('.reveal-media-circle');
     const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const compactViewport = window.matchMedia(
+      '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
+    );
     if (!circle || !layers.length) return () => controller.abort();
+
+    const syncMobileTrack = (id: string | null) => {
+      if (!mobileTrack || !mobileItems.length) return;
+      const activeIndex = id
+        ? mobileItems.findIndex((item) => item.dataset.item === id)
+        : -1;
+      const visibleCount = Math.min(5, mobileItems.length);
+      const windowStart = activeIndex < 0
+        ? 0
+        : Math.max(0, Math.min(activeIndex - 1, mobileItems.length - visibleCount));
+      mobileItems.forEach((item, index) => {
+        const visible = index >= windowStart && index < windowStart + visibleCount;
+        item.tabIndex = visible ? 0 : -1;
+        item.toggleAttribute('data-mobile-visible', visible);
+      });
+      const firstVisible = mobileItems[windowStart];
+      mobileTrack.style.setProperty(
+        '--reveal-mobile-track-shift',
+        `${-(firstVisible?.offsetLeft ?? 0)}px`,
+      );
+    };
 
     const activate = (id: string | null) => {
       // Los botones siguen en el DOM mientras Anime.js los desvanece. Sin
@@ -208,7 +257,59 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
         const selected = layer.dataset.media === id || layer.dataset.phrase === id;
         layer.toggleAttribute('data-selected', selected);
       });
+      syncMobileTrack(id);
     };
+
+    const moveSelection = (direction: -1 | 1) => {
+      if (root.dataset.revealState !== 'shown' || !mobileItems.length) return;
+      const activeIndex = mobileItems.findIndex((item) => item.dataset.item === root.dataset.active);
+      const nextIndex = activeIndex < 0
+        ? (direction > 0 ? 0 : mobileItems.length - 1)
+        : (activeIndex + direction + mobileItems.length) % mobileItems.length;
+      activate(mobileItems[nextIndex].dataset.item ?? null);
+    };
+
+    let swipePointerId: number | null = null;
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    const resetSwipe = () => {
+      swipePointerId = null;
+      swipeZone?.removeAttribute('data-dragging');
+    };
+
+    swipeZone?.addEventListener('pointerdown', (event) => {
+      if (
+        root.dataset.revealState !== 'shown'
+        || !event.isPrimary
+        || (event.pointerType === 'mouse' && event.button !== 0)
+      ) return;
+      swipePointerId = event.pointerId;
+      swipeStartX = event.clientX;
+      swipeStartY = event.clientY;
+      swipeZone.setPointerCapture(event.pointerId);
+    }, options);
+    swipeZone?.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== swipePointerId) return;
+      const horizontalDistance = Math.abs(event.clientX - swipeStartX);
+      const verticalDistance = Math.abs(event.clientY - swipeStartY);
+      swipeZone.toggleAttribute(
+        'data-dragging',
+        horizontalDistance > 8 && horizontalDistance > verticalDistance,
+      );
+    }, options);
+    swipeZone?.addEventListener('pointerup', (event) => {
+      if (event.pointerId !== swipePointerId) return;
+      const horizontalDistance = event.clientX - swipeStartX;
+      const verticalDistance = event.clientY - swipeStartY;
+      const threshold = Math.max(36, swipeZone.getBoundingClientRect().width * 0.12);
+      const shouldMove =
+        Math.abs(horizontalDistance) >= threshold
+        && Math.abs(horizontalDistance) > Math.abs(verticalDistance) * 1.25;
+      resetSwipe();
+      if (shouldMove) moveSelection(horizontalDistance < 0 ? 1 : -1);
+    }, options);
+    swipeZone?.addEventListener('pointercancel', resetSwipe, options);
+    swipeZone?.addEventListener('lostpointercapture', resetSwipe, options);
 
     const isNearInteraction = (x: number, y: number) => {
       const elements = [circle, ...items];
@@ -228,7 +329,7 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
     items.forEach((item) => {
       const id = item.dataset.item!;
       item.addEventListener('pointerenter', () => {
-        if (hoverCapable.matches) activate(id);
+        if (hoverCapable.matches && !item.classList.contains('reveal-mobile-item')) activate(id);
       }, options);
       item.addEventListener('focus', () => {
         // Un toque enfoca el botón antes de disparar `click`. Si se activara
@@ -237,22 +338,60 @@ const nextProduct = PRODUCT_DETAILS[(productIndex + 1) % PRODUCT_DETAILS.length]
         if (item.matches(':focus-visible')) activate(id);
       }, options);
       item.addEventListener('click', () => {
-        if (!hoverCapable.matches) activate(root.dataset.active === id ? null : id);
+        if (item.classList.contains('reveal-mobile-item') || !hoverCapable.matches) {
+          activate(root.dataset.active === id ? null : id);
+        }
       }, options);
     });
 
+    previousButton?.addEventListener('click', () => moveSelection(-1), options);
+    nextButton?.addEventListener('click', () => moveSelection(1), options);
+    mobileTrack?.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'Home' || event.key === 'End') {
+        const item = mobileItems[event.key === 'Home' ? 0 : mobileItems.length - 1];
+        activate(item?.dataset.item ?? null);
+        item?.focus();
+        return;
+      }
+      moveSelection(event.key === 'ArrowLeft' ? -1 : 1);
+      mobileItems.find((item) => item.dataset.item === root.dataset.active)?.focus();
+    }, options);
+
+    window.addEventListener('pointerdown', (event) => {
+      if (!compactViewport.matches || !root.dataset.active) return;
+      const path = event.composedPath();
+      const isInsideInteraction =
+        (swipeZone && path.includes(swipeZone))
+        || (mobileControls && path.includes(mobileControls));
+      if (!isInsideInteraction) activate(null);
+    }, options);
+
     window.addEventListener('pointermove', (event) => {
-      if (hoverCapable.matches && root.dataset.active && !isNearInteraction(event.clientX, event.clientY)) {
+      if (
+        !compactViewport.matches
+        && hoverCapable.matches
+        && root.dataset.active
+        && !isNearInteraction(event.clientX, event.clientY)
+      ) {
         activate(null);
       }
     }, options);
     window.addEventListener('blur', () => activate(null), options);
-    root.addEventListener('reveal:hide', () => activate(null), options);
+    window.addEventListener('resize', () => syncMobileTrack(root.dataset.active ?? null), options);
+    root.addEventListener('reveal:hide', () => {
+      resetSwipe();
+      activate(null);
+    }, options);
     root.addEventListener('focusout', (event) => {
-      if (!root.contains(event.relatedTarget as Node | null)) activate(null);
+      if (!compactViewport.matches && !root.contains(event.relatedTarget as Node | null)) activate(null);
     }, options);
 
+    syncMobileTrack(null);
+
     return () => {
+      resetSwipe();
       activate(null);
       controller.abort();
     };
