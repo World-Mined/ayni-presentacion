@@ -85,7 +85,7 @@ const questionsArt = {
 </script>
 
 <style>
-  .product-questions { --cta-gap:48px;position:relative;isolation:isolate;overflow:hidden;padding:clamp(48px,5.556vw,80px);background:#000; }
+  .product-questions { --questions-cta-gap:64px;position:relative;isolation:isolate;overflow:hidden;padding:clamp(48px,5.556vw,80px);background:#000; }
   .product-questions__art { pointer-events:none; }
   .product-questions__art :global(img) { display:block; }
   .product-questions__inner { position:relative;z-index:1;display:grid;width:min(100%,1280px);min-height:clamp(560px,55.833vw,804px);margin:0 auto;grid-template-columns:minmax(380px,1fr) minmax(400px,635px);gap:clamp(48px,8.333vw,120px);align-items:center; }
@@ -121,7 +121,7 @@ const questionsArt = {
   .product-questions__answer { padding:0 16px 24px;color:#fef2d4;font-family:var(--font-title);font-size:clamp(16px,1.389vw,20px);line-height:1.2; }
   .product-questions__answer p { margin:0; }
   .product-questions__answer p + p { margin-top:0; }
-  .product-questions :global(.product-questions__cta) { position:relative;z-index:1;display:flex;width:max-content;max-width:100%;margin:var(--cta-gap) auto 0;--cta-color:#987c40;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185deg,rgba(135,116,79,.2),rgba(43,43,43,.14)); }
+  .product-questions :global(.product-questions__cta) { position:relative;z-index:1;display:flex;width:max-content;max-width:100%;margin:var(--questions-cta-gap) auto 0;--cta-color:#987c40;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185deg,rgba(135,116,79,.2),rgba(43,43,43,.14)); }
   .product-questions :global(.product-questions__cta svg) { fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
   .product-questions__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
   .product-questions--immersive { padding-top:clamp(32px,3.889vw,56px); }
@@ -135,8 +135,8 @@ const questionsArt = {
     /* Como el acordeón (673) queda centrado dentro de la fila de 804 del pack,
        le sobran ~65.5px de aire debajo antes de que termine la fila — el
        margin-top del CTA se mide desde ahí, no desde el acordeón. Se descuenta
-       ese sobrante para que el espacio visible hasta el CTA sea 48px reales. */
-    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--cta-gap) - 65.5px); }
+       ese sobrante para que el espacio visible hasta el CTA sea 64px reales. */
+    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--questions-cta-gap) - 65.5px); }
   }
   @media (min-width:1100px) and (max-width:1439px) {
     /* Tramo intermedio: no hay espacio para que el pack mantenga su tamaño de
@@ -147,7 +147,7 @@ const questionsArt = {
     .product-questions--immersive .product-questions__inner { container-type:inline-size;min-height:0;grid-template-columns:minmax(0,1fr) 480px;gap:16px; }
     .product-questions--immersive .product-questions__stage { width:100%;margin-left:0; }
     .product-questions--immersive .product-questions__accordion { margin-left:-100px;max-height:calc((100cqw - 496px) * 0.841); }
-    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--cta-gap) - (min(100vw - 70px,1280px) - 496px) * 0.082); }
+    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--questions-cta-gap) - (min(100vw - 70px,1280px) - 496px) * 0.082); }
   }
   @media (max-width:1099px) {
     .product-questions__inner { display:block;min-height:auto; }
@@ -163,7 +163,7 @@ const questionsArt = {
     .product-questions__accordion { max-height:none;overflow:visible; }
     .product-questions summary { min-height:64px;padding:18px 0;font-size:18px; }
     .product-questions__answer { padding:0 0 20px;font-size:16px;line-height:1.45; }
-    .product-questions :global(.product-questions__cta) { width:100%;margin-top:var(--cta-gap); }
+    .product-questions :global(.product-questions__cta) { width:100%;margin-top:var(--questions-cta-gap); }
     .product-questions--immersive { display:block;min-height:0;height:auto;padding:0 12px 28px; }
     .product-questions--immersive .product-questions__inner { position:static;padding-top:246px;gap:56px; }
     .product-questions--immersive .product-questions__stage { display:contents; }
