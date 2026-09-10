@@ -17,6 +17,12 @@ import heroReset from '../assets/v2/products-hero-reset.webp';
 import capucciPack from '../assets/v2/products-capucci-shadow.webp';
 import moraviPack from '../assets/v2/products-moravi-shadow.webp';
 import resetPack from '../assets/v2/products-reset-shadow.webp';
+import otherProductCapucci from '../assets/v2/other-product-capucci.webp';
+import otherProductMoravi from '../assets/v2/other-product-moravi.webp';
+import otherProductReset from '../assets/v2/other-product-reset.webp';
+import capucciWordmark from '../assets/v2/capucci-logo.svg';
+import moraviWordmark from '../assets/v2/moravi-logo.svg';
+import resetWordmark from '../assets/v2/reset-logo.svg';
 import type { ProductId } from '../lib/reveal/products';
 
 export interface ProductBenefit {
@@ -67,6 +73,11 @@ export interface ProductDetail {
   };
   /** Bolsa que se muestra cuando este producto sale en "Otros Productos". */
   pack: ImageMetadata;
+  /** Composición horizontal usada por la tarjeta de "Otros Productos" en móvil. */
+  otherProductCard: {
+    background: ImageMetadata;
+    wordmark: ImageMetadata;
+  };
 }
 
 // El orden es el de `PRODUCT_LINE` en v2.ts: es el mismo que sigue el banner
@@ -115,6 +126,10 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
       description: 'Comparte bienestar consciente y construye una fuente de ingresos a tu propio ritmo.',
     },
     pack: moraviPack,
+    otherProductCard: {
+      background: otherProductMoravi,
+      wordmark: moraviWordmark,
+    },
   },
   {
     slug: 'capucci-360',
@@ -159,6 +174,10 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
       description: 'Comparte una nueva forma de vivir el café y construye una fuente de ingresos a tu propio ritmo.',
     },
     pack: capucciPack,
+    otherProductCard: {
+      background: otherProductCapucci,
+      wordmark: capucciWordmark,
+    },
   },
   {
     slug: 'reset-360',
@@ -206,6 +225,10 @@ export const PRODUCT_DETAILS: ProductDetail[] = [
       descriptionHighlight: 'construye una fuente de ingresos',
     },
     pack: resetPack,
+    otherProductCard: {
+      background: otherProductReset,
+      wordmark: resetWordmark,
+    },
   },
 ];
 

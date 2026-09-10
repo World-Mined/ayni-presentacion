@@ -3,7 +3,9 @@ import { Image, getImage } from 'astro:assets';
 import banner from '../../../assets/v2/products-banner.webp';
 import bannerPortrait from '../../../assets/v2/products-jungle.webp';
 import plank from '../../../assets/v2/products-plank.webp';
+import arrowForward from '../../../assets/v2/arrow-forward-gold.svg';
 import { productHref, type ProductDetail } from '../../../data/products';
+import MotionCta from '../MotionCta/MotionCta.astro';
 
 interface Props {
   /** Los otros dos productos de la línea, en orden de `PRODUCT_DETAILS`. */
@@ -12,16 +14,15 @@ interface Props {
 
 const { products } = Astro.props;
 
-// Misma art direction que `ProductsBanner`: en vertical el diseño usa un
-// encuadre más cerrado de la misma foto, y `<Image>` no hace art direction.
+// En móvil la misma escena usa el recorte ampliado del nodo 3211:12623.
 const sceneWide = await getImage({ src: banner, widths: [768, 1280, 1920], format: 'webp', quality: 72 });
-const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1170], format: 'webp', quality: 72 });
+const sceneMobile = await getImage({ src: bannerPortrait, widths: [390, 780, 1170, 1440], format: 'webp', quality: 92 });
 ---
 
 <section class="other-products" aria-labelledby="other-products-title">
   <div class="other-products__scene" aria-hidden="true">
     <picture>
-      <source media="(max-width: 767px)" srcset={scenePortrait.srcSet.attribute} sizes="100vw" />
+      <source media="(max-width: 767px)" srcset={sceneMobile.srcSet.attribute} sizes="100vw" />
       <img
         src={sceneWide.src}
         srcset={sceneWide.srcSet.attribute}
@@ -43,11 +44,49 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
     <h2 id="other-products-title">Otros Productos</h2>
     <div class="other-products__packs">
       {products.map((product) => (
-        <a class="other-products__pack" href={productHref(product.slug)}>
-          <span class="other-products__pack-art">
-            <Image src={product.pack} alt={product.name} widths={[260, 460, 920]} sizes="(max-width: 767px) 45vw, min(25.07vw, 361px)" loading="lazy" />
+        <div
+          class="other-products__pack"
+          data-product={product.revealId}
+        >
+          <a
+            class="other-products__pack-link"
+            href={productHref(product.slug)}
+            aria-label={`Conoce más sobre ${product.name}`}
+          >
+            <span class="other-products__pack-art">
+              <Image src={product.pack} alt={product.name} widths={[260, 460, 920]} sizes="min(25.07vw, 361px)" loading="lazy" />
+            </span>
+          </a>
+          <span class="other-products__mobile-card">
+            <span class="other-products__mobile-background">
+              <Image
+                src={product.otherProductCard.background}
+                alt=""
+                widths={[390, 780, 1170, 1560]}
+                sizes="100vw"
+                quality={92}
+                loading="lazy"
+              />
+            </span>
+            <span class="other-products__mobile-shade"></span>
+            <span class="other-products__mobile-copy">
+              <Image
+                class="other-products__wordmark"
+                src={product.otherProductCard.wordmark}
+                alt=""
+                loading="lazy"
+              />
+              <MotionCta
+                class="other-products__mobile-cta"
+                href={productHref(product.slug)}
+                aria-label={`Conoce más sobre ${product.name}`}
+              >
+                <span>Conoce más aquí</span>
+                <Image src={arrowForward} alt="" width={16} height={16} />
+              </MotionCta>
+            </span>
           </span>
-        </a>
+        </div>
       ))}
     </div>
   </div>
@@ -77,40 +116,61 @@ const scenePortrait = await getImage({ src: bannerPortrait, widths: [390, 780, 1
   .other-products__packs { display:flex;width:100%;height:clamp(240px,28.889vw,416px);align-items:center;justify-content:center; }
   .other-products__pack { position:relative;width:clamp(160px,25.069vw,361px);aspect-ratio:361/442; }
   .other-products__pack:first-child { margin-right:calc(-1 * clamp(22px,3.472vw,50px)); }
+  .other-products__pack-link { position:absolute;inset:0;display:block; }
   /* Como en `ProductsBanner`, la caja del enlace es la zona sensible y el arte
      —que sobresale por los lados con píxeles transparentes— no captura el ratón. */
   .other-products__pack-art { position:absolute;inset:0;display:block;transform-origin:bottom center;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease;pointer-events:none; }
   .other-products__pack-art :global(img) { position:absolute;top:0;left:-12.65%;display:block;width:122.47%;height:100.09%;max-width:none;object-fit:contain; }
+  .other-products__mobile-card { display:none; }
 
   @media(hover:hover){
-    .other-products__packs:has(.other-products__pack:hover) .other-products__pack-art { transform:scale(.98); }
-    .other-products__packs:has(.other-products__pack:hover) .other-products__pack:hover .other-products__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
+    .other-products__packs:has(.other-products__pack-link:hover) .other-products__pack-art { transform:scale(.98); }
+    .other-products__packs:has(.other-products__pack-link:hover) .other-products__pack-link:hover .other-products__pack-art { transform:scale(1.04);filter:drop-shadow(0 12px 22px rgba(0,0,0,.45)) brightness(1.04); }
   }
   @media(prefers-reduced-motion:reduce){
     .other-products__pack-art { transition:none; }
   }
 
   @media(max-width:767px){
-    .other-products { --plank-h:clamp(80px,24vw,120px);min-height:clamp(420px,120vw,600px);padding-inline:20px;box-shadow:none; }
-    .other-products__plank :global(img) { width:236.15%;margin-left:-68.08%; }
-    .other-products__gradient { height:60vw; }
-    /* Compensa el cambio de geometría en 767 px: el bloque móvil sube de
-       forma fluida mientras el de escritorio/tablet baja ligeramente. Así no
-       hay un salto visual al cruzar el breakpoint. */
-    .other-products__content { gap:clamp(32px,10vw,56px);padding-top:clamp(24px,8vw,44px);transform:translateY(clamp(-28px,-4vw,-14px)); }
-    .other-products h2 { font-family:Poppins,sans-serif;font-size:clamp(26px,8.205vw,39px);font-weight:600;line-height:1.1875;color:#fcfcfb; }
-    /* La fila conserva un mínimo de 200 px, pero las bolsas sí reducen su
-       tamaño por debajo de 340 px de viewport. Alinearlas al centro dejaba el
-       espacio sobrante debajo y parecía que flotaban; la base queda ahora
-       anclada a la tabla en todos los anchos. */
-    .other-products__packs {
-      height:clamp(200px,52vw,300px);
-      align-items:flex-end;
-      /* En viewports muy estrechos la bolsa se reduce, pero su transparencia
-         inferior también se vuelve más perceptible. El desplazamiento crece
-         al reducir el ancho para que el arte siga apoyado sobre la madera. */
-      transform:translateY(clamp(14px,calc(52px - 10vw),24px));
+    /* Figma 3211:12623: cabecera de 118 px seguida de dos tarjetas 390:200.
+       El bloque conserva esa proporción al bajar de 390 px. */
+    .other-products { display:block;min-height:0;padding:0;box-shadow:none;background:#000; }
+    .other-products__scene { height:118px;bottom:auto; }
+    .other-products__scene :global(img) {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      max-width:none;
+      object-fit:cover;
+      object-position:center 48%;
     }
-    .other-products__pack { width:clamp(116px,42vw,240px); }
+    .other-products__gradient { z-index:1;height:318px; }
+    .other-products__plank { display:none; }
+    .other-products__content { width:100%;gap:0;padding:0;transform:none; }
+    .other-products h2 { z-index:2;display:grid;width:100%;height:118px;place-items:center;margin:0;padding:40px 16px;color:#fcfcfb;font-family:Poppins,sans-serif;font-size:32px;font-weight:600;letter-spacing:0;line-height:38px; }
+    .other-products__packs { display:flex;width:100%;height:auto;flex-direction:column;align-items:stretch;justify-content:flex-start;transform:none; }
+    .other-products__pack,.other-products__pack:first-child { display:block;width:100%;height:auto;aspect-ratio:390/200;margin:0;overflow:hidden; }
+    .other-products__pack-link { display:none; }
+    .other-products__pack-art { display:none; }
+    .other-products__mobile-card { position:absolute;inset:0;display:block;overflow:hidden; }
+    .other-products__mobile-background { position:absolute;inset:0;display:block;overflow:hidden; }
+    .other-products__mobile-background :global(img) { position:absolute;top:-61.75%;left:0;display:block;width:100%;height:195%;max-width:none;object-fit:fill;transition:transform .34s cubic-bezier(.22,.61,.36,1),filter .34s ease; }
+    .other-products__pack[data-product='reset'] .other-products__mobile-background :global(img) { top:-65.75%; }
+    .other-products__pack[data-product='capucci'] .other-products__mobile-background :global(img) { top:-65.5%; }
+    .other-products__mobile-shade { position:absolute;inset:0;background:linear-gradient(180deg,#3b322a 0%,rgba(110,94,61,0) 60%),linear-gradient(90deg,rgba(0,0,0,.6) 0%,rgba(69,50,43,0) 70%);mix-blend-mode:multiply;pointer-events:none; }
+    .other-products__pack[data-product='reset'] .other-products__mobile-shade { mix-blend-mode:hard-light; }
+    .other-products__mobile-copy { position:relative;display:flex;height:100%;flex-direction:column;align-items:flex-start;gap:12px;padding:30px 16px; }
+    .other-products__wordmark { display:block;width:auto;height:30px; }
+    .other-products__mobile-copy :global(.other-products__mobile-cta) { --cta-w:200px;--cta-h:36px;--cta-gap:12px;--cta-font-size:10.5px;--cta-font-weight:400;--cta-surface:linear-gradient(0deg,#000,#000),linear-gradient(183.9deg,rgba(135,116,79,.2),rgba(43,43,43,.14));--cta-bevel:inset -1.715px -1.059px 2.774px rgba(250,250,250,.22);--cta-color:#987c40;--cta-color-hover:#f7c45f;--cta-ring-w:.5px;--cta-ring:#b1a58d;--cta-ring-hover:rgba(164,137,85,.2);--cta-ring-hover-w:2px;padding:7.85px 10.47px;line-height:1; }
+    .other-products__mobile-copy :global(.other-products__mobile-cta img) { display:block;width:16px;height:16px;flex:none; }
+  }
+
+  @media(max-width:389px){
+    .other-products__scene,.other-products h2 { height:clamp(96px,30.256vw,118px); }
+    .other-products h2 { padding-block:clamp(28px,10.256vw,40px);font-size:clamp(27px,8.205vw,32px);line-height:1.1875; }
+    .other-products__mobile-copy { gap:clamp(9px,3.077vw,12px);padding:clamp(22px,7.692vw,30px) 16px; }
+    .other-products__wordmark { height:clamp(24px,7.692vw,30px); }
+    .other-products__mobile-copy :global(.other-products__mobile-cta) { --cta-w:min(200px,51.282vw);--cta-h:clamp(32px,9.231vw,36px);--cta-font-size:clamp(9px,2.692vw,10.5px); }
   }
 </style>
