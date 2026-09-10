@@ -8,3 +8,6 @@ export const MEDIA_BASE_URL =
 export const REVEAL_BACKGROUND_URL = revealMandala.src;
 
 export const mediaUrl = (file: string) => `${MEDIA_BASE_URL}/${file}`;
+
+export const ABOUT_VIDEO_URL =
+  'https://ayni.s3.us-east-1.amazonaws.com/videos/ayni-about.mp4';
