@@ -29,8 +29,6 @@ export interface FramesConfig {
 /** Animación compuesta de entrada y anillo, entregada en video. */
 export interface VideoConfig {
   src: string;
-  /** Momento, en ms, en que aparecen las ramas de ingredientes. */
-  labelsStart: number;
   playbackRate?: number;
 }
 

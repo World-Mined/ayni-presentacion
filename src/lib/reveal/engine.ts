@@ -7,6 +7,7 @@ import {
   DEFAULT_SCROLL,
   DEFAULT_FRAMES,
 } from './defaults';
+import { clamp, resolveRingTiming } from './timing';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 /** Fracción del anillo durante la que su trazo termina de aparecer. Con el 5% el
@@ -42,7 +43,6 @@ const SNAP_SETTLE_MS = 180;
  * alcanzar su intensidad, para que la luz crezca junto con el cierre del giro. */
 const MOBILE_BLUR_LEAD_MS = 300;
 const MOBILE_BLUR_DURATION_MS = 650;
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
 /** Fusiona la config del producto con los defaults. */
@@ -258,11 +258,15 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
 
   // Giro en 2 fases + círculo sincronizado al frame.
   const count = C.frames.count;
-  const centerIdx = clamp(T.centerFrame - 1, 0, count - 1);
-  const endIdx = Math.round(T.rotateEnd * (count - 1));
-  const ringFromIdx = Math.max(0, T.ringStartFrame - 1);
-  const ringToIdx = Math.max(ringFromIdx + 1, T.ringEndFrame - 1);
-  const ringFollowsFrames = endIdx > centerIdx && ringToIdx <= endIdx;
+  const {
+    centerIdx,
+    endIdx,
+    ringFromIdx,
+    ringToIdx,
+    ringFollowsFrames,
+    timedRingDur,
+    ringCloseAt: labelsStart,
+  } = resolveRingTiming(T, count);
   const ringState = { p: 0 };
   const setRingProgress = (progress: number) => {
     const cp = clamp(progress, 0, 1);
@@ -302,14 +306,6 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // real, que aquí no da de sí. Calcularlo —en vez de dejar la constante a ojo
   // que había antes— es lo que mantiene las dos rutas sincronizadas si alguien
   // retoca `centerFrame`, `rotateEnd` o `ringEndFrame`.
-  const nominalEnd = Math.round(T.rotateEnd * (T.nominalFrameCount - 1));
-  const nominalCenter = clamp(T.centerFrame - 1, 0, nominalEnd);
-  // Si la referencia se queda corta para los tiempos, el anillo ocupa toda la fase.
-  const timedRingRatio =
-    nominalEnd > nominalCenter
-      ? clamp((ringToIdx - nominalCenter) / (nominalEnd - nominalCenter), 0, 1)
-      : 1;
-  const timedRingDur = T.rotateCenterDur * timedRingRatio;
   if (!ringFollowsFrames) {
     tl.add(
       ringState,
@@ -317,15 +313,6 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       T.riseDur,
     );
   }
-
-  // Instante en que se cierra el círculo → ahí arrancan las ramas.
-  const labelsStart = nativeVideo
-    ? C.video!.labelsStart
-    : ringFollowsFrames
-    ? ringToIdx <= centerIdx
-      ? (ringToIdx / centerIdx) * T.riseDur
-      : T.riseDur + ((ringToIdx - centerIdx) / (endIdx - centerIdx)) * T.rotateCenterDur
-    : T.riseDur + timedRingDur;
 
   if (mobileBlur) {
     // `labelsStart` marca el destello final en ambas rutas. El adelanto inicia

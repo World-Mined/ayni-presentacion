@@ -16,9 +16,9 @@ aquí a mano antes de levantar el sitio.
 
 | archivo | servido desde | notas |
 | --- | --- | --- |
-| `video-naturaleza-ayni.mp4` | S3 | fondo de la portada (`HeroSection/HeroSection.astro`) |
+| `video-naturaleza-ayni.mp4` | S3 | fondo de la portada y objeto sobre el que se verificaron los cues (`HeroSection/HeroSection.astro`) |
 | `ayni-about.mp4` | S3 | presentación de “¿Qué es AYNI?”, en el CTA “Conoce más” de `HomeOverview.astro` |
-| `ayni-home.mp4` | — | máster local sobre el que se midieron los cortes de `home-video.ts`. **Verificar que el archivo de S3 es este mismo encode**: los tiempos no los valida nada en el build. |
+| `ayni-home.mp4` | — | copia local de referencia del mismo montaje; no es el mismo encode que el objeto S3. |
 
 ## `ayni-home.mp4` tiene medidas tomadas a mano
 
@@ -28,10 +28,12 @@ depende de tiempos y recortes medidos sobre este archivo concreto, y viven todos
 en **`src/data/home-video.ts`**: los segundos de cada tramo, la resolución del
 máster (1280 × 768) y las coordenadas de las cinco tarjetas.
 
-Si reemplazas o reencodas el video, vuelve a medir ahí. Los recortes se
-normalizan contra la resolución declarada, así que un reencode a otro tamaño no
-los rompe; los **tiempos sí hay que revisarlos** porque nada los valida en el
-build.
+El 10 de septiembre de 2026 se compararon los fotogramas de los tres cues con
+el objeto S3 `video-naturaleza-ayni.mp4`: es el mismo montaje, aunque el objeto
+servido es otro encode (60 fps). El motor valida también su duración antes de
+activar el reencuadre. Si se reemplaza por otro montaje, hay que volver a medir
+`home-video.ts`; un cambio de resolución aislado no rompe los recortes porque se
+normalizan contra la resolución declarada.
 
 Sin el archivo la portada no rompe: el `<video>` se queda en su fondo sólido y
 el resto de la página funciona igual. Pero la portada pierde su contenido

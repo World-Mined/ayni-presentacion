@@ -5,6 +5,13 @@
 // vive aquí y no enterrado dentro del componente. Si se reemplaza o se reencoda
 // el video, esto es lo único que hay que volver a medir.
 
+/** Objeto de S3 sobre el que se verificaron los cues y recortes. */
+export const HOME_VIDEO_FILE = 'video-naturaleza-ayni.mp4';
+
+/** Duración del encode servido, usada para no aplicar cues a otro montaje. */
+export const HOME_VIDEO_EXPECTED_DURATION = 65.816667;
+export const HOME_VIDEO_DURATION_TOLERANCE = 0.25;
+
 /** Tramos del cierre del video, en segundos. */
 export const HOME_VIDEO_CUES = {
   /** Entra el mosaico de cinco planos. */

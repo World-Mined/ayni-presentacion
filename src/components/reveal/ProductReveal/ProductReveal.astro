@@ -4,9 +4,10 @@ import revealChevronLeft from '../../../assets/v2/reveal-chevron-left.svg';
 import revealChevronRight from '../../../assets/v2/reveal-chevron-right.svg';
 import revealMobileBlur from '../../../assets/v2/reveal-mobile-blur.webp';
 import type { IngredientsScene } from '../../../data/product-ingredients';
-import { DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
+import { DEFAULT_FRAMES, DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
 import { PRODUCTS } from '../../../lib/reveal/products';
 import type { ProductId } from '../../../lib/reveal/products';
+import { resolveRingTiming } from '../../../lib/reveal/timing';
 import './product-reveal.css';
 import './product-reveal-responsive.css';
 import './product-reveal-motion.css';
@@ -25,7 +26,20 @@ if (!cfg) {
     `<ProductReveal>: producto desconocido "${product}". Regístralo en src/lib/reveal/products/index.ts`,
   );
 }
+if (scene) {
+  const labelIds = new Set(cfg.labels.map(({ id }) => id));
+  const sceneIds = new Set(scene.items.map(({ id }) => id));
+  const missingSceneItems = cfg.labels.filter(({ id }) => !sceneIds.has(id));
+  const orphanSceneItems = scene.items.filter(({ id }) => !labelIds.has(id));
+  const hasDuplicateIds = labelIds.size !== cfg.labels.length || sceneIds.size !== scene.items.length;
+
+  if (missingSceneItems.length || orphanSceneItems.length || hasDuplicateIds) {
+    throw new Error(`<ProductReveal>: etiquetas e ingredientes desincronizados para "${product}"`);
+  }
+}
 const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
+const timing = { ...DEFAULT_TIMING, ...cfg.timing };
+const frames = { ...DEFAULT_FRAMES, ...cfg.frames };
 const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
 const hasNativeVideo = Boolean(cfg.video);
 const circleStyle = [
@@ -44,7 +58,7 @@ const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` :
 // la relación de aspecto implícita y el bloque salta de alto mientras carga.
 const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
 const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
-const mobileLabelsStart = cfg.video?.labelsStart ?? 1450;
+const mobileLabelsStart = resolveRingTiming(timing, frames.count).ringCloseAt;
 const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsStagger;
 ---
 

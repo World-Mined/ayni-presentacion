@@ -5,10 +5,9 @@ import { mediaUrl, REVEAL_BACKGROUND_URL } from '../../../data/media';
 export const reset: RevealConfig = {
   id: 'reset',
   title: { main: 'RESET 360', sub: 'La fórmula 8 en 1' },
-  // Video final entregado por diseño: conserva entrada y anillo originales.
-  // Adelantamos las ramas apenas antes del cierre visual del MP4 para evitar
-  // el vacío que queda entre el anillo y el primer ingrediente.
-  video: { src: mediaUrl('reset.mp4'), labelsStart: 1550, playbackRate: 1.25 },
+  // Video final entregado por diseño: conserva la entrada original. Las ramas
+  // se sincronizan con el cierre del anillo que dibuja el motor.
+  video: { src: mediaUrl('reset.mp4'), playbackRate: 1.25 },
   background: REVEAL_BACKGROUND_URL,
   scroll: { revRate: 3 },
   timing: { labelsStagger: 15, labelsDur: 100 },

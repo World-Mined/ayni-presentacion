@@ -252,7 +252,14 @@ function initializeCta(cta: CtaElement) {
   // sigue enfocado o bajo el puntero, su estado visual debe seguir siendo el
   // activo. Quitar el atributo aquí lo apagaría a media interacción.
   reducedMotion.addEventListener('change', ({ matches }) => {
-    if (matches) animation?.pause();
+    if (matches) {
+      animation?.pause();
+      return;
+    }
+
+    const remainsActive =
+      (hoverCapable.matches && cta.matches(':hover')) || cta.matches(':focus-visible');
+    if (remainsActive && cta.dataset.motionActive === 'true') start();
   });
 }
 
