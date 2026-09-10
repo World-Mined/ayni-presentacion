@@ -298,13 +298,15 @@ const optimizedBonusFocusMobile = await getImage({
               <>
                 <div class="star-destination__image">
                   <>
-                    <Image
-                      src={image}
-                      alt={`Vista de ${name}`}
-                      loading="eager"
-                      widths={[480, 768, 1440]}
-                      sizes="(max-width: 767px) 44vw, 22vw"
-                    />
+                    <div class="star-destination__photo">
+                      <Image
+                        src={image}
+                        alt={`Vista de ${name}`}
+                        loading="eager"
+                        widths={[480, 768, 1440]}
+                        sizes="(max-width: 767px) 92vw, (max-aspect-ratio: 13 / 10) 46vw, 22vw"
+                      />
+                    </div>
                     <img
                       class="star-destination__flare"
                       src={flareV2.src}
@@ -1093,12 +1095,21 @@ const optimizedBonusFocusMobile = await getImage({
       0 0.8rem 1.4rem rgba(0, 0, 0, 0.65),
       0 0.1rem 1rem rgba(249, 203, 105, 0.42);
   }
-  .star-destination__image :global(img):not(.star-destination__flare) {
+  .star-destination__photo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 7px;
+  }
+  .star-destination__photo :global(img) {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 7px;
+    transform: scale(1);
+    transform-origin: center;
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
   }
   .star-destination__flare {
     position: absolute;
@@ -1137,6 +1148,16 @@ const optimizedBonusFocusMobile = await getImage({
     text-align: center;
     text-transform: uppercase;
   }
+  @media (hover: hover) and (pointer: fine) {
+    .star-destination:hover .star-destination__photo :global(img) {
+      transform: scale(1.05);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .star-destination__photo :global(img) {
+      transition: none;
+    }
+  }
   @media (max-width: 767px) {
     .sponsorship-plan {
       --sponsorship-team-radius: 4px;
@@ -1150,26 +1171,6 @@ const optimizedBonusFocusMobile = await getImage({
     }
     .residual-bonus__note {
       max-width: 85%;
-    }
-    .ambassadors-star__content {
-      width: min(88%, 32rem);
-      padding: 2.7rem 0 3.3rem;
-    }
-    .ambassadors-star__requirements {
-      grid-template-columns: 1fr;
-      gap: 2.7rem;
-    }
-    .star-requirement {
-      min-height: 7rem;
-      padding: 1.2rem;
-    }
-    .ambassadors-star__destinations {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.8rem 1rem;
-    }
-    .ambassadors-star__footnote {
-      max-width: 85%;
-      line-height: 1.7;
     }
   }
   .star-requirement__icon--trophy::before {
@@ -1228,8 +1229,12 @@ const optimizedBonusFocusMobile = await getImage({
   /* Figma 3211:12329 is composed as one desktop viewport below the 104px header. */
   @media (min-width: 768px) {
     .ambassadors-star {
-      height: min(calc(100svh - 104px), calc(var(--star-w) * 0.5));
-      min-height: 0;
+      display: flex;
+      min-height: calc(100svh - var(--header-height));
+      overflow: visible;
+    }
+    .ambassadors-star__content {
+      margin-block: auto;
     }
     .ambassadors-star__content {
       --star-title-margin: clamp(0.8rem, 1.35vw, 1.4rem) 0
@@ -1262,6 +1267,121 @@ const optimizedBonusFocusMobile = await getImage({
     .ambassadors-star__footnote {
       margin-top: clamp(1.8rem, 2.5vw, 3rem);
       font-size: clamp(0.65rem, 1vw, 1.2rem);
+    }
+  }
+
+  /* Portrait-ish desktop/tablet viewports cannot host the 16:9 composition
+     without shrinking it to a sliver, so reflow to a 2x2 destination grid
+     and drive the vertical rhythm off svh to fill the viewport. */
+  @media (min-width: 768px) and (max-aspect-ratio: 13 / 10) {
+    .ambassadors-star__content {
+      --star-title-size: clamp(1.4rem, min(3.4vw, 3.1svh), 2.6rem);
+      --star-title-margin: clamp(0.6rem, 1.2svh, 1.4rem) 0
+        clamp(1.1rem, 2.2svh, 2.4rem);
+      width: min(92%, 60rem, calc((100svh - var(--header-height)) * 0.95));
+      padding-block: clamp(1rem, 1.8svh, 2.4rem);
+    }
+    .ambassadors-star__brand {
+      width: clamp(13rem, min(33vw, 30svh), 26rem);
+      height: clamp(4rem, min(9.5vw, 8.6svh), 7.5rem);
+    }
+    .ambassadors-star__requirements {
+      gap: clamp(1.2rem, 2.6vw, 2.4rem);
+    }
+    .star-requirement {
+      min-height: clamp(4.6rem, min(11vw, 9.5svh), 7.5rem);
+      padding-inline: clamp(0.9rem, 2vw, 1.6rem);
+    }
+    .star-requirement__icon {
+      width: clamp(2.2rem, min(5.4vw, 4.6svh), 3.6rem);
+      height: clamp(2.2rem, min(5.4vw, 4.6svh), 3.6rem);
+      margin-right: clamp(0.8rem, 2.2vw, 1.8rem);
+    }
+    .star-requirement p {
+      font-size: clamp(0.85rem, min(1.9vw, 1.75svh), 1.25rem);
+    }
+    .ambassadors-star__destinations {
+      margin-top: clamp(1.1rem, 2.2svh, 2.4rem);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(1rem, 2.2svh, 2rem) clamp(1rem, 2.4vw, 2rem);
+    }
+    .star-destination__image {
+      aspect-ratio: 2.1;
+    }
+    .star-destination h3 {
+      margin-top: clamp(0.4rem, 0.9svh, 0.8rem);
+      font-size: clamp(0.95rem, min(2.1vw, 1.9svh), 1.4rem);
+    }
+    .star-destination p {
+      font-size: clamp(0.95rem, min(2.1vw, 1.9svh), 1.4rem);
+    }
+    .ambassadors-star__footnote {
+      margin-top: clamp(1rem, 2.2svh, 2.2rem);
+      font-size: clamp(0.65rem, min(1.5vw, 1.4svh), 1rem);
+      letter-spacing: clamp(0.12rem, 0.5vw, 0.4rem);
+    }
+  }
+
+  /* Below the desktop composition the band follows the stacked Figma layout:
+     one destination per row and a natural page-flow height instead of a
+     viewport-locked band. */
+  @media (max-width: 767px) {
+    .ambassadors-star {
+      display: block;
+      min-height: 0;
+    }
+    .ambassadors-star__content {
+      --star-title-margin: clamp(1rem, 4vw, 1.6rem) 0 clamp(1.6rem, 7vw, 2.6rem);
+      --star-title-size: clamp(1.15rem, 5.2vw, 1.6rem);
+      width: min(92%, 30rem);
+      margin-block: 0;
+      padding-block: clamp(2.2rem, 9vw, 3.2rem);
+    }
+    .ambassadors-star__brand {
+      width: min(88%, 22rem);
+      height: clamp(4.6rem, 17vw, 6.5rem);
+    }
+    .ambassadors-star__requirements {
+      width: 100%;
+      gap: clamp(2.4rem, 9vw, 3.4rem);
+    }
+    .star-requirement {
+      min-height: clamp(5.6rem, 25vw, 8rem);
+      padding: clamp(1rem, 4vw, 1.5rem) clamp(1rem, 4.5vw, 1.7rem);
+      justify-content: flex-start;
+    }
+    .star-requirement__icon {
+      width: clamp(2.9rem, 13vw, 4rem);
+      height: clamp(2.9rem, 13vw, 4rem);
+      margin-right: clamp(0.9rem, 4vw, 1.5rem);
+    }
+    .star-requirement p {
+      font-size: clamp(0.9rem, 3.9vw, 1.2rem);
+    }
+    .star-requirement small {
+      font-size: 0.82em;
+    }
+    .ambassadors-star__destinations {
+      width: 100%;
+      margin-top: clamp(2rem, 8vw, 3rem);
+      grid-template-columns: 1fr;
+      gap: clamp(1.6rem, 6.5vw, 2.4rem);
+    }
+    .star-destination__image {
+      aspect-ratio: 2.25;
+    }
+    .star-destination h3 {
+      margin-top: clamp(0.6rem, 2.6vw, 0.9rem);
+      font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+      text-transform: none;
+    }
+    .star-destination p {
+      font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+    }
+    .ambassadors-star__footnote {
+      max-width: 100%;
+      margin-top: clamp(2rem, 8vw, 3rem);
+      font-size: clamp(0.62rem, 2.6vw, 0.85rem);
     }
   }
 </style>
