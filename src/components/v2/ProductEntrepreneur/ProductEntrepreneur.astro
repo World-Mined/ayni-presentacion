@@ -12,6 +12,7 @@ import sharedGradient from '../../../assets/v2/product-entrepreneur-gradient.png
 import mobileBlur from '../../../assets/v2/product-entrepreneur-mobile-blur.svg';
 import arrowForward from '../../../assets/v2/product-entrepreneur-arrow-forward.svg';
 import MotionCta from '../MotionCta/MotionCta.astro';
+import { ROUTES } from '../../../data/v2';
 
 interface Props {
   product: ProductDetail;
@@ -58,7 +59,7 @@ const optimizedPeopleMobile = await getImage({ src: entrepreneurArt.people, widt
           Comparte lo que ya conoces y <strong>construye una fuente de ingresos</strong> a tu propio ritmo.
         </p>
       </div>
-      <MotionCta class="product-entrepreneur__cta" href="/embajadores">
+      <MotionCta class="product-entrepreneur__cta" href={ROUTES.ambassadors}>
         <span>Quiero emprender</span>
         <span class="product-entrepreneur__arrow-desktop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
         <span class="product-entrepreneur__arrow-mobile" aria-hidden="true"><Image src={arrowForward} alt="" /></span>

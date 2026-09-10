@@ -1,8 +1,18 @@
 ---
+import { legalHref } from '../../../data/legal';
+
 // Libro de reclamaciones. El formulario reproduce el diseño de Figma; el envío
 // necesita un endpoint que todavía no existe: mientras `SUBMIT_ENDPOINT` esté
 // vacío el formulario no envía nada y avisa al usuario por dónde reclamar.
 const SUBMIT_ENDPOINT = '';
+const submissionEnabled = Boolean(SUBMIT_ENDPOINT);
+
+// Los campos van dentro de un `<fieldset disabled>` mientras no haya endpoint.
+// Un botón deshabilitado sólo frena el envío implícito; el fieldset además
+// impide que los controles se serialicen, así que ni `requestSubmit()` ni una
+// extensión pueden mandar el documento de identidad y el domicilio en un POST
+// contra el propio origen estático, donde acabarían en los logs del proxy.
+const DATA_POLICY_HREF = legalHref('tratamiento-de-datos-personales');
 
 // Figma solo pinta el estado "Seleccionar" de los dos desplegables, así que las
 // opciones son las del formato oficial del libro de reclamaciones.
@@ -25,86 +35,90 @@ const CLAIM_SUBJECTS = ['Producto', 'Servicio'];
       class="claims__form"
       method="post"
       action={SUBMIT_ENDPOINT || undefined}
-      data-claims-form
-      data-endpoint={SUBMIT_ENDPOINT}
     >
-      <h2 class="claims__legend">Información del consumidor</h2>
+      {!submissionEnabled && (
+        <p id="claims-unavailable" class="claims__notice" role="status">
+          El envío del libro de reclamaciones aún no está habilitado. Escríbenos a <a href="mailto:soporte@ayniworld.com">soporte@ayniworld.com</a>.
+        </p>
+      )}
+      <fieldset class="claims__fields" disabled={!submissionEnabled}>
+        <h2 class="claims__legend">Información del consumidor</h2>
 
-      <p class="claims__field">
-        <label for="claims-nombres">Nombres*</label>
-        <input id="claims-nombres" name="nombres" type="text" placeholder="Nombres" required />
-      </p>
-      <p class="claims__field">
-        <label for="claims-apellido-paterno">Apellido paterno*</label>
-        <input id="claims-apellido-paterno" name="apellidoPaterno" type="text" placeholder="Apellido paterno" required />
-      </p>
-      <p class="claims__field">
-        <label for="claims-apellido-materno">Apellido materno*</label>
-        <input id="claims-apellido-materno" name="apellidoMaterno" type="text" placeholder="Apellido materno" required />
-      </p>
+        <p class="claims__field">
+          <label for="claims-nombres">Nombres*</label>
+          <input id="claims-nombres" name="nombres" type="text" placeholder="Nombres" required />
+        </p>
+        <p class="claims__field">
+          <label for="claims-apellido-paterno">Apellido paterno*</label>
+          <input id="claims-apellido-paterno" name="apellidoPaterno" type="text" placeholder="Apellido paterno" required />
+        </p>
+        <p class="claims__field">
+          <label for="claims-apellido-materno">Apellido materno*</label>
+          <input id="claims-apellido-materno" name="apellidoMaterno" type="text" placeholder="Apellido materno" required />
+        </p>
 
-      <h3 class="claims__legend claims__legend--sub">En caso de ser menor de edad</h3>
-      <p class="claims__field">
-        <label for="claims-tutor-nombre">Nombre de padre/madre</label>
-        <input id="claims-tutor-nombre" name="tutorNombre" type="text" placeholder="Nombre de padre/madre" />
-      </p>
-      <p class="claims__field">
-        <label for="claims-tutor-apellido">Apellido de padre/madre</label>
-        <input id="claims-tutor-apellido" name="tutorApellido" type="text" placeholder="Apellido de padre/madre" />
-      </p>
+        <h3 class="claims__legend claims__legend--sub">En caso de ser menor de edad</h3>
+        <p class="claims__field">
+          <label for="claims-tutor-nombre">Nombre de padre/madre</label>
+          <input id="claims-tutor-nombre" name="tutorNombre" type="text" placeholder="Nombre de padre/madre" />
+        </p>
+        <p class="claims__field">
+          <label for="claims-tutor-apellido">Apellido de padre/madre</label>
+          <input id="claims-tutor-apellido" name="tutorApellido" type="text" placeholder="Apellido de padre/madre" />
+        </p>
 
-      <p class="claims__field">
-        <label for="claims-domicilio">Domicilio*</label>
-        <input id="claims-domicilio" name="domicilio" type="text" placeholder="Domicilio" required />
-      </p>
+        <p class="claims__field">
+          <label for="claims-domicilio">Domicilio*</label>
+          <input id="claims-domicilio" name="domicilio" type="text" placeholder="Domicilio" required />
+        </p>
 
-      <div class="claims__row">
+        <div class="claims__row">
+          <p class="claims__field claims__field--sm">
+            <label for="claims-tipo-documento">Tipo de documento*</label>
+            <select id="claims-tipo-documento" name="tipoDocumento" required>
+              <option value="" selected disabled>Seleccionar</option>
+              {DOCUMENT_TYPES.map((type) => <option value={type}>{type}</option>)}
+            </select>
+          </p>
+          <p class="claims__field claims__field--sm">
+            <label for="claims-numero-documento">N° de documento*</label>
+            <input id="claims-numero-documento" name="numeroDocumento" type="text" placeholder="N° de documento" required />
+          </p>
+        </div>
+
+        <p class="claims__field">
+          <label for="claims-email">Correo electrónico*</label>
+          <input id="claims-email" name="email" type="email" placeholder="Correo electrónico" required />
+        </p>
         <p class="claims__field claims__field--sm">
-          <label for="claims-tipo-documento">Tipo de documento*</label>
-          <select id="claims-tipo-documento" name="tipoDocumento" required>
+          <label for="claims-telefono">N° de teléfono</label>
+          <input id="claims-telefono" name="telefono" type="tel" placeholder="N° de teléfono" />
+        </p>
+
+        <h2 class="claims__legend">Información del producto o servicio</h2>
+        <p class="claims__field claims__field--md">
+          <label for="claims-producto">Producto o servicio*</label>
+          <select id="claims-producto" name="producto" required>
             <option value="" selected disabled>Seleccionar</option>
-            {DOCUMENT_TYPES.map((type) => <option value={type}>{type}</option>)}
+            {CLAIM_SUBJECTS.map((subject) => <option value={subject}>{subject}</option>)}
           </select>
         </p>
-        <p class="claims__field claims__field--sm">
-          <label for="claims-numero-documento">N° de documento*</label>
-          <input id="claims-numero-documento" name="numeroDocumento" type="text" placeholder="N° de documento" required />
+        <p class="claims__field">
+          <label for="claims-cuantia">Cuantía reclamada*</label>
+          <input id="claims-cuantia" name="cuantia" type="text" placeholder="Monto objeto de reclamo" required />
         </p>
-      </div>
 
-      <p class="claims__field">
-        <label for="claims-email">Correo electrónico*</label>
-        <input id="claims-email" name="email" type="email" placeholder="Correo electrónico" required />
-      </p>
-      <p class="claims__field claims__field--sm">
-        <label for="claims-telefono">N° de teléfono</label>
-        <input id="claims-telefono" name="telefono" type="tel" placeholder="N° de teléfono" />
-      </p>
-
-      <h2 class="claims__legend">Información del producto o servicio</h2>
-      <p class="claims__field claims__field--md">
-        <label for="claims-producto">Producto o servicio*</label>
-        <select id="claims-producto" name="producto" required>
-          <option value="" selected disabled>Seleccionar</option>
-          {CLAIM_SUBJECTS.map((subject) => <option value={subject}>{subject}</option>)}
-        </select>
-      </p>
-      <p class="claims__field">
-        <label for="claims-cuantia">Cuantía reclamada*</label>
-        <input id="claims-cuantia" name="cuantia" type="text" placeholder="Monto objeto de reclamo" required />
-      </p>
-
-      <h2 class="claims__legend">Detalle del reclamo</h2>
-      <fieldset class="claims__choices">
-        <legend class="claims__sr-only">Tipo de disconformidad</legend>
-        <label class="claims__choice">
-          <input type="radio" name="tipoReclamo" value="reclamo" required />
-          <span>Reclamo (Disconformidad relacionada a los productos y/o servicios)</span>
-        </label>
-        <label class="claims__choice">
-          <input type="radio" name="tipoReclamo" value="queja" />
-          <span>Queja (Disconformidad no relacionada a los productos y/o servicios o malestar o descontento a la atención al público)</span>
-        </label>
+        <h2 class="claims__legend">Detalle del reclamo</h2>
+        <fieldset class="claims__choices">
+          <legend class="claims__sr-only">Tipo de disconformidad</legend>
+          <label class="claims__choice">
+            <input type="radio" name="tipoReclamo" value="reclamo" required />
+            <span>Reclamo (Disconformidad relacionada a los productos y/o servicios)</span>
+          </label>
+          <label class="claims__choice">
+            <input type="radio" name="tipoReclamo" value="queja" />
+            <span>Queja (Disconformidad no relacionada a los productos y/o servicios o malestar o descontento a la atención al público)</span>
+          </label>
       </fieldset>
 
       <p class="claims__field claims__field--area">
@@ -116,32 +130,21 @@ const CLAIM_SUBJECTS = ['Producto', 'Servicio'];
         <textarea id="claims-solucion" name="solucion" placeholder="Descripción de solicitud de solución" required></textarea>
       </p>
 
-      <p class="claims__notice" data-claims-notice hidden>
-        El envío del libro de reclamaciones aún no está habilitado. Escríbenos a <a href="mailto:soporte@ayniworld.com">soporte@ayniworld.com</a>.
-      </p>
+      <label class="claims__consent">
+        <input type="checkbox" name="consentimiento" value="si" required />
+        <span>
+          Autorizo el tratamiento de mis datos personales para atender este reclamo,
+          conforme a la <a href={DATA_POLICY_HREF}>política de tratamiento de datos personales</a>.*
+        </span>
+      </label>
+      </fieldset>
 
       <div class="claims__actions">
-        <button type="submit">Enviar</button>
+        <button type="submit" disabled={!submissionEnabled} aria-describedby={!submissionEnabled ? 'claims-unavailable' : undefined}>Enviar</button>
       </div>
     </form>
   </div>
 </section>
-
-<script>
-  // Sin endpoint el navegador reenviaría la página a sí misma y perdería lo
-  // escrito, así que se corta el envío y se dice a dónde escribir. En cuanto
-  // `SUBMIT_ENDPOINT` tenga valor, el `action` toma el control y esto no actúa.
-  const form = document.querySelector<HTMLFormElement>('[data-claims-form]');
-  const notice = form?.querySelector<HTMLElement>('[data-claims-notice]');
-
-  if (form && notice && !form.dataset.endpoint) {
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      notice.hidden = false;
-      notice.scrollIntoView({ block: 'nearest' });
-    });
-  }
-</script>
 
 <style>
   .claims { padding:clamp(40px,6vw,80px) clamp(20px,9.45vw,136px) clamp(56px,9vw,120px);background:var(--black);font-family:var(--font-title); }
@@ -174,12 +177,21 @@ const CLAIM_SUBJECTS = ['Producto', 'Servicio'];
   .claims__choice input { width:20px;height:20px;flex:none;margin:6px;accent-color:#f9cb69; }
   .claims__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
 
+  .claims__fields { display:flex;margin:0;flex-direction:column;gap:20px;padding:0;border:0;min-inline-size:0; }
+  .claims__fields:disabled { opacity:.6; }
+
+  .claims__consent { display:flex;align-items:flex-start;gap:8px;color:#8d8584;font-size:14px;font-weight:500;line-height:20px;cursor:pointer; }
+  .claims__consent input { width:20px;height:20px;flex:none;margin:0;accent-color:#f9cb69; }
+  .claims__consent a { color:#f9cb69; }
+
   .claims__notice { margin:0;color:#f9cb69;font-size:14px;font-weight:500;line-height:20px; }
   .claims__notice a { color:inherit; }
 
   .claims__actions { display:flex;justify-content:flex-end; }
   .claims__actions button { width:120px;padding:10px 20px;border:0;border-radius:20px;color:#000;background:#fefaf0;font-family:inherit;font-size:15px;font-weight:700;line-height:1.29;cursor:pointer; }
   .claims__actions button:hover { background:#fff; }
+  .claims__actions button:disabled { opacity:.55;cursor:not-allowed; }
+  .claims__actions button:disabled:hover { background:#fefaf0; }
 
   @media (max-width:767px) {
     .claims { padding-inline:24px; }
