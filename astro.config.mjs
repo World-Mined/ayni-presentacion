@@ -55,12 +55,7 @@ export default defineConfig({
         // recojo son ~600 KB cada uno. Quedan fuera de la instalación y entran
         // por la regla CacheFirst de /_astro/ de abajo, la primera vez que se
         // ven. Los iconos sueltos de /public sí se precachean.
-        globIgnores: [
-          '**/_astro/**/*.{svg,png,webp}',
-          // Capucci usa el MP4 nativo. Los frames permanecen como respaldo de
-          // desarrollo, pero no deben descargarse durante la instalación PWA.
-          '**/reveal/capucci/frame-*.webp',
-        ],
+        globIgnores: ['**/_astro/**/*.{svg,png,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/offline.html',
         runtimeCaching: [

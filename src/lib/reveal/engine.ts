@@ -5,7 +5,6 @@ import {
   DEFAULT_TIMING,
   DEFAULT_GEOMETRY,
   DEFAULT_SCROLL,
-  DEFAULT_FRAMES,
 } from './defaults';
 import { clamp, resolveRingTiming } from './timing';
 
@@ -50,7 +49,6 @@ function resolve(config: RevealConfig): ResolvedConfig {
   return {
     id: config.id,
     title: config.title,
-    frames: { ...DEFAULT_FRAMES, ...config.frames },
     video: config.video,
     labels: config.labels,
     background: config.background,
@@ -73,20 +71,17 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const stage = root.querySelector<HTMLElement>('.reveal-stage');
   const overlay = root.querySelector<SVGSVGElement>('.reveal-overlay');
   const halo = root.querySelector<HTMLElement>('.reveal-halo');
-  const productImg = root.querySelector<HTMLImageElement | HTMLVideoElement>('.reveal-product');
+  const video = root.querySelector<HTMLVideoElement>('video.reveal-product');
   const titleblock = root.querySelector<HTMLElement>('.reveal-title');
   const mobileBlur = root.querySelector<HTMLElement>('.reveal-mobile-blur');
-  if (!stage || !overlay || !halo || !productImg || !titleblock) return () => {};
-  const nativeVideo = productImg instanceof HTMLVideoElement ? productImg : undefined;
+  if (!stage || !overlay || !halo || !video || !titleblock) return () => {};
   // Safari móvil evalúa las políticas de autoplay antes de que Anime.js entre
   // en juego. Fijamos las propiedades DOM además de los atributos HTML para
   // que el MP4 remoto siempre sea reconocido como silencioso e inline.
-  if (nativeVideo) {
-    nativeVideo.muted = true;
-    nativeVideo.defaultMuted = true;
-    nativeVideo.playsInline = true;
-    nativeVideo.autoplay = true;
-  }
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.autoplay = true;
 
   const compactViewport = window.matchMedia(
     '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
@@ -100,56 +95,27 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   compactViewport.addEventListener('change', syncTrackHeight);
   root.classList.add('reveal-initialized');
   root.dataset.revealState = 'hidden';
-  root.dataset.framesReady = 'false';
+  root.dataset.mediaReady = 'false';
 
-  const frameSrc = (i: number) =>
-    `${C.frames.dir}/${C.frames.prefix}${String(i + 1).padStart(C.frames.pad, '0')}.${C.frames.ext}`;
-
-  // Conservamos las referencias de precarga durante toda la animación. El
-  // frame visible solo cambia cuando el siguiente bitmap ya está listo, para
-  // evitar un destello transparente si el usuario llega muy rápido al reveal.
-  const preloadedFrames = nativeVideo ? [] : Array.from({ length: C.frames.count }, (_, i) => {
-    const im = new Image();
-    im.decoding = 'async';
-    im.src = frameSrc(i);
-    return im;
-  });
-  if (!nativeVideo) productImg.src = frameSrc(0);
-
-  // En una visita sin caché, `complete` puede cambiar entre dos ticks mientras
-  // Anime.js ya está recorriendo los frames. Eso hacía que la secuencia saltara
-  // algunos bitmaps y produjera el flicker que solo se veía la primera vez.
-  // Esperamos tanto la descarga como la decodificación antes de permitir el
-  // play; un archivo fallido no bloquea para siempre el reveal.
-  let framesReady = false;
+  // No arrancamos hasta tener un fotograma decodificado: si el reveal empieza
+  // con el MP4 aún vacío, el producto entra invisible y aparece de golpe a
+  // media animación. Un error de red resuelve igual, para no dejar la sección
+  // bloqueada para siempre.
+  let mediaReady = false;
   let disposed = false;
-  let refreshAfterFramesReady = () => {};
-  const waitUntilDecoded = async (image: HTMLImageElement) => {
-    try {
-      await image.decode();
-    } catch {
-      if (!image.complete) {
-        await new Promise<void>((resolve) => {
-          image.addEventListener('load', () => resolve(), { once: true });
-          image.addEventListener('error', () => resolve(), { once: true });
-        });
-      }
+  let refreshAfterMediaReady = () => {};
+  const ready = new Promise<void>((resolve) => {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
+    else {
+      video.addEventListener('loadeddata', () => resolve(), { once: true });
+      video.addEventListener('error', () => resolve(), { once: true });
     }
-  };
-  const ready = nativeVideo
-    ? new Promise<void>((resolve) => {
-      if (nativeVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
-      else {
-        nativeVideo.addEventListener('loadeddata', () => resolve(), { once: true });
-        nativeVideo.addEventListener('error', () => resolve(), { once: true });
-      }
-    })
-    : Promise.all([productImg as HTMLImageElement, ...preloadedFrames].map(waitUntilDecoded)).then(() => {});
+  });
   void ready.then(() => {
     if (disposed) return;
-    framesReady = true;
-    root.dataset.framesReady = 'true';
-    refreshAfterFramesReady();
+    mediaReady = true;
+    root.dataset.mediaReady = 'true';
+    refreshAfterMediaReady();
   });
 
   // ── Círculo (anillo) ──
@@ -243,7 +209,6 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   });
 
   // ── Timeline único y continuo: entrada → círculo → ramas ──
-  const state = { f: 0 };
   const tl = createTimeline({ autoplay: false });
 
   // ENTRADA
@@ -251,22 +216,16 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // El MP4 ya contiene el desplazamiento vertical. Le damos la misma ventana
   // de subida que a la ruta por frames para que aparezca suavemente desde
   // transparente y, al invertir, se desvanezca durante la bajada.
-  tl.add(productImg, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0);
-  if (!nativeVideo) {
-    tl.add(productImg, { translateY: [T.riseFrom, '0%'], duration: T.riseDur, ease: T.curve }, 0);
-  }
+  tl.add(video, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0);
 
-  // Giro en 2 fases + círculo sincronizado al frame.
-  const count = C.frames.count;
-  const {
-    centerIdx,
-    endIdx,
-    ringFromIdx,
-    ringToIdx,
-    ringFollowsFrames,
-    timedRingDur,
-    ringCloseAt: labelsStart,
-  } = resolveRingTiming(T, count);
+  const { ringDur, ringCloseAt: labelsStart, entranceDur } = resolveRingTiming(T);
+
+  // El MP4 corre por su cuenta; la timeline es el reloj que el scroll recorre.
+  // Nada más en ella llega hasta el final del giro —el anillo cierra antes y
+  // las ramas también—, así que sin este tramo `tl.duration` se quedaría corta
+  // y el scroll comprimiría la entrada. No anima nada: sostiene el compás.
+  const entrance = { p: 0 };
+  tl.add(entrance, { p: [0, 1], duration: entranceDur, ease: 'linear' }, 0);
   const ringState = { p: 0 };
   const setRingProgress = (progress: number) => {
     const cp = clamp(progress, 0, 1);
@@ -282,37 +241,15 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     ring.style.strokeOpacity = String(fade * fade);
     halo.style.opacity = String(cp);
   };
-  const setFrame = () => {
-    const frame = preloadedFrames[Math.round(state.f)];
-    if (!nativeVideo && frame?.complete && frame.naturalWidth > 0 && productImg.src !== frame.src) {
-      productImg.src = frame.src;
-    }
-    if (ringFollowsFrames) {
-      setRingProgress((state.f - ringFromIdx) / (ringToIdx - ringFromIdx));
-    }
-  };
-  // FASE A: sube al centro girando (frames 0→centerIdx)
-  tl.add(state, { f: [0, centerIdx], duration: T.riseDur, ease: 'linear', onUpdate: setFrame }, 0);
-  // FASE B: gira en el centro (frames centerIdx→endIdx)
-  tl.add(state, { f: [centerIdx, endIdx], duration: T.rotateCenterDur, ease: 'linear', onUpdate: setFrame }, T.riseDur);
-
-  // Con una secuencia completa, el círculo continúa sincronizado a sus frames.
-  // Moravi y Reset solo tienen el arte final (`count: 1`): en ese caso no hay
-  // frame al cual amarrarlo, así que conservamos el mismo ritmo por tiempo. De
-  // este modo aparecen halo y ramas sin fingir una rotación inexistente.
-  //
-  // Ese ritmo es la misma proporción que usa la ruta por frames, pero medida
-  // sobre la secuencia de referencia (`nominalFrameCount`) en lugar de sobre la
-  // real, que aquí no da de sí. Calcularlo —en vez de dejar la constante a ojo
-  // que había antes— es lo que mantiene las dos rutas sincronizadas si alguien
-  // retoca `centerFrame`, `rotateEnd` o `ringEndFrame`.
-  if (!ringFollowsFrames) {
-    tl.add(
-      ringState,
-      { p: [0, 1], duration: timedRingDur, ease: 'linear', onUpdate: () => setRingProgress(ringState.p) },
-      T.riseDur,
-    );
-  }
+  // El círculo se dibuja por tiempo, arrancando cuando el producto llega al
+  // centro. Su duración sale de la proporción del giro que ocupa el cierre
+  // según la secuencia de referencia, así que retocar `ringEndFrame` mueve a la
+  // vez el anillo y las ramas que cuelgan de él.
+  tl.add(
+    ringState,
+    { p: [0, 1], duration: ringDur, ease: 'linear', onUpdate: () => setRingProgress(ringState.p) },
+    T.riseDur,
+  );
 
   if (mobileBlur) {
     // `labelsStart` marca el destello final en ambas rutas. El adelanto inicia
@@ -365,7 +302,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   //    controla la velocidad de cada dirección de forma fiable. ──
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
-    if (nativeVideo) nativeVideo.currentTime = nativeVideo.duration || 0;
+    video.currentTime = video.duration || 0;
     tl.seek(DUR); // accesibilidad: estado final sin movimiento
     root.dataset.revealState = 'shown';
     built.forEach(({ label }) => { label.disabled = false; });
@@ -375,7 +312,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       tl.pause();
       root.classList.remove('reveal-initialized');
       delete root.dataset.revealState;
-      delete root.dataset.framesReady;
+      delete root.dataset.mediaReady;
     };
   }
 
@@ -388,16 +325,15 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     reverseVideoFrame = undefined;
   };
   const reverseNativeVideo = () => {
-    if (!nativeVideo) return;
-    nativeVideo.pause();
+    video.pause();
     stopVideoReverse();
-    const startTime = nativeVideo.currentTime;
+    const startTime = video.currentTime;
     const reverseDuration = Math.max(1, DUR / C.scroll.revRate);
     let startTimestamp: number | undefined;
     const tick = (timestamp: number) => {
       startTimestamp ??= timestamp;
       const progress = clamp((timestamp - startTimestamp) / reverseDuration, 0, 1);
-      nativeVideo.currentTime = startTime * (1 - progress);
+      video.currentTime = startTime * (1 - progress);
       if (progress < 1) reverseVideoFrame = requestAnimationFrame(tick);
       else reverseVideoFrame = undefined;
     };
@@ -417,18 +353,16 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     if (shown) return;
     shown = true;
     root.dataset.revealState = 'showing';
-    if (nativeVideo) {
-      stopVideoReverse();
-      nativeVideo.muted = true;
-      nativeVideo.defaultMuted = true;
-      nativeVideo.playsInline = true;
-      nativeVideo.currentTime = 0;
-      nativeVideo.playbackRate = C.video?.playbackRate ?? 1;
-      void nativeVideo.play().then(
-        () => { delete root.dataset.videoPlaybackBlocked; },
-        () => { root.dataset.videoPlaybackBlocked = 'true'; },
-      );
-    }
+    stopVideoReverse();
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.currentTime = 0;
+    video.playbackRate = C.video.playbackRate ?? 1;
+    void video.play().then(
+      () => { delete root.dataset.videoPlaybackBlocked; },
+      () => { root.dataset.videoPlaybackBlocked = 'true'; },
+    );
     driveTo(1, DUR, () => {
       if (!shown) return;
       root.dataset.revealState = 'shown';
@@ -471,7 +405,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   const verifySnapArrival = (target: number, release: () => void) => {
     clearTimeout(snapVerifyTimer);
     stopVideoReverse();
-    nativeVideo?.pause();
+    video.pause();
     snapVerifyTimer = setTimeout(() => {
       const missed = Math.abs(window.scrollY - target) > SNAP_ARRIVAL_TOLERANCE;
       if (!missed) {
@@ -568,11 +502,11 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     const isFocused = compact ? isCompactFocus : isPinned;
     if (!isFocused) {
       goHide();
-    } else if ((compact || p >= C.scroll.showAt) && framesReady) {
+    } else if ((compact || p >= C.scroll.showAt) && mediaReady) {
       goShow();
     }
   };
-  refreshAfterFramesReady = onScroll;
+  refreshAfterMediaReady = onScroll;
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
@@ -591,6 +525,6 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     tl.pause();
     root.classList.remove('reveal-initialized');
     delete root.dataset.revealState;
-    delete root.dataset.framesReady;
+    delete root.dataset.mediaReady;
   };
 }

@@ -1,4 +1,4 @@
-import type { TimingConfig, GeometryConfig, ScrollConfig, FramesConfig } from './types';
+import type { TimingConfig, GeometryConfig, ScrollConfig } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DEFAULTS — el "feel" afinado. Cada producto solo sobreescribe lo que necesite;
@@ -26,10 +26,10 @@ export const DEFAULT_TIMING: TimingConfig = {
   ringEndFrame: 39,        // frame donde cierra (menor = círculo más rápido). Ahí arrancan las ramas
   // Los tres frames de arriba describen POSICIONES dentro de una secuencia, así
   // que solo significan algo si se sabe cuánto dura esa secuencia. 47 es la de
-  // Capucci, contra la que se afinó todo. Un producto sin secuencia (`count: 1`)
-  // no tiene último frame del que sacar la proporción, y es este número el que
-  // se la presta: así el anillo por tiempo mantiene el mismo ritmo que el de
-  // Capucci, y si alguien retoca `centerFrame` o `ringEndFrame` se mueven los dos.
+  // Capucci, contra la que se afinó todo el reveal. Ya no existe como archivos
+  // —la entrada la sirve el MP4—, pero sigue siendo la regla que convierte esos
+  // tres números en milisegundos, e igual que antes basta retocar `centerFrame`
+  // o `ringEndFrame` para mover el cierre del anillo y con él las ramas.
   nominalFrameCount: 47,
 
   // 3) RAMAS
@@ -53,5 +53,3 @@ export const DEFAULT_SCROLL: ScrollConfig = {
   hideAt: 0.08,   // % para desaparecer (⚠ debe ser < showAt)
   revRate: 1.9,   // velocidad original de la animación inversa
 };
-
-export const DEFAULT_FRAMES: Required<FramesConfig> = { dir: '', count: 0, prefix: 'frame-', pad: 2, ext: 'webp' };

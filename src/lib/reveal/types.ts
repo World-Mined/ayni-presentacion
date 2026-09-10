@@ -1,6 +1,12 @@
 // Tipos del "Product Reveal" (animación de producto estilo Onyx).
 // El MOTOR (engine.ts) es igual para todos; lo único que cambia por producto
-// son los DATOS (title, frames, labels) definidos en products/*.ts.
+// son los DATOS (title, video, labels) definidos en products/*.ts.
+//
+// La entrada del producto siempre llega en MP4. Hubo una segunda ruta que la
+// reconstruía a partir de una secuencia de .webp; se retiró junto con sus
+// archivos, así que `video` es obligatorio y los campos de abajo que hablan de
+// "frames" describen posiciones dentro de la secuencia NOMINAL de referencia
+// (`nominalFrameCount`), no archivos en disco.
 
 export type Side = 'left' | 'right';
 
@@ -17,15 +23,6 @@ export interface LabelDef {
   icon: IconKey;
 }
 
-/** Secuencia de frames de la rotación del producto. */
-export interface FramesConfig {
-  dir: string;          // carpeta en /public, ej. '/reveal/capucci'
-  count: number;        // cuántos frames
-  prefix?: string;      // por defecto 'frame-'
-  pad?: number;         // dígitos con ceros, por defecto 2  -> frame-01
-  ext?: string;         // por defecto 'webp'
-}
-
 /** Animación compuesta de entrada y anillo, entregada en video. */
 export interface VideoConfig {
   src: string;
@@ -37,15 +34,15 @@ export interface TimingConfig {
   // 1) ENTRADA
   riseFrom: string;                 // desde dónde sube ('190%' abajo · '-190%' arriba)
   riseDur: number;                  // ms para llegar al centro
-  centerFrame: number;              // frame en que llega al centro
+  centerFrame: number;              // frame NOMINAL en que llega al centro
   rotateCenterDur: number;          // ms del giro EN EL centro
   rotateEnd: number;                // 1 = giro completo (frente)
   titleDur: number;                 // ms del popup del título
   curve: (t: number) => number;     // curva de subida/popup
   // 2) CÍRCULO (sincronizado al giro)
-  ringStartFrame: number;           // frame donde empieza el círculo
-  ringEndFrame: number;             // frame donde se cierra (< frame final = más rápido)
-  nominalFrameCount: number;        // longitud de secuencia contra la que están afinados los frames de arriba
+  ringStartFrame: number;           // frame NOMINAL donde empieza el círculo
+  ringEndFrame: number;             // frame NOMINAL donde se cierra (menor = más rápido)
+  nominalFrameCount: number;        // longitud de la secuencia de referencia que da sentido a los tres de arriba
   // 3) RAMAS
   labelsStagger: number;            // ms entre una rama y otra
   labelsOrder: 'sequence' | 'random';
@@ -72,9 +69,7 @@ export interface ScrollConfig {
 export interface RevealConfig {
   id: string;
   title: { main: string; sub: string };
-  /** Fuente alternativa para productos configurados sin video nativo. */
-  frames?: FramesConfig;
-  video?: VideoConfig;
+  video: VideoConfig;
   labels: LabelDef[];
   /** Fondo de la sección (ruta en /public). Sin él queda solo el degradado. */
   background?: string;
@@ -87,8 +82,7 @@ export interface RevealConfig {
 export interface ResolvedConfig {
   id: string;
   title: { main: string; sub: string };
-  frames: Required<FramesConfig>;
-  video?: VideoConfig;
+  video: VideoConfig;
   labels: LabelDef[];
   background?: string;
   timing: TimingConfig;

@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test:responsive": "npm run build && playwright test tests/responsive-layout.spec.ts",
+    "test:responsive": "npm run build && playwright test tests/responsive-layout.spec.ts tests/reveal-video.spec.ts",
     "test:unit": "playwright test --config playwright.unit.config.ts",
     "test": "npm run test:unit && npm run test:responsive"
   },

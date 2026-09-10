@@ -154,15 +154,10 @@
   transition: opacity .32s ease;
   perspective: 900px;
 }
+/* Sobrevive al efecto de inclinación que le dio nombre: hoy es solo la capa
+   que aísla el `mix-blend-mode: screen` del MP4, más abajo. */
 .reveal-product-tilt {
-  transform: rotateY(var(--reveal-product-tilt, 0deg));
   transform-origin: center;
-  transform-style: preserve-3d;
-  transition: transform .28s cubic-bezier(.22, .61, .36, 1);
-  will-change: transform;
-}
-.reveal-product-wrap[data-tilting] .reveal-product-tilt {
-  transition-duration: .08s;
 }
 .reveal-product {
   display: block;

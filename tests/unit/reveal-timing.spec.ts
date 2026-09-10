@@ -9,34 +9,45 @@ test('clamp acota por ambos extremos y deja pasar lo que ya está dentro', () =>
   expect(clamp(0.25, 0, 1)).toBe(0.25);
 });
 
-test('un producto sin secuencia de frames cae en la rama temporizada', () => {
-  // Moravi y Reset entregan MP4 y no declaran `frames`, así que `count` es 0.
-  const timing = resolveRingTiming(DEFAULT_TIMING, 0);
+test('el anillo cierra donde lo hacía la secuencia de referencia', () => {
+  // Valor que producía la ruta por frames de Capucci antes de retirarla:
+  // riseDur + rotateCenterDur * (ringEndFrame-1 - (centerFrame-1))
+  //                           / (rotateEnd*(nominalFrameCount-1) - (centerFrame-1))
+  const { riseDur, rotateCenterDur, centerFrame, ringEndFrame, rotateEnd, nominalFrameCount } =
+    DEFAULT_TIMING;
+  const lastIdx = Math.round(rotateEnd * (nominalFrameCount - 1));
+  const esperado = riseDur + rotateCenterDur * ((ringEndFrame - 1 - (centerFrame - 1)) / (lastIdx - (centerFrame - 1)));
 
-  expect(timing.ringFollowsFrames).toBe(false);
-  expect(timing.ringCloseAt).toBeGreaterThan(DEFAULT_TIMING.riseDur);
-  expect(Number.isFinite(timing.ringCloseAt)).toBe(true);
+  expect(resolveRingTiming(DEFAULT_TIMING).ringCloseAt).toBeCloseTo(esperado, 6);
 });
 
-test('la secuencia de Capucci y la referencia nominal cierran el anillo a la vez', () => {
-  // `nominalFrameCount` existe justo para eso: un producto sin frames debe
-  // seguir el mismo ritmo que la secuencia contra la que se afinó todo.
-  const withFrames = resolveRingTiming(DEFAULT_TIMING, DEFAULT_TIMING.nominalFrameCount);
-  const withoutFrames = resolveRingTiming(DEFAULT_TIMING, 0);
+test('el anillo cierra antes de que termine el giro', () => {
+  const { ringCloseAt, entranceDur } = resolveRingTiming(DEFAULT_TIMING);
 
-  expect(withFrames.ringFollowsFrames).toBe(true);
-  expect(withFrames.ringCloseAt).toBeCloseTo(withoutFrames.ringCloseAt, 6);
+  expect(ringCloseAt).toBeGreaterThan(DEFAULT_TIMING.riseDur);
+  expect(ringCloseAt).toBeLessThan(entranceDur);
 });
 
-test('una secuencia de un solo frame no divide entre cero', () => {
-  const timing = resolveRingTiming(DEFAULT_TIMING, 1);
+test('la entrada dura la subida más el giro: es el reloj que recorre el scroll', () => {
+  const { entranceDur } = resolveRingTiming(DEFAULT_TIMING);
 
-  expect(Number.isFinite(timing.ringCloseAt)).toBe(true);
-  expect(Number.isNaN(timing.ringCloseAt)).toBe(false);
+  expect(entranceDur).toBe(DEFAULT_TIMING.riseDur + DEFAULT_TIMING.rotateCenterDur);
 });
 
-test('el anillo nunca cierra antes de empezar a dibujarse', () => {
-  const timing = resolveRingTiming(DEFAULT_TIMING, 47);
+test('una referencia demasiado corta deja que el anillo ocupe toda la fase', () => {
+  // `nominalFrameCount` por debajo de `centerFrame`: no hay giro del que sacar
+  // proporción, así que el cierre se estira hasta el final en vez de dar NaN.
+  const timing = { ...DEFAULT_TIMING, nominalFrameCount: 2 };
+  const { ringDur, ringCloseAt } = resolveRingTiming(timing);
 
-  expect(timing.ringToIdx).toBeGreaterThan(timing.ringFromIdx);
+  expect(ringDur).toBe(timing.rotateCenterDur);
+  expect(Number.isFinite(ringCloseAt)).toBe(true);
+});
+
+test('adelantar ringEndFrame adelanta el cierre y no toca la duración total', () => {
+  const antes = resolveRingTiming(DEFAULT_TIMING);
+  const despues = resolveRingTiming({ ...DEFAULT_TIMING, ringEndFrame: 30 });
+
+  expect(despues.ringCloseAt).toBeLessThan(antes.ringCloseAt);
+  expect(despues.entranceDur).toBe(antes.entranceDur);
 });

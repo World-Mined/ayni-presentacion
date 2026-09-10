@@ -4,7 +4,7 @@ import revealChevronLeft from '../../../assets/v2/reveal-chevron-left.svg';
 import revealChevronRight from '../../../assets/v2/reveal-chevron-right.svg';
 import revealMobileBlur from '../../../assets/v2/reveal-mobile-blur.webp';
 import type { IngredientsScene } from '../../../data/product-ingredients';
-import { DEFAULT_FRAMES, DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
+import { DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
 import { PRODUCTS } from '../../../lib/reveal/products';
 import type { ProductId } from '../../../lib/reveal/products';
 import { resolveRingTiming } from '../../../lib/reveal/timing';
@@ -39,9 +39,7 @@ if (scene) {
 }
 const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
 const timing = { ...DEFAULT_TIMING, ...cfg.timing };
-const frames = { ...DEFAULT_FRAMES, ...cfg.frames };
 const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
-const hasNativeVideo = Boolean(cfg.video);
 const circleStyle = [
   `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
   `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
@@ -58,7 +56,7 @@ const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` :
 // la relación de aspecto implícita y el bloque salta de alto mientras carga.
 const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
 const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
-const mobileLabelsStart = resolveRingTiming(timing, frames.count).ringCloseAt;
+const mobileLabelsStart = resolveRingTiming(timing).ringCloseAt;
 const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsStagger;
 ---
 
@@ -68,7 +66,11 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
   class="reveal-track"
   data-reveal={product}
   data-row-count={rowCount}
-  data-native-video={hasNativeVideo ? '' : undefined}
+  {/* Marca la variante de arte servida en MP4, de la que cuelgan el
+      `mix-blend-mode`, el ancho del producto y el ocultado del halo. Hoy la
+      llevan los tres productos; queda como gancho hasta que esos selectores
+      se fusionen con los de base. */}
+  data-native-video
   style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
 >
   <div class="reveal-pin">
@@ -164,33 +166,17 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
           ))}
         </div>
       )}
-      <div
-        class="reveal-product-wrap"
-        data-product-tilt={product === 'capucci' && !cfg.video ? '' : undefined}
-      >
+      <div class="reveal-product-wrap">
         <div class="reveal-product-tilt">
-          {cfg.video ? (
-            <video
-              class="reveal-product reveal-product-video"
-              src={cfg.video.src}
-              aria-label={`Animación de ${cfg.title.main}`}
-              autoplay
-              muted
-              playsinline
-              preload="auto"
-            ></video>
-          ) : cfg.frames ? (
-            <img
-              class="reveal-product"
-              src={`${cfg.frames.dir}/frame-01.webp`}
-              alt={cfg.title.main}
-              width="700"
-              height="700"
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-            />
-          ) : null}
+          <video
+            class="reveal-product reveal-product-video"
+            src={cfg.video.src}
+            aria-label={`Animación de ${cfg.title.main}`}
+            autoplay
+            muted
+            playsinline
+            preload="auto"
+          ></video>
         </div>
       </div>
       {scene && <div class="reveal-mobile-swipe-zone" data-mobile-swipe-zone aria-hidden="true"></div>}
@@ -411,62 +397,6 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
     };
   };
 
-  const bindProductTilt = (root: HTMLElement) => {
-    const wrap = root.querySelector<HTMLElement>('[data-product-tilt]');
-    const tilt = wrap?.querySelector<HTMLElement>('.reveal-product-tilt');
-    if (!wrap || !tilt) return () => {};
-
-    const controller = new AbortController();
-    const options = { signal: controller.signal };
-    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let animationFrame = 0;
-    let horizontalPosition = 0;
-
-    const paint = () => {
-      animationFrame = 0;
-      tilt.style.setProperty('--reveal-product-tilt', `${(horizontalPosition * 5.5).toFixed(2)}deg`);
-      tilt.style.setProperty('--reveal-product-shadow-x', `${(-horizontalPosition * 14).toFixed(2)}px`);
-    };
-
-    const reset = () => {
-      if (animationFrame) cancelAnimationFrame(animationFrame);
-      animationFrame = 0;
-      horizontalPosition = 0;
-      delete wrap.dataset.tilting;
-      tilt.style.removeProperty('--reveal-product-tilt');
-      tilt.style.removeProperty('--reveal-product-shadow-x');
-    };
-
-    wrap.addEventListener('pointermove', (event) => {
-      if (
-        !hoverCapable.matches
-        || reduceMotion.matches
-        || root.dataset.revealState !== 'shown'
-        || root.dataset.active
-      ) {
-        reset();
-        return;
-      }
-
-      const rect = wrap.getBoundingClientRect();
-      const center = rect.left + rect.width / 2;
-      horizontalPosition = Math.max(-1, Math.min(1, (event.clientX - center) / (rect.width / 2)));
-      wrap.dataset.tilting = '';
-      if (!animationFrame) animationFrame = requestAnimationFrame(paint);
-    }, options);
-
-    wrap.addEventListener('pointerleave', reset, options);
-    root.addEventListener('reveal:ingredient', reset, options);
-    root.addEventListener('reveal:hide', reset, options);
-    window.addEventListener('blur', reset, options);
-
-    return () => {
-      reset();
-      controller.abort();
-    };
-  };
-
   const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -477,9 +407,7 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
       if (!cfg) return;
       const cleanupReveal = createReveal(el, cfg);
       const cleanupInteraction = bindIngredientInteraction(el);
-      const cleanupProductTilt = bindProductTilt(el);
       cleanups.set(el, () => {
-        cleanupProductTilt();
         cleanupInteraction();
         cleanupReveal();
       });

@@ -2,14 +2,14 @@ import type { RevealConfig } from '../types';
 import { mediaUrl, REVEAL_BACKGROUND_URL } from '../../../data/media';
 
 // Datos de Capucci 360. Para un producto nuevo: copia este archivo, cambia
-// title/frames/labels (y overrides de timing/geometry/scroll si hacen falta),
+// title/video/labels (y overrides de timing/geometry/scroll si hacen falta),
 // y regístralo en products/index.ts.
 export const capucci: RevealConfig = {
   id: 'capucci',
   title: { main: 'CAPUCCI 360', sub: 'La fórmula 7 en 1' },
-  frames: { dir: '/reveal/capucci', count: 47 }, // /public/reveal/capucci/frame-01.webp …
-  // El MP4 conserva la animación entregada; los frames fijan su ritmo de
-  // referencia y se mantienen como material de desarrollo.
+  // El MP4 conserva la animación entregada. Su secuencia original de 47 frames
+  // ya no vive en el repo; sigue siendo la referencia de ritmo a través de
+  // `nominalFrameCount` en los defaults.
   video: { src: mediaUrl('capucci.mp4'), playbackRate: 1.25 },
   background: REVEAL_BACKGROUND_URL,
 
