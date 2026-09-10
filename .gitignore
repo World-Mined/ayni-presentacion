@@ -30,6 +30,10 @@ pnpm-debug.log*
 output/
 
 # Video sources. Too large for the repository: see public/media/README.md for
-# how to obtain them. The site degrades to the poster frame without them.
+# how to obtain them. Nothing in the site declares a `poster`, so without them
+# the video slots stay empty instead of showing a still.
 public/media/*.mp4
 public/reveal/*/reveal.mp4
+
+# Service worker de desarrollo, regenerado en cada build.
+dev-dist/
