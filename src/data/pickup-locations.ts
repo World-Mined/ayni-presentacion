@@ -40,7 +40,6 @@ export interface PickupCountryConfig {
   auxiliaryContent?: {
     title: string;
     description: string;
-    actionLabel: string;
   };
   map: ImageMetadata;
   mapAlt: string;
@@ -115,7 +114,6 @@ export const PICKUP_COUNTRIES: Record<PickupCountry, PickupCountryConfig> = {
     auxiliaryContent: {
       title: 'Envíos a domicilio',
       description: 'Por el momento los envíos a Bolivia son directamente a domicilio. Consulta la disponibilidad para tu zona.',
-      actionLabel: 'Opcional',
     },
   },
 };
