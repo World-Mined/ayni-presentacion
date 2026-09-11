@@ -1,0 +1,127 @@
+---
+// Cabecera de la sección de bonos: el título y el badge del bono de reconsumo.
+// Escritorio escala con `--w`, que hereda de `.ambassadors-bonuses`; móvil usa
+// los px del frame de Figma 3410:20024.
+---
+
+<header class="bonuses-intro">
+  <h2 id="bonuses-title">Bonos AYNI</h2><p class="reconsumption-bonus">
+    <span>Bono<br />Reconsumo</span><strong>15%</strong>
+  </p>
+</header>
+
+<style>
+  h2,
+  p {
+    margin: 0;
+  }
+  .bonuses-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--w) * 0.04167);
+  }
+  .bonuses-intro h2 {
+    color: #f3c864;
+    font-family: var(--font-title);
+    font-size: calc(var(--w) * 0.04444);
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: -0.035em;
+  }
+  .reconsumption-bonus {
+    position: relative;
+    display: flex;
+    min-width: calc(var(--w) * 0.18056);
+    padding: calc(var(--w) * 0.01111);
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #f3c864;
+    border-radius: 8px;
+    background: linear-gradient(
+      135deg,
+      rgba(219, 168, 59, 0.72),
+      rgba(0, 0, 0, 0.48) 23%,
+      rgba(0, 0, 0, 0.48) 80%,
+      rgba(219, 168, 59, 0.72)
+    );
+    color: #f9cb69;
+    font-family: var(--font-title);
+    font-size: calc(var(--w) * 0.02222);
+    font-weight: 700;
+    line-height: 1.18;
+    text-align: center;
+  }
+  .reconsumption-bonus::before,
+  .reconsumption-bonus::after {
+    position: absolute;
+    left: 50%;
+    width: var(--flare-width, calc(var(--w) * 0.068));
+    height: 3px;
+    content: "";
+    transform: translateX(-50%);
+    background: radial-gradient(
+      ellipse,
+      rgba(249, 203, 105, 0.95),
+      rgba(249, 203, 105, 0) 70%
+    );
+  }
+  .reconsumption-bonus::before {
+    top: -2px;
+  }
+  .reconsumption-bonus::after {
+    bottom: -2px;
+  }
+  .reconsumption-bonus strong {
+    color: #fff9ec;
+    font-size: calc(var(--w) * 0.01944);
+  }
+
+  /* Móvil: la composición deja de escalar con el ancho y toma los tamaños fijos
+     del frame de Figma, donde el título pasa a degradado dorado. */
+  @media (max-width: 1023px) {
+    .bonuses-intro {
+      gap: 40px;
+    }
+    .bonuses-intro h2 {
+      background: var(--gold-text);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-size: 32px;
+      line-height: 1.2;
+    }
+    .reconsumption-bonus {
+      --flare-width: 98px;
+      min-width: 260px;
+      padding: 16px;
+      /* El frame móvil coloca las paradas doradas FUERA de la caja (-21.9% y
+         129.7%), así que solo entra su cola: un resplandor en los bordes. El
+         degradado de escritorio las pone en 0% y 100% y el dorado a plena
+         intensidad cae justo en la esquina, que es la cuña que se veía aquí. */
+      background:
+        linear-gradient(rgba(48, 35, 10, 0.1), rgba(48, 35, 10, 0.1)),
+        linear-gradient(
+          125.83deg,
+          rgba(219, 168, 59, 0.8) -21.916%,
+          rgba(0, 0, 0, 0.4) 21.243%,
+          rgba(0, 0, 0, 0.48) 50.231%,
+          rgba(0, 0, 0, 0.4) 79.997%,
+          rgba(219, 168, 59, 0.8) 129.67%
+        );
+      font-size: 28px;
+      line-height: 33px;
+    }
+    .reconsumption-bonus span {
+      background: var(--gold-text);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .reconsumption-bonus strong {
+      font-size: 24px;
+      line-height: 28px;
+    }
+  }
+</style>

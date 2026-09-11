@@ -1,10 +1,11 @@
 ---
 import { Image, getImage } from "astro:assets";
 import bonusesBackground from "../../../assets/v2/ambassadors-bonuses-background.webp";
-import residualFlareTop from "../../../assets/v2/residual-flare-top.svg";
-import residualFlareBottom from "../../../assets/v2/residual-flare-bottom.svg";
 import bonusFocus from "../../../assets/v2/ambassadors-bonus-focus.webp";
 import bonusFocusMobile from "../../../assets/v2/ambassadors-bonus-focus-mobile.webp";
+import BonusesIntro from "../BonusesIntro/BonusesIntro.astro";
+import ResidualBonus from "../ResidualBonus/ResidualBonus.astro";
+import SponsorshipBonus from "../SponsorshipBonus/SponsorshipBonus.astro";
 import estrellaLogo from "../../../assets/v2/ambassadors-star/logo-lockup.webp";
 import estrellaFlare from "../../../assets/v2/ambassadors-star/flare-v3.webp";
 import mancora from "../../../assets/v2/ambassadors-star/mancora.webp";
@@ -15,39 +16,6 @@ import trophy from "../../../assets/v2/ambassadors-star/trophy.webp";
 import calendar from "../../../assets/v2/ambassadors-star/calendar.webp";
 import flareV2 from "../../../assets/v2/ambassadors-star/flare-v2.webp";
 
-const RESIDUAL_BONUS = [
-  ["GEN 350", "1,200 pts", "400 pts", "300 pts", "$175", "$350"],
-  ["GEN 1000", "4,800 pts", "1,700 pts", "1,000 pts", "$500", "$1,000"],
-  ["GEN 3000", "22,000 pts", "6,500 pts", "3,700 pts", "$1,500", "$3,000"],
-  ["GEN 5000", "43,500 pts", "13,900 pts", "6,200 pts", "$2,500", "$5,000"],
-  ["GEN 10K", "70,000 pts", "26,000 pts", "10,000 pts", "$5,000", "$10,000"],
-  ["GEN 30K", "200,000 pts", "90,000 pts", "35,000 pts", "$15,000", "$30,000"],
-  ["GEN 60K", "600,000 pts", "190,000 pts", "80,000 pts", "$30,000", "$60,000"],
-  [
-    "GEN 100K",
-    "950,000 pts",
-    "320,000 pts",
-    "125,000 pts",
-    "$50,000",
-    "$100,000",
-  ],
-  [
-    "GEN 300K",
-    "3,500,000 pts",
-    "1,200,000 pts",
-    "500,000 pts",
-    "$150,000",
-    "$300,000",
-  ],
-  [
-    "GEN 1M",
-    "14,500,000 pts",
-    "5,000,000 pts",
-    "2,000,000 pts",
-    "$500,000",
-    "$1,000,000",
-  ],
-];
 const STAR_DESTINATIONS = [
   { image: mancora, name: "Máncora", country: "Perú" },
   { image: uyuni, name: "Salar de Uyuni", country: "Bolivia" },
@@ -74,124 +42,13 @@ const optimizedBonusFocusMobile = await getImage({
       sizes="100vw"
     />
     <div class="ambassadors-bonuses__content">
-      <header class="bonuses-intro">
-        <h2 id="bonuses-title">Bonos AYNI</h2><p class="reconsumption-bonus">
-          <span>Bono<br />Reconsumo</span><strong>15%</strong>
-        </p>
-      </header>
-      <section class="residual-bonus" aria-labelledby="residual-bonus-title">
-        <h3 id="residual-bonus-title">Bono de ingreso residual</h3>
-        <div class="residual-bonus__table-shell">
-          <div
-            class="residual-bonus__table-wrap"
-            tabindex="0"
-            role="region"
-            aria-label="Rangos y ganancias del bono residual"
-          >
-            <table>
-              <colgroup
-                ><col class="rank-column" /><col
-                  span="3"
-                  class="team-column"
-                /><col span="2" class="earnings-column" /></colgroup
-              >
-              <thead>
-                <tr>
-                  <th rowspan="2" scope="col"
-                    ><span class="th-title">Rangos</span></th
-                  >
-                  <th rowspan="2" scope="col"
-                    ><span class="th-title">Binario<br />2 EQUIPOS</span></th
-                  >
-                  <th rowspan="2" scope="col"
-                    ><span class="th-title">Trinario<br />3 EQUIPOS</span></th
-                  >
-                  <th rowspan="2" scope="col"
-                    ><span class="th-title">Tretanario<br />4 EQUIPOS</span></th
-                  >
-                  <th colspan="2" scope="colgroup"
-                    ><span class="th-title">Ganancias</span></th
-                  >
-                </tr>
-                <tr
-                  ><th scope="col">Quincenales</th><th scope="col">Mensuales</th
-                  ></tr
-                >
-              </thead>
-              <tbody
-                >{
-                  RESIDUAL_BONUS.map((row) => (
-                    <tr>
-                      {row.map((cell) => (
-                        <td>{cell}</td>
-                      ))}
-                    </tr>
-                  ))
-                }</tbody
-              >
-            </table>
-          </div>
-          <img
-            class="residual-bonus__flare residual-bonus__flare--top"
-            src={residualFlareTop.src}
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="residual-bonus__flare residual-bonus__flare--bottom"
-            src={residualFlareBottom.src}
-            alt=""
-            aria-hidden="true"
-          />
-        </div>
-        <p class="residual-bonus__note">
-          *Los puntajes mostrados han sido calculados en base a un equipo
-          TRINARIO y TETRANARIO.
-        </p>
-      </section>
-      <section
-        class="sponsorship-bonus"
-        aria-labelledby="sponsorship-bonus-title"
-      >
-        <h3 id="sponsorship-bonus-title">Bono patrocinio</h3><p>
-          Convierte tus patrocinados en <strong>recompensas</strong>
-        </p>
-        <div
-          class="sponsorship-plan"
-          aria-label="Tres equipos patrocinados de 400 puntos generan 60 dólares por equipo y 180 puntos de bono de patrocinio al llegar a GEN 350."
-        >
-          <h4>Embajador AYNI</h4><div class="sponsorship-plan__teams">
-            {
-              [1, 2, 3].map((team) => (
-                <div class="sponsorship-plan__team">
-                  <>
-                    <span
-                      class:list={[
-                        "sponsorship-plan__arrow",
-                        `sponsorship-plan__arrow--${team}`,
-                      ]}
-                      aria-hidden="true"
-                    >
-                      ↘
-                    </span>
-                    <strong class="sponsorship-plan__team-points">
-                      400 pts.
-                    </strong>
-                    <span class="sponsorship-plan__down" aria-hidden="true">
-                      ↓
-                    </span>
-                    <b class="sponsorship-plan__team-reward">$ 60,00</b>
-                  </>
-                </div>
-              ))
-            }
-          </div><div class="sponsorship-plan__result">
-            <strong>GEN 350</strong><span aria-hidden="true">↓</span><b
-              >$180 pts.<small>de bono de patrocinio</small></b
-            >
-          </div>
-        </div>
-      </section>
+      <div class="bonuses-screen">
+        <BonusesIntro />
+        <ResidualBonus />
+      </div>
+      <div class="bonuses-screen">
+        <SponsorshipBonus />
+      </div>
     </div>
   </section>
 
@@ -358,421 +215,44 @@ const optimizedBonusFocusMobile = await getImage({
     flex-direction: column;
     align-items: center;
   }
+
   h2,
   h3,
   h4,
   p {
     margin: 0;
   }
-  .bonuses-intro {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: calc(var(--w) * 0.04167);
+
+  /* En escritorio los paneles no existen para la maquetación: los tres bloques
+     se apilan con sus propios márgenes, como hasta ahora. Por debajo de 1024px
+     cada uno pasa a ser una pantalla, que es como está compuesta la versión
+     móvil en Figma (3410:20024). */
+  .bonuses-screen {
+    display: contents;
   }
-  .bonuses-intro h2 {
-    color: #f3c864;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.04444);
-    font-weight: 600;
-    line-height: 1.2;
-    text-align: center;
-    letter-spacing: -0.035em;
-  }
-  .reconsumption-bonus {
-    position: relative;
-    display: flex;
-    min-width: calc(var(--w) * 0.18056);
-    padding: calc(var(--w) * 0.01111);
-    flex-direction: column;
-    align-items: center;
-    border: 1px solid #f3c864;
-    border-radius: 8px;
-    background: linear-gradient(
-      135deg,
-      rgba(219, 168, 59, 0.72),
-      rgba(0, 0, 0, 0.48) 23%,
-      rgba(0, 0, 0, 0.48) 80%,
-      rgba(219, 168, 59, 0.72)
-    );
-    color: #f9cb69;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.02222);
-    font-weight: 700;
-    line-height: 1.18;
-    text-align: center;
-  }
-  .reconsumption-bonus::before {
-    position: absolute;
-    left: 50%;
-    width: calc(var(--w) * 0.068);
-    height: 3px;
-    content: "";
-    transform: translateX(-50%);
-    background: radial-gradient(
-      ellipse,
-      rgba(249, 203, 105, 0.95),
-      rgba(249, 203, 105, 0) 70%
-    );
-    top: -2px;
-  }
-  .reconsumption-bonus::after {
-    position: absolute;
-    left: 50%;
-    width: calc(var(--w) * 0.068);
-    height: 3px;
-    bottom: -2px;
-    content: "";
-    transform: translateX(-50%);
-    background: radial-gradient(
-      ellipse,
-      rgba(249, 203, 105, 0.95),
-      rgba(249, 203, 105, 0) 70%
-    );
-  }
-  .reconsumption-bonus strong {
-    color: #fff9ec;
-    font-size: calc(var(--w) * 0.01944);
-  } /* Figma 3253:28162: 1280px wide, 94px header and ten 56px rows. */
-  .residual-bonus {
-    --gold-text: linear-gradient(
-      90deg,
-      #6e582b 10.512%,
-      #f9cb69 50.363%,
-      #f0c365 58.373%,
-      #d8b05a 69.587%,
-      #b29049 85.607%,
-      #7d6431 103.23%,
-      #6e582b 108.03%
-    );
-    /* El bloque residual se consulta como una lámina: a 1124 × 639 debe
-       mostrar título, tabla y nota completos. La referencia de escala es el
-       frame de 812 px de alto de Figma; nunca agranda la tabla en pantallas
-       altas. */
-    --residual-scale: min(1, calc(100svh / 812px));
-    -webkit-font-smoothing: antialiased;
-    display: flex;
-    width: 100%;
-    margin-top: calc(var(--w) * 0.075);
-    flex-direction: column;
-    align-items: center;
-  }
-  .residual-bonus h3 {
-    width: min(100%, 806px);
-    margin-bottom: calc(48px * var(--residual-scale));
-    color: #f3c864;
-    font-family: var(--font-title);
-    font-size: calc(40px * var(--residual-scale));
-    font-weight: 600;
-    line-height: calc(60px * var(--residual-scale));
-    letter-spacing: 0;
-    background: var(--gold-text);
-    background-clip: text;
-    color: transparent;
-    text-align: center;
-  }
-  .sponsorship-bonus h3 {
-    color: #f3c864;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.02778);
-    font-weight: 600;
-    line-height: 1.2;
-    text-align: center;
-    letter-spacing: -0.035em;
-  }
-  .residual-bonus__table-shell {
-    position: relative;
-    width: 100%;
-  }
-  .residual-bonus__table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 8px;
-  }
-  .residual-bonus__table-wrap:focus-visible {
-    outline: 2px solid #f3c864;
-    outline-offset: 4px;
-  }
-  table {
-    width: 100%;
-    min-width: calc(1000px * var(--residual-scale));
-    border-spacing: 0;
-    table-layout: fixed;
-    color: #fff9ec;
-    background: rgba(20, 20, 20, 0.75);
-    font-family: var(--font-title);
-    text-align: center;
-  }
-  .rank-column {
-    width: 10.9375%;
-  }
-  .team-column {
-    width: 17.708333%;
-  }
-  .earnings-column {
-    width: 17.96875%;
-  }
-  th,
-  td {
-    border: 0;
-    border-left: 1px solid #f3c864;
-    border-bottom: 1px solid #f3c864;
-  }
-  tr > :last-child {
-    border-right: 1px solid #f3c864;
-  }
-  .th-title {
-    display: block;
-    background: var(--gold-text);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-  }
-  thead {
-    background: linear-gradient(rgba(48, 35, 10, 0.1), rgba(48, 35, 10, 0.1));
-  }
-  thead tr:first-child th {
-    height: calc(54px * var(--residual-scale));
-    border-top: 1px solid #f3c864;
-    padding: 0 calc(16px * var(--residual-scale));
-    background: linear-gradient(
-      130deg,
-      rgba(219, 168, 59, 0.8) -21.916%,
-      rgba(0, 0, 0, 0.4) 21.243%,
-      rgba(0, 0, 0, 0.48) 50.231%,
-      rgba(0, 0, 0, 0.4) 80%,
-      rgba(219, 168, 59, 0.8) 180%
-    );
-    font-size: calc(24px * var(--residual-scale));
-    font-weight: 700;
-    line-height: calc(28px * var(--residual-scale));
-  }
-  thead tr:first-child th[rowspan] {
-    height: calc(94px * var(--residual-scale));
-  }
-  thead tr:first-child th:first-child {
-    border-top-left-radius: 8px;
-  }
-  thead tr:first-child th:last-child {
-    padding-top: 12px;
-    border-top-right-radius: 8px;
-    background: linear-gradient(
-      130deg,
-      rgba(219, 168, 59, 0.8) -21.916%,
-      rgba(0, 0, 0, 0.4) 21.243%,
-      rgba(0, 0, 0, 0.48) 50.231%,
-      rgba(0, 0, 0, 0.4) 80%,
-      rgba(219, 168, 59, 0.8) 180%
-    );
-  }
-  thead tr:last-child th {
-    height: calc(40px * var(--residual-scale));
-    padding: 0 calc(8px * var(--residual-scale));
-    background: rgba(0, 0, 0, 0.4);
-    font-size: calc(20px * var(--residual-scale));
-    font-weight: 500;
-    line-height: calc(24px * var(--residual-scale));
-  }
-  tbody td {
-    height: calc(56px * var(--residual-scale));
-    padding: 0 calc(16px * var(--residual-scale));
-    background: rgba(48, 35, 10, 0.2);
-    font-size: calc(16px * var(--residual-scale));
-    font-weight: 500;
-    line-height: calc(24px * var(--residual-scale));
-    white-space: nowrap;
-  }
-  tbody tr:last-child td:first-child {
-    border-bottom-left-radius: 8px;
-  }
-  tbody tr:last-child td:last-child {
-    border-bottom-right-radius: 8px;
-  }
-  .residual-bonus__flare {
-    position: absolute;
-    z-index: 1;
-    display: block;
-    pointer-events: none;
-  }
-  .residual-bonus__flare--top {
-    top: -9px;
-    left: 0;
-    width: 10.9375%;
-    height: 18px;
-  }
-  .residual-bonus__flare--bottom {
-    bottom: -10px;
-    right: 0;
-    width: 20.234375%;
-    height: 20px;
-  }
-  .residual-bonus__note {
-    width: 100%;
-    margin-top: calc(24px * var(--residual-scale));
-    color: #c4bba8;
-    font-family: var(--font-title);
-    font-size: calc(18px * var(--residual-scale));
-    font-weight: 400;
-    line-height: calc(26px * var(--residual-scale));
-    text-align: center;
-  }
-  @media (max-width: 1100px) {
-    .residual-bonus {
-      --residual-scale: clamp(0.72, calc(100vw / 1000px), 0.88);
+  @media (max-width: 1023px) {
+    .ambassadors-bonuses,
+    .ambassadors-bonuses__content {
+      min-height: 0;
     }
-    .residual-bonus h3 {
-      margin-bottom: calc(32px * var(--residual-scale));
-      font-size: clamp(24px, calc(40px * var(--residual-scale)), 35px);
-      line-height: 1.5;
+    .ambassadors-bonuses__content {
+      padding: 0 16px;
+      gap: 0;
     }
-    .residual-bonus__note {
-      font-size: clamp(12px, calc(18px * var(--residual-scale)), 16px);
-      line-height: 1.5;
-    }
-    .residual-bonus__flare--bottom {
-      display: none;
+    .bonuses-screen {
+      display: flex;
+      width: 100%;
+      /* `min-height` y no `height`: en móviles bajos el contenido manda y nunca
+         se recorta. Mismo criterio que la banda Estrella. */
+      min-height: calc(100svh - var(--header-height));
+      padding-block: 48px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
     }
   }
-  .sponsorship-bonus {
-    display: flex;
-    width: 100%;
-    margin-top: calc(var(--w) * 0.10417);
-    flex-direction: column;
-    align-items: center;
-    gap: calc(var(--w) * 0.01111);
-  }
-  .sponsorship-bonus > p {
-    color: #c4bba8;
-    font-family: var(--font-body);
-    font-size: calc(var(--w) * 0.01667);
-  }
-  .sponsorship-bonus > p strong {
-    color: #fff9ec;
-  }
-  .sponsorship-plan {
-    display: grid;
-    width: calc(var(--w) * 0.8125);
-    margin-top: calc(var(--w) * 0.02222);
-    padding: calc(var(--w) * 0.02222);
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto 1fr;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 12px;
-    background: rgba(5, 5, 4, 0.22);
-  }
-  .sponsorship-plan h4 {
-    grid-column: 1;
-    grid-row: 1;
-    color: #fff9ec;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.02778);
-    font-weight: 700;
-    line-height: 1.2;
-    text-align: center;
-  }
-  .sponsorship-plan__teams {
-    display: grid;
-    grid-column: 1;
-    grid-row: 2;
-    padding-top: calc(var(--w) * 0.02222);
-    grid-template-columns: repeat(3, 1fr);
-    gap: calc(var(--w) * 0.01389);
-  }
-  .sponsorship-plan__team {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .sponsorship-plan__arrow {
-    height: calc(var(--w) * 0.06);
-    color: #f3c864;
-    font-family: Arial, sans-serif;
-    font-size: calc(var(--w) * 0.06);
-    line-height: 0.58;
-  }
-  .sponsorship-plan__arrow--2 {
-    transform: rotate(45deg);
-  }
-  .sponsorship-plan__arrow--3 {
-    transform: scaleX(-1);
-  }
-  .sponsorship-plan__team-points {
-    display: flex;
-    width: 100%;
-    height: calc(var(--w) * 0.04444);
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #f3c864;
-    border-radius: var(--sponsorship-team-radius, 8px);
-    background: linear-gradient(
-      135deg,
-      rgba(219, 168, 59, 0.55),
-      rgba(0, 0, 0, 0.52) 28%,
-      rgba(0, 0, 0, 0.52) 76%,
-      rgba(219, 168, 59, 0.55)
-    );
-    color: #f3c864;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.02222);
-    font-weight: 700;
-    line-height: 1;
-  }
-  .sponsorship-plan__team-reward {
-    display: flex;
-    width: 100%;
-    height: calc(var(--w) * 0.04444);
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #f3c864;
-    border-radius: var(--sponsorship-team-radius, 8px);
-    background: linear-gradient(
-      135deg,
-      rgba(219, 168, 59, 0.55),
-      rgba(0, 0, 0, 0.52) 28%,
-      rgba(0, 0, 0, 0.52) 76%,
-      rgba(219, 168, 59, 0.55)
-    );
-    color: #fff9ec;
-    font-family: var(--font-title);
-    font-size: calc(var(--w) * 0.02222);
-    font-weight: 700;
-    line-height: 1;
-  }
-  .sponsorship-plan__down {
-    height: calc(var(--w) * 0.052);
-    padding-top: calc(var(--w) * 0.012);
-    color: #f3c864;
-    font-size: calc(var(--w) * 0.03);
-    line-height: 1;
-  }
-  .sponsorship-plan__result {
-    display: flex;
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    min-width: calc(var(--w) * 0.125);
-    padding-left: calc(var(--w) * 0.02222);
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-    border-left: 2px solid #f3c864;
-    color: #f3c864;
-    font-family: var(--font-title);
-    text-align: center;
-  }
-  .sponsorship-plan__result strong,
-  .sponsorship-plan__result b {
-    font-size: calc(var(--w) * 0.02222);
-    font-weight: 700;
-  }
-  .sponsorship-plan__result > span {
-    font-size: calc(var(--w) * 0.028);
-  }
-  .sponsorship-plan__result small {
-    display: block;
-    font-size: calc(var(--w) * 0.00833);
-    font-weight: 600;
-    white-space: nowrap;
-  }
+
   .ambassadors-band {
     --w: min(100vw, 1920px, 200svh);
     position: relative;
@@ -1156,21 +636,6 @@ const optimizedBonusFocusMobile = await getImage({
   @media (prefers-reduced-motion: reduce) {
     .star-destination__photo :global(img) {
       transition: none;
-    }
-  }
-  @media (max-width: 767px) {
-    .sponsorship-plan {
-      --sponsorship-team-radius: 4px;
-      width: 100%;
-      padding: calc(var(--w) * 0.017);
-      border-radius: 8px;
-    }
-    .sponsorship-plan__result {
-      min-width: calc(var(--w) * 0.12);
-      padding-left: calc(var(--w) * 0.012);
-    }
-    .residual-bonus__note {
-      max-width: 85%;
     }
   }
   .star-requirement__icon--trophy::before {
