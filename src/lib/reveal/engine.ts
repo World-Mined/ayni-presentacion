@@ -218,7 +218,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // transparente y, al invertir, se desvanezca durante la bajada.
   tl.add(video, { opacity: [0, 1], duration: T.riseDur, ease: 'linear' }, 0);
 
-  const { ringDur, ringCloseAt: labelsStart, entranceDur } = resolveRingTiming(T);
+  const { ringDur, ringCloseAt: labelsStart, entranceDur } = resolveRingTiming(T, C.video);
 
   // El MP4 corre por su cuenta; la timeline es el reloj que el scroll recorre.
   // Nada más en ella llega hasta el final del giro —el anillo cierra antes y

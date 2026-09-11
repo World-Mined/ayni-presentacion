@@ -5,8 +5,8 @@
 // La entrada del producto siempre llega en MP4. Hubo una segunda ruta que la
 // reconstruía a partir de una secuencia de .webp; se retiró junto con sus
 // archivos, así que `video` es obligatorio y los campos de abajo que hablan de
-// "frames" describen posiciones dentro de la secuencia NOMINAL de referencia
-// (`nominalFrameCount`), no archivos en disco.
+// el cierre del anillo se toma medido de la propia cinta (`video.ringCloseMs`)
+// en vez de reconstruirse a partir de una secuencia de referencia.
 
 export type Side = 'left' | 'right';
 
@@ -26,24 +26,24 @@ export interface LabelDef {
 /** Animación compuesta de entrada y anillo, entregada en video. */
 export interface VideoConfig {
   src: string;
+  /** El MP4 se acelera para caber en el compás del motor. */
   playbackRate?: number;
+  /** Momento, en ms DE LA PROPIA CINTA, en que el anillo del MP4 termina de
+   *  cerrarse. Es una medida sobre el archivo servido, no una preferencia: se
+   *  saca mirando fotograma a fotograma dónde se junta el arco. El motor lo
+   *  divide por `playbackRate` para llevarlo a su reloj, y de ahí cuelgan el
+   *  cierre de su propio anillo y la salida de las ramas. */
+  ringCloseMs: number;
 }
 
 /** Tiempos y curvas de la secuencia (todo opcional: usa DEFAULT_TIMING). */
 export interface TimingConfig {
   // 1) ENTRADA
-  riseFrom: string;                 // desde dónde sube ('190%' abajo · '-190%' arriba)
   riseDur: number;                  // ms para llegar al centro
-  centerFrame: number;              // frame NOMINAL en que llega al centro
   rotateCenterDur: number;          // ms del giro EN EL centro
-  rotateEnd: number;                // 1 = giro completo (frente)
   titleDur: number;                 // ms del popup del título
   curve: (t: number) => number;     // curva de subida/popup
-  // 2) CÍRCULO (sincronizado al giro)
-  ringStartFrame: number;           // frame NOMINAL donde empieza el círculo
-  ringEndFrame: number;             // frame NOMINAL donde se cierra (menor = más rápido)
-  nominalFrameCount: number;        // longitud de la secuencia de referencia que da sentido a los tres de arriba
-  // 3) RAMAS
+  // 2) RAMAS
   labelsStagger: number;            // ms entre una rama y otra
   labelsOrder: 'sequence' | 'random';
   labelsDur: number;                // ms de crecimiento de cada rama

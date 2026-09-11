@@ -149,15 +149,19 @@
   z-index: 2;
   left: 50%;
   top: 55%;
-  width: 32%;
+  /* El MP4 deja aire alrededor del anillo, así que el envoltorio ocupa la
+     mitad del escenario y no el 32% que pedía el arte sin video. */
+  width: 50%;
   transform: translate(-50%, -50%);
   transition: opacity .32s ease;
-  perspective: 900px;
 }
-/* Sobrevive al efecto de inclinación que le dio nombre: hoy es solo la capa
-   que aísla el `mix-blend-mode: screen` del MP4, más abajo. */
+/* Sobrevive al efecto de inclinación que le dio nombre: hoy es solo la capa que
+   aísla la mezcla del MP4. El video llega con su fondo como un rectángulo negro
+   codificado en H.264; mezclamos el grupo completo contra el fondo real de la
+   escena para que ese negro quede transparente. */
 .reveal-product-tilt {
   transform-origin: center;
+  mix-blend-mode: screen;
 }
 .reveal-product {
   display: block;
@@ -182,17 +186,16 @@
 }
 /* `transform` crea una capa de composición. Si `screen` vive en el `<video>`
    se mezcla contra esa capa vacía y, de forma intermitente, reaparece el
-   rectángulo negro codificado en H.264. Mezclamos el grupo completo contra
-   el fondo real de la escena para que el negro permanezca transparente. */
-.reveal-track[data-native-video] .reveal-product-tilt { mix-blend-mode: screen; }
-.reveal-track[data-native-video] .reveal-product-wrap { width: 50%; }
-.reveal-track[data-native-video] .reveal-halo { display: none; }
-/* El MP4 ya trae su anillo en el estado normal. Durante el hover el video
-   se oculta para revelar la foto, así que recuperamos el anillo SVG solo
-   entonces: un único borde dorado, sin duplicarlo en reposo. */
-.reveal-track[data-native-video]:not([data-active]) .reveal-ring { display: none; }
+/* El MP4 ya trae su anillo en el estado normal. Durante el hover el video se
+   oculta para revelar la foto, así que recuperamos el anillo SVG solo entonces:
+   un único borde dorado, sin duplicarlo en reposo. */
+.reveal-track:not([data-active]) .reveal-ring { display: none; }
 
+/* Nunca visible mientras la entrada la sirva un MP4, que trae su propio
+   resplandor. El elemento sigue en el DOM porque el motor le escribe la
+   opacidad al dibujar el anillo. */
 .reveal-halo {
+  display: none;
   position: absolute;
   z-index: 1;
   left: 50%;

@@ -10,7 +10,7 @@ export const capucci: RevealConfig = {
   // El MP4 conserva la animación entregada. Su secuencia original de 47 frames
   // ya no vive en el repo; sigue siendo la referencia de ritmo a través de
   // `nominalFrameCount` en los defaults.
-  video: { src: mediaUrl('capucci.mp4'), playbackRate: 1.25 },
+  video: { src: mediaUrl('capucci.mp4'), playbackRate: 1.25, ringCloseMs: 1800 },
   background: REVEAL_BACKGROUND_URL,
 
   // Ingredientes impresos en el empaque. El orden de la lista = orden de aparición

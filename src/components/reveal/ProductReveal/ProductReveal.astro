@@ -39,6 +39,18 @@ if (scene) {
 }
 const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
 const timing = { ...DEFAULT_TIMING, ...cfg.timing };
+
+// Un MP4 nuevo cuya marca de cinta caiga fuera del compás se pegaría a un
+// extremo por el `clamp` de `resolveRingTiming` y desafinaría en silencio.
+// Aquí falla el build en su lugar.
+const ringTiming = resolveRingTiming(timing, cfg.video);
+if (ringTiming.ringCloseAt <= timing.riseDur || ringTiming.ringCloseAt >= ringTiming.entranceDur) {
+  throw new Error(
+    `<ProductReveal>: "${product}" cierra el anillo fuera de la entrada. `
+    + `Revisa 'video.ringCloseMs' (${cfg.video.ringCloseMs} ms de cinta, a ${cfg.video.playbackRate ?? 1}x) `
+    + `contra 'riseDur' y 'rotateCenterDur'.`,
+  );
+}
 const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
 const circleStyle = [
   `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
@@ -56,7 +68,7 @@ const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` :
 // la relación de aspecto implícita y el bloque salta de alto mientras carga.
 const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
 const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
-const mobileLabelsStart = resolveRingTiming(timing).ringCloseAt;
+const mobileLabelsStart = ringTiming.ringCloseAt;
 const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsStagger;
 ---
 
@@ -66,11 +78,6 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
   class="reveal-track"
   data-reveal={product}
   data-row-count={rowCount}
-  {/* Marca la variante de arte servida en MP4, de la que cuelgan el
-      `mix-blend-mode`, el ancho del producto y el ocultado del halo. Hoy la
-      llevan los tres productos; queda como gancho hasta que esos selectores
-      se fusionen con los de base. */}
-  data-native-video
   style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
 >
   <div class="reveal-pin">

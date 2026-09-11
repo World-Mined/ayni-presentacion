@@ -3,51 +3,60 @@ import { expect, test } from '@playwright/test';
 import { DEFAULT_TIMING } from '../../src/lib/reveal/defaults';
 import { clamp, resolveRingTiming } from '../../src/lib/reveal/timing';
 
+const video = (over: Partial<{ ringCloseMs: number; playbackRate: number }> = {}) => ({
+  src: 'https://example.test/x.mp4',
+  ringCloseMs: 1800,
+  playbackRate: 1.25,
+  ...over,
+});
+
 test('clamp acota por ambos extremos y deja pasar lo que ya está dentro', () => {
   expect(clamp(-5, 0, 1)).toBe(0);
   expect(clamp(5, 0, 1)).toBe(1);
   expect(clamp(0.25, 0, 1)).toBe(0.25);
 });
 
-test('el anillo cierra donde lo hacía la secuencia de referencia', () => {
-  // Valor que producía la ruta por frames de Capucci antes de retirarla:
-  // riseDur + rotateCenterDur * (ringEndFrame-1 - (centerFrame-1))
-  //                           / (rotateEnd*(nominalFrameCount-1) - (centerFrame-1))
-  const { riseDur, rotateCenterDur, centerFrame, ringEndFrame, rotateEnd, nominalFrameCount } =
-    DEFAULT_TIMING;
-  const lastIdx = Math.round(rotateEnd * (nominalFrameCount - 1));
-  const esperado = riseDur + rotateCenterDur * ((ringEndFrame - 1 - (centerFrame - 1)) / (lastIdx - (centerFrame - 1)));
-
-  expect(resolveRingTiming(DEFAULT_TIMING).ringCloseAt).toBeCloseTo(esperado, 6);
+test('la marca de la cinta se divide por la velocidad de reproducción', () => {
+  // Esta es la regresión que el modelo anterior tenía: derivaba el cierre en
+  // milisegundos de reloj e ignoraba que la cinta corre acelerada, así que las
+  // ramas salían ~300 ms después de que el círculo ya se hubiera cerrado.
+  expect(resolveRingTiming(DEFAULT_TIMING, video()).ringCloseAt).toBeCloseTo(1800 / 1.25, 6);
 });
 
-test('el anillo cierra antes de que termine el giro', () => {
-  const { ringCloseAt, entranceDur } = resolveRingTiming(DEFAULT_TIMING);
+test('sin velocidad declarada la cinta corre a tiempo real', () => {
+  const { ringCloseAt } = resolveRingTiming(DEFAULT_TIMING, {
+    src: 'https://example.test/x.mp4',
+    ringCloseMs: 1200,
+  });
 
-  expect(ringCloseAt).toBeGreaterThan(DEFAULT_TIMING.riseDur);
-  expect(ringCloseAt).toBeLessThan(entranceDur);
+  expect(ringCloseAt).toBe(1200);
+});
+
+test('acelerar más la cinta adelanta el cierre', () => {
+  const lenta = resolveRingTiming(DEFAULT_TIMING, video({ playbackRate: 1 })).ringCloseAt;
+  const rapida = resolveRingTiming(DEFAULT_TIMING, video({ playbackRate: 2 })).ringCloseAt;
+
+  expect(rapida).toBeLessThan(lenta);
+});
+
+test('el anillo del motor dura desde el centro hasta el cierre', () => {
+  const { ringDur, ringCloseAt } = resolveRingTiming(DEFAULT_TIMING, video());
+
+  expect(ringDur).toBeCloseTo(ringCloseAt - DEFAULT_TIMING.riseDur, 6);
+  expect(ringDur).toBeGreaterThan(0);
+});
+
+test('una cinta mal medida desafina pero no rompe la entrada', () => {
+  const temprana = resolveRingTiming(DEFAULT_TIMING, video({ ringCloseMs: 0 }));
+  const tardia = resolveRingTiming(DEFAULT_TIMING, video({ ringCloseMs: 999_999 }));
+
+  expect(temprana.ringCloseAt).toBe(DEFAULT_TIMING.riseDur);
+  expect(temprana.ringDur).toBe(0);
+  expect(tardia.ringCloseAt).toBe(tardia.entranceDur);
 });
 
 test('la entrada dura la subida más el giro: es el reloj que recorre el scroll', () => {
-  const { entranceDur } = resolveRingTiming(DEFAULT_TIMING);
+  const { entranceDur } = resolveRingTiming(DEFAULT_TIMING, video());
 
   expect(entranceDur).toBe(DEFAULT_TIMING.riseDur + DEFAULT_TIMING.rotateCenterDur);
-});
-
-test('una referencia demasiado corta deja que el anillo ocupe toda la fase', () => {
-  // `nominalFrameCount` por debajo de `centerFrame`: no hay giro del que sacar
-  // proporción, así que el cierre se estira hasta el final en vez de dar NaN.
-  const timing = { ...DEFAULT_TIMING, nominalFrameCount: 2 };
-  const { ringDur, ringCloseAt } = resolveRingTiming(timing);
-
-  expect(ringDur).toBe(timing.rotateCenterDur);
-  expect(Number.isFinite(ringCloseAt)).toBe(true);
-});
-
-test('adelantar ringEndFrame adelanta el cierre y no toca la duración total', () => {
-  const antes = resolveRingTiming(DEFAULT_TIMING);
-  const despues = resolveRingTiming({ ...DEFAULT_TIMING, ringEndFrame: 30 });
-
-  expect(despues.ringCloseAt).toBeLessThan(antes.ringCloseAt);
-  expect(despues.entranceDur).toBe(antes.entranceDur);
 });

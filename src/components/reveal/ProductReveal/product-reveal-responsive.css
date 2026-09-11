@@ -80,20 +80,16 @@
     top: calc(var(--reveal-mobile-center-y) + var(--reveal-mobile-content-offset));
   }
   .reveal-media-circle { width: var(--reveal-mobile-circle); }
-  .reveal-product-wrap { width: clamp(205px, 76.154vw, 297px); }
-  .reveal-track[data-native-video] .reveal-product-wrap {
-    /* El anillo ocupa aproximadamente el 82% del MP4. */
-    width: clamp(303px, 111.795vw, 436px);
-  }
-  .reveal-track[data-native-video] .reveal-mobile-ring { display: none; }
-  .reveal-halo { width: var(--reveal-mobile-circle); }
+  /* El anillo ocupa aproximadamente el 82% del MP4. */
+  .reveal-product-wrap { width: clamp(303px, 111.795vw, 436px); }
 
   .reveal-overlay,
   .reveal-label { display: none; }
+  /* Sin `display`: el anillo móvil lo trae el propio MP4 y el SVG queda oculto
+     por la regla base. El resto se conserva para cuando se le vuelva a dar uso. */
   .reveal-mobile-ring {
     position: absolute;
     z-index: 3;
-    display: block;
     width: var(--reveal-mobile-circle);
     aspect-ratio: 1;
     overflow: visible;
@@ -273,8 +269,7 @@
   .reveal-title h2.reveal-title__mark::before { font-size: 7px; line-height: 8px; }
   .reveal-logo { height: clamp(18px, 6svh, 26px); }
   .reveal-title p.reveal-formula { font-size: clamp(10px, 2.2vw, 13px); line-height: 15px; }
-  .reveal-product-wrap { width: clamp(98px, 31.5svh, 166px); }
-  .reveal-track[data-native-video] .reveal-product-wrap { width: clamp(144px, 46.3svh, 244px); }
+  .reveal-product-wrap { width: clamp(144px, 46.3svh, 244px); }
   .reveal-mobile-controls { width: min(calc(100vw - 32px), 358px); }
   .reveal-mobile-arrow { width: 20px; }
   .reveal-mobile-arrow img { width: 20px; height: 20px; }

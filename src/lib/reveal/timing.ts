@@ -1,4 +1,4 @@
-import type { TimingConfig } from './types';
+import type { TimingConfig, VideoConfig } from './types';
 
 /** Acota un valor al rango dado. Vive aquí, el módulo hoja del reveal, para
  *  que el motor y el cálculo de hitos no lleven dos copias que puedan
@@ -7,34 +7,29 @@ export const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
 /**
- * Traduce a milisegundos los hitos que `TimingConfig` expresa como posiciones
- * dentro de la secuencia nominal de referencia.
+ * Traduce los hitos del MP4 al reloj del motor.
  *
- * La entrada del producto la sirve el MP4, así que no hay frames reales a los
- * que amarrar el anillo: se dibuja por tiempo. Lo que fija ese tiempo es la
- * proporción del giro que ocupa el cierre según `nominalFrameCount`, y por eso
- * el cálculo vive fuera del motor: mantiene alineados el anillo del escritorio
- * y el adelanto de etiquetas de la vista móvil, en vez de dejar que cada uno
- * lleve su propia constante a ojo.
+ * La cinta corre acelerada, así que sus marcas no son las del motor: los
+ * 1800 ms en que el arco del video se cierra son 1440 ms de reloj a 1.25x.
+ * Olvidar esa división es lo que dejaba las ramas saliendo ~300 ms después de
+ * que el círculo ya se había cerrado en pantalla.
+ *
+ * El cálculo vive fuera del motor para que la vista móvil y el anillo de
+ * escritorio salgan del mismo número en vez de llevar cada uno su constante.
  */
-export function resolveRingTiming(timing: TimingConfig) {
-  const lastIdx = Math.round(timing.rotateEnd * (timing.nominalFrameCount - 1));
-  const centerIdx = clamp(timing.centerFrame - 1, 0, lastIdx);
-  const ringFromIdx = Math.max(0, timing.ringStartFrame - 1);
-  const ringToIdx = Math.max(ringFromIdx + 1, timing.ringEndFrame - 1);
-
-  // Si la referencia se queda corta para los tiempos, el anillo ocupa toda la fase.
-  const ringRatio = lastIdx > centerIdx
-    ? clamp((ringToIdx - centerIdx) / (lastIdx - centerIdx), 0, 1)
-    : 1;
-  const ringDur = timing.rotateCenterDur * ringRatio;
+export function resolveRingTiming(timing: TimingConfig, video: VideoConfig) {
+  const entranceDur = timing.riseDur + timing.rotateCenterDur;
+  const rate = video.playbackRate ?? 1;
+  // Nunca antes de que el producto llegue al centro ni después de que termine
+  // la entrada: una cinta mal medida desafina, pero no rompe la animación.
+  const ringCloseAt = clamp(video.ringCloseMs / rate, timing.riseDur, entranceDur);
 
   return {
-    /** ms que tarda el anillo en cerrarse, ya dentro de la fase de giro. */
-    ringDur,
+    /** ms que tarda el anillo del motor en cerrarse, ya dentro del giro. */
+    ringDur: ringCloseAt - timing.riseDur,
     /** Instante en que el círculo cierra; ahí arrancan las ramas. */
-    ringCloseAt: timing.riseDur + ringDur,
+    ringCloseAt,
     /** Duración total de la entrada, que es también el reloj del scroll. */
-    entranceDur: timing.riseDur + timing.rotateCenterDur,
+    entranceDur,
   };
 }

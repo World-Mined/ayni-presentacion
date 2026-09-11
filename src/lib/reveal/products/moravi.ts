@@ -9,7 +9,7 @@ export const moravi: RevealConfig = {
   title: { main: 'MORAVI 360', sub: 'La fórmula 6 en 1' },
   // Video final entregado por diseño: conserva la entrada original. Las ramas
   // se sincronizan con el cierre del anillo que dibuja el motor.
-  video: { src: mediaUrl('moravi.mp4'), playbackRate: 1.25 },
+  video: { src: mediaUrl('moravi.mp4'), playbackRate: 1.25, ringCloseMs: 1800 },
   background: REVEAL_BACKGROUND_URL,
   scroll: { revRate: 3 },
   timing: { labelsStagger: 12, labelsDur: 90 },

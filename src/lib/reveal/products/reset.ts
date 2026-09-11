@@ -7,7 +7,7 @@ export const reset: RevealConfig = {
   title: { main: 'RESET 360', sub: 'La fórmula 8 en 1' },
   // Video final entregado por diseño: conserva la entrada original. Las ramas
   // se sincronizan con el cierre del anillo que dibuja el motor.
-  video: { src: mediaUrl('reset.mp4'), playbackRate: 1.25 },
+  video: { src: mediaUrl('reset.mp4'), playbackRate: 1.25, ringCloseMs: 1800 },
   background: REVEAL_BACKGROUND_URL,
   scroll: { revRate: 3 },
   timing: { labelsStagger: 15, labelsDur: 100 },
