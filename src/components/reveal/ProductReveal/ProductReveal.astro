@@ -1,0 +1,437 @@
+---
+import { Image } from 'astro:assets';
+import revealChevronLeft from '../../../assets/v2/reveal-chevron-left.svg';
+import revealChevronRight from '../../../assets/v2/reveal-chevron-right.svg';
+import revealMobileBlur from '../../../assets/v2/reveal-mobile-blur.webp';
+import type { IngredientsScene } from '../../../data/product-ingredients';
+import { DEFAULT_GEOMETRY, DEFAULT_TIMING } from '../../../lib/reveal/defaults';
+import { PRODUCTS } from '../../../lib/reveal/products';
+import type { ProductId } from '../../../lib/reveal/products';
+import { resolveRingTiming } from '../../../lib/reveal/timing';
+import './product-reveal.css';
+import './product-reveal-responsive.css';
+import './product-reveal-motion.css';
+
+interface Props {
+  /** id del producto registrado en lib/reveal/products/index.ts */
+  product: ProductId;
+  /** Fotos y frases que ocupan el mismo círculo al interactuar. */
+  scene?: IngredientsScene;
+}
+
+const { product, scene } = Astro.props;
+const cfg = PRODUCTS[product];
+if (!cfg) {
+  throw new Error(
+    `<ProductReveal>: producto desconocido "${product}". Regístralo en src/lib/reveal/products/index.ts`,
+  );
+}
+if (scene) {
+  const labelIds = new Set(cfg.labels.map(({ id }) => id));
+  const sceneIds = new Set(scene.items.map(({ id }) => id));
+  const missingSceneItems = cfg.labels.filter(({ id }) => !sceneIds.has(id));
+  const orphanSceneItems = scene.items.filter(({ id }) => !labelIds.has(id));
+  const hasDuplicateIds = labelIds.size !== cfg.labels.length || sceneIds.size !== scene.items.length;
+
+  if (missingSceneItems.length || orphanSceneItems.length || hasDuplicateIds) {
+    throw new Error(`<ProductReveal>: etiquetas e ingredientes desincronizados para "${product}"`);
+  }
+}
+const geometry = { ...DEFAULT_GEOMETRY, ...cfg.geometry };
+const timing = { ...DEFAULT_TIMING, ...cfg.timing };
+
+// Un MP4 nuevo cuya marca de cinta caiga fuera del compás se pegaría a un
+// extremo por el `clamp` de `resolveRingTiming` y desafinaría en silencio.
+// Aquí falla el build en su lugar.
+const ringTiming = resolveRingTiming(timing, cfg.video);
+if (ringTiming.ringCloseAt <= timing.riseDur || ringTiming.ringCloseAt >= ringTiming.entranceDur) {
+  throw new Error(
+    `<ProductReveal>: "${product}" cierra el anillo fuera de la entrada. `
+    + `Revisa 'video.ringCloseMs' (${cfg.video.ringCloseMs} ms de cinta, a ${cfg.video.playbackRate ?? 1}x) `
+    + `contra 'riseDur' y 'rotateCenterDur'.`,
+  );
+}
+const rowCount = Math.max(...cfg.labels.map((label) => label.row)) + 1;
+const circleStyle = [
+  `--reveal-circle-x:${(geometry.center.x / 1920) * 100}%`,
+  `--reveal-circle-y:${(geometry.center.y / 1080) * 100}%`,
+  `--reveal-circle-size:${((geometry.ringRadius * 2) / 1920) * 100}%`,
+].join(';');
+
+// El wordmark se dimensiona en dos pasos, igual que en Figma: el `h2` hace de
+// cabecera y mide 521/1440 del ancho de sección, y dentro el logotipo ocupa
+// `anchoDelSVG / 521`. Se saca del propio asset en vez de un dato aparte porque
+// así no hay nada que mantener sincronizado: si cambia el SVG, cambia el ancho.
+const logoStyle = scene ? `--reveal-logo-w:${(scene.logo.width / 521) * 100}%` : undefined;
+// Los atributos width/height de HTML solo admiten enteros y estos SVG miden
+// 370.999×56.0007: sin redondear, el navegador descarta la dimensión, se pierde
+// la relación de aspecto implícita y el bloque salta de alto mientras carga.
+const logoWidth = scene ? Math.round(scene.logo.width) : undefined;
+const logoHeight = scene ? Math.round(scene.logo.height) : undefined;
+const mobileLabelsStart = ringTiming.ringCloseAt;
+const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsStagger;
+---
+
+{cfg.background && <link rel="preload" href={cfg.background} as="image" type="image/webp" />}
+
+<div
+  class="reveal-track"
+  data-reveal={product}
+  data-row-count={rowCount}
+  style={cfg.background ? `--reveal-bg:url(${cfg.background})` : undefined}
+>
+  <div class="reveal-pin">
+    <div class="reveal-stage" aria-label={`Animación de ${cfg.title.main}`}>
+      {scene && (
+        <div class="reveal-mobile-blur" aria-hidden="true">
+          <Image src={revealMobileBlur} alt="" loading="lazy" />
+        </div>
+      )}
+      {scene ? (
+        <div class="reveal-title" style={logoStyle}>
+          <h2 class="reveal-title__mark">
+            <img
+              class="reveal-logo"
+              src={scene.logo.src}
+              width={logoWidth}
+              height={logoHeight}
+              alt={scene.logoAlt}
+              decoding="async"
+            />
+          </h2>
+          <p class="reveal-formula">{scene.formula.lead} <strong>{scene.formula.strong}</strong></p>
+        </div>
+      ) : (
+        /* Sin escena no hay logotipo que pintar: queda el título de texto, que
+           es la ruta que usa `reveal-demo.astro`. */
+        <div class="reveal-title">
+          <h2>{cfg.title.main}</h2>
+          <p>{cfg.title.sub}</p>
+        </div>
+      )}
+      <div class="reveal-halo"></div>
+      <svg class="reveal-mobile-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="reveal-mobile-ring__circle" cx="50" cy="50" r="49"></circle>
+      </svg>
+      {scene && (
+        <nav class="reveal-mobile-controls" aria-label="Explorar ingredientes">
+          <button type="button" class="reveal-mobile-arrow" data-mobile-ingredient-prev aria-label="Ingrediente anterior">
+            <Image src={revealChevronLeft} alt="" width={25} height={24} />
+          </button>
+          <div class="reveal-mobile-viewport">
+            <div class="reveal-mobile-track" data-mobile-ingredient-track>
+              {scene.items.map((item, index) => (
+                <button
+                  type="button"
+                  class="reveal-mobile-item"
+                  data-item={item.id}
+                  data-mobile-index={index}
+                  style={`--reveal-mobile-item-delay:${mobileLabelsStart + index * mobileLabelsStagger}ms`}
+                  aria-label={item.name}
+                  aria-pressed="false"
+                  aria-describedby={`reveal-phrase-${product}-${item.id}`}
+                >
+                  <img src={item.icon.src} alt="" />
+                </button>
+              ))}
+            </div>
+          </div>
+          <button type="button" class="reveal-mobile-arrow" data-mobile-ingredient-next aria-label="Ingrediente siguiente">
+            <Image src={revealChevronRight} alt="" width={25} height={24} />
+          </button>
+        </nav>
+      )}
+      {scene && (
+        <div class="reveal-icon-sources" aria-hidden="true">
+          {scene.items.map((item) => (
+            <img src={item.icon.src} alt="" data-mobile-icon={item.id} />
+          ))}
+        </div>
+      )}
+      {scene && (
+        <div class="reveal-media-circle" style={circleStyle} aria-live="polite">
+          {scene.items.map((item) => (
+            <Image
+              class="reveal-media"
+              data-media={item.id}
+              src={item.photo}
+              alt=""
+              widths={[550, 700]}
+              sizes="38vw"
+              quality={78}
+              loading="lazy"
+            />
+          ))}
+          {scene.items.map((item) => (
+            <p
+              class="reveal-phrase"
+              id={`reveal-phrase-${product}-${item.id}`}
+              data-phrase={item.id}
+            >
+              {item.phrase}
+            </p>
+          ))}
+        </div>
+      )}
+      <div class="reveal-product-wrap">
+        <div class="reveal-product-tilt">
+          <video
+            class="reveal-product reveal-product-video"
+            src={cfg.video.src}
+            aria-label={`Animación de ${cfg.title.main}`}
+            autoplay
+            muted
+            playsinline
+            preload="auto"
+          ></video>
+        </div>
+      </div>
+      {scene && <div class="reveal-mobile-swipe-zone" data-mobile-swipe-zone aria-hidden="true"></div>}
+      <svg class="reveal-overlay" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+</div>
+
+<noscript>
+  <style is:global>
+    .reveal-product { opacity: 1 !important; }
+    /* La opacidad del título la levanta la timeline. Sin JS eso dejaba oculto el
+       logotipo de marca, que es justo lo que nombra la sección. */
+    .reveal-title { opacity: 1 !important; }
+    .reveal-mobile-blur { opacity: 1 !important; }
+  </style>
+</noscript>
+
+<script>
+  import { createReveal } from '../../../lib/reveal/engine';
+  import { PRODUCTS } from '../../../lib/reveal/products';
+
+  const cleanups = new Map<HTMLElement, () => void>();
+  const bindIngredientInteraction = (root: HTMLElement) => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const items = root.querySelectorAll<HTMLButtonElement>('[data-item]');
+    const mobileItems = [...root.querySelectorAll<HTMLButtonElement>('.reveal-mobile-item')];
+    const mobileControls = root.querySelector<HTMLElement>('.reveal-mobile-controls');
+    const mobileTrack = root.querySelector<HTMLElement>('[data-mobile-ingredient-track]');
+    const previousButton = root.querySelector<HTMLButtonElement>('[data-mobile-ingredient-prev]');
+    const nextButton = root.querySelector<HTMLButtonElement>('[data-mobile-ingredient-next]');
+    const swipeZone = root.querySelector<HTMLElement>('[data-mobile-swipe-zone]');
+    const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
+    const circle = root.querySelector<HTMLElement>('.reveal-media-circle');
+    const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const compactViewport = window.matchMedia(
+      '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
+    );
+    if (!circle || !layers.length) return () => controller.abort();
+
+    const syncMobileTrack = (id: string | null) => {
+      if (!mobileTrack || !mobileItems.length) return;
+      const activeIndex = id
+        ? mobileItems.findIndex((item) => item.dataset.item === id)
+        : -1;
+      const visibleCount = Math.min(5, mobileItems.length);
+      const windowStart = activeIndex < 0
+        ? 0
+        : Math.max(0, Math.min(activeIndex - 1, mobileItems.length - visibleCount));
+      mobileItems.forEach((item, index) => {
+        const visible = index >= windowStart && index < windowStart + visibleCount;
+        item.tabIndex = visible ? 0 : -1;
+        item.toggleAttribute('data-mobile-visible', visible);
+      });
+      const firstVisible = mobileItems[windowStart];
+      mobileTrack.style.setProperty(
+        '--reveal-mobile-track-shift',
+        `${-(firstVisible?.offsetLeft ?? 0)}px`,
+      );
+    };
+
+    const activate = (id: string | null) => {
+      // Los botones siguen en el DOM mientras Anime.js los desvanece. Sin
+      // esta compuerta el navegador puede lanzar otro pointerenter sobre un
+      // botón ya invisible y volver a encender su foto durante el reverso.
+      if (id && root.dataset.revealState !== 'shown') return;
+      if (id) root.dataset.active = id;
+      else delete root.dataset.active;
+      if (id) root.dispatchEvent(new Event('reveal:ingredient'));
+
+      items.forEach((item) => {
+        const selected = item.dataset.item === id;
+        item.setAttribute('aria-pressed', String(selected));
+        item.toggleAttribute('data-selected', selected);
+      });
+      layers.forEach((layer) => {
+        const selected = layer.dataset.media === id || layer.dataset.phrase === id;
+        layer.toggleAttribute('data-selected', selected);
+      });
+      syncMobileTrack(id);
+    };
+
+    const moveSelection = (direction: -1 | 1) => {
+      if (root.dataset.revealState !== 'shown' || !mobileItems.length) return;
+      const activeIndex = mobileItems.findIndex((item) => item.dataset.item === root.dataset.active);
+      const nextIndex = activeIndex < 0
+        ? (direction > 0 ? 0 : mobileItems.length - 1)
+        : (activeIndex + direction + mobileItems.length) % mobileItems.length;
+      activate(mobileItems[nextIndex].dataset.item ?? null);
+    };
+
+    let swipePointerId: number | null = null;
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    const resetSwipe = () => {
+      swipePointerId = null;
+      swipeZone?.removeAttribute('data-dragging');
+    };
+
+    swipeZone?.addEventListener('pointerdown', (event) => {
+      if (
+        root.dataset.revealState !== 'shown'
+        || !event.isPrimary
+        || (event.pointerType === 'mouse' && event.button !== 0)
+      ) return;
+      swipePointerId = event.pointerId;
+      swipeStartX = event.clientX;
+      swipeStartY = event.clientY;
+      swipeZone.setPointerCapture(event.pointerId);
+    }, options);
+    swipeZone?.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== swipePointerId) return;
+      const horizontalDistance = Math.abs(event.clientX - swipeStartX);
+      const verticalDistance = Math.abs(event.clientY - swipeStartY);
+      swipeZone.toggleAttribute(
+        'data-dragging',
+        horizontalDistance > 8 && horizontalDistance > verticalDistance,
+      );
+    }, options);
+    swipeZone?.addEventListener('pointerup', (event) => {
+      if (event.pointerId !== swipePointerId) return;
+      const horizontalDistance = event.clientX - swipeStartX;
+      const verticalDistance = event.clientY - swipeStartY;
+      const threshold = Math.max(36, swipeZone.getBoundingClientRect().width * 0.12);
+      const shouldMove =
+        Math.abs(horizontalDistance) >= threshold
+        && Math.abs(horizontalDistance) > Math.abs(verticalDistance) * 1.25;
+      resetSwipe();
+      if (shouldMove) moveSelection(horizontalDistance < 0 ? 1 : -1);
+    }, options);
+    swipeZone?.addEventListener('pointercancel', resetSwipe, options);
+    swipeZone?.addEventListener('lostpointercapture', resetSwipe, options);
+
+    const isNearInteraction = (x: number, y: number) => {
+      const elements = [circle, ...items];
+      const rects = elements
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (!rects.length) return false;
+
+      const padding = Math.min(64, Math.max(24, circle.getBoundingClientRect().width * 0.08));
+      const left = Math.min(...rects.map((rect) => rect.left)) - padding;
+      const right = Math.max(...rects.map((rect) => rect.right)) + padding;
+      const top = Math.min(...rects.map((rect) => rect.top)) - padding;
+      const bottom = Math.max(...rects.map((rect) => rect.bottom)) + padding;
+      return x >= left && x <= right && y >= top && y <= bottom;
+    };
+
+    items.forEach((item) => {
+      const id = item.dataset.item!;
+      item.addEventListener('pointerenter', () => {
+        if (hoverCapable.matches && !item.classList.contains('reveal-mobile-item')) activate(id);
+      }, options);
+      item.addEventListener('focus', () => {
+        // Un toque enfoca el botón antes de disparar `click`. Si se activara
+        // también aquí, ese mismo click lo apagaría de inmediato. El foco solo
+        // adelanta la selección cuando procede del teclado.
+        if (item.matches(':focus-visible')) activate(id);
+      }, options);
+      item.addEventListener('click', () => {
+        if (item.classList.contains('reveal-mobile-item') || !hoverCapable.matches) {
+          activate(root.dataset.active === id ? null : id);
+        }
+      }, options);
+    });
+
+    previousButton?.addEventListener('click', () => moveSelection(-1), options);
+    nextButton?.addEventListener('click', () => moveSelection(1), options);
+    mobileTrack?.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'Home' || event.key === 'End') {
+        const item = mobileItems[event.key === 'Home' ? 0 : mobileItems.length - 1];
+        activate(item?.dataset.item ?? null);
+        item?.focus();
+        return;
+      }
+      moveSelection(event.key === 'ArrowLeft' ? -1 : 1);
+      mobileItems.find((item) => item.dataset.item === root.dataset.active)?.focus();
+    }, options);
+
+    window.addEventListener('pointerdown', (event) => {
+      if (!compactViewport.matches || !root.dataset.active) return;
+      const path = event.composedPath();
+      const isInsideInteraction =
+        (swipeZone && path.includes(swipeZone))
+        || (mobileControls && path.includes(mobileControls));
+      if (!isInsideInteraction) activate(null);
+    }, options);
+
+    window.addEventListener('pointermove', (event) => {
+      if (
+        !compactViewport.matches
+        && hoverCapable.matches
+        && root.dataset.active
+        && !isNearInteraction(event.clientX, event.clientY)
+      ) {
+        activate(null);
+      }
+    }, options);
+    window.addEventListener('blur', () => activate(null), options);
+    window.addEventListener('resize', () => syncMobileTrack(root.dataset.active ?? null), options);
+    root.addEventListener('reveal:hide', () => {
+      resetSwipe();
+      activate(null);
+    }, options);
+    root.addEventListener('focusout', (event) => {
+      if (!compactViewport.matches && !root.contains(event.relatedTarget as Node | null)) activate(null);
+    }, options);
+
+    syncMobileTrack(null);
+
+    return () => {
+      resetSwipe();
+      activate(null);
+      controller.abort();
+    };
+  };
+
+  const roots = document.querySelectorAll<HTMLElement>('[data-reveal]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const el = entry.target as HTMLElement;
+      if (!entry.isIntersecting || cleanups.has(el)) return;
+      const product = el.dataset.reveal as keyof typeof PRODUCTS;
+      const cfg = PRODUCTS[product];
+      if (!cfg) return;
+      const cleanupReveal = createReveal(el, cfg);
+      const cleanupInteraction = bindIngredientInteraction(el);
+      cleanups.set(el, () => {
+        cleanupInteraction();
+        cleanupReveal();
+      });
+      observer.unobserve(el);
+    });
+  }, { rootMargin: '85% 0px 85%' });
+
+  roots.forEach((el) => {
+    if (!el.dataset.revealObserved) {
+      el.dataset.revealObserved = 'true';
+      observer.observe(el);
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    observer.disconnect();
+    cleanups.forEach((cleanup) => cleanup());
+    cleanups.clear();
+  }, { once: true });
+</script>

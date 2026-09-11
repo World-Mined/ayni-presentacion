@@ -1,0 +1,25 @@
+---
+import HomeFooter from '../../components/v2/HomeFooter/HomeFooter.astro';
+import LegalDocumentView from '../../components/v2/LegalDocument/LegalDocument.astro';
+import SiteHeader from '../../components/v2/SiteHeader/SiteHeader.astro';
+import { LEGAL_DOCUMENTS } from '../../data/legal';
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/v2.css';
+
+export function getStaticPaths() {
+  return LEGAL_DOCUMENTS.map((document) => ({
+    params: { slug: document.slug },
+    props: { document },
+  }));
+}
+
+const { document } = Astro.props;
+---
+
+<Layout variant="website" title={`${document.navLabel} — AYNI`} description={document.description}>
+  <SiteHeader active="legal" />
+  <main class="v2-page">
+    <LegalDocumentView document={document} />
+  </main>
+  <HomeFooter />
+</Layout>

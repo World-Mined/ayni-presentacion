@@ -1,0 +1,60 @@
+---
+import type { LegalDocument } from '../../../data/legal';
+
+interface Props {
+  document: LegalDocument;
+}
+
+const { document } = Astro.props;
+---
+
+<article class="legal-doc">
+  <!-- El resplandor dorado que corona la página. En Figma es un rectángulo de
+       1440×211 con un degradado radial cuyo centro queda por encima del marco;
+       aquí se reproduce con el mismo elipsoide en porcentajes para que escale
+       con el ancho sin recortarse. -->
+  <div class="legal-doc__glow" aria-hidden="true"></div>
+
+  <div class="legal-doc__inner">
+    <h1 class="legal-doc__title">{document.title}</h1>
+
+    {document.sections.map((section) => section.chapterTitle ? (
+      <h2 class="legal-doc__chapter">{section.chapterTitle}</h2>
+    ) : (
+      <section class="legal-doc__section">
+        {section.title && <h2 class="legal-doc__heading">{section.title}</h2>}
+        {section.subtitle && <h3 class="legal-doc__heading">{section.subtitle}</h3>}
+        {section.body?.map((block) => (
+          <div class="legal-doc__block">
+            {block.map((line) => <p>{line}</p>)}
+          </div>
+        ))}
+      </section>
+    ))}
+  </div>
+</article>
+
+<style>
+  .legal-doc { position:relative;padding:clamp(56px,9vw,120px) clamp(20px,9.45vw,136px);background:var(--black);font-family:Montserrat,var(--font-body); }
+  .legal-doc__glow { position:absolute;z-index:0;top:0;left:50%;width:min(100%,1440px);height:211px;transform:translateX(-50%);background:radial-gradient(52.28% 141.47% at 47.18% -98.58%,#f9cb69 0%,rgba(206,168,86,.75) 25%,rgba(163,133,68,.5) 50%,rgba(77,62,30,0) 100%);pointer-events:none; }
+  .legal-doc__inner { position:relative;z-index:1;display:flex;width:min(100%,1168px);flex-direction:column;gap:24px;margin-inline:auto;color:#cbc3b3; }
+
+  .legal-doc__title { margin:0;font-family:Montserrat,var(--font-body);font-size:clamp(20px,1.7vw,24px);font-weight:700;letter-spacing:0;line-height:1.1667; }
+  .legal-doc__chapter { margin:0;font-family:var(--font-title);font-size:20px;font-weight:700;letter-spacing:0;line-height:24px; }
+
+  .legal-doc__section { display:flex;flex-direction:column;gap:20px; }
+  .legal-doc__heading { margin:0;font-family:Montserrat,var(--font-body);font-size:16px;font-weight:600;letter-spacing:0;line-height:24px; }
+
+  /* Dentro de un grupo las líneas van pegadas, como en el documento original;
+     la separación de 24 px solo aparece entre grupos, que es donde el texto de
+     Figma tiene una línea en blanco. */
+  .legal-doc__block p { margin:0;font-size:16px;font-weight:400;line-height:24px;overflow-wrap:break-word; }
+  .legal-doc__block + .legal-doc__block { margin-top:24px; }
+
+  @media (max-width:767px) {
+    /* El margen lateral baja a 24 px para alinear con el header y el footer,
+       que en móvil respiran mucho menos que el 9.45vw del diseño de 1440. */
+    .legal-doc { padding-inline:24px; }
+    .legal-doc__glow { height:140px; }
+  }
+</style>

@@ -23,7 +23,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        orientation: 'landscape',
+        lang: 'es',
+        orientation: 'any',
         icons: [
           {
             src: '/icon-192.png',
@@ -49,7 +50,12 @@ export default defineConfig({
         skipWaiting: true,
         // Keep the app shell available offline. Astro-generated optimized
         // images are cached on first use so installation stays lightweight.
-        globPatterns: ['**/*.{html,js,css,svg,png,ico,woff,woff2}'],
+        globPatterns: ['**/*.{html,js,css,svg,png,webp,ico,woff,woff2}'],
+        // Los SVG que emite Astro son arte, no chrome: los mapas de puntos de
+        // recojo son ~600 KB cada uno. Quedan fuera de la instalación y entran
+        // por la regla CacheFirst de /_astro/ de abajo, la primera vez que se
+        // ven. Los iconos sueltos de /public sí se precachean.
+        globIgnores: ['**/_astro/**/*.{svg,png,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/offline.html',
         runtimeCaching: [
@@ -81,7 +87,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        // A development service worker can keep serving an older presentation
+        // A development service worker can keep serving an older site
         // after the source changes. PWA behavior is verified from the build.
         enabled: false
       }

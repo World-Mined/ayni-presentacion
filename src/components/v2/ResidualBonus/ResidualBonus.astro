@@ -1,0 +1,471 @@
+---
+import { RESIDUAL_BONUS, RESIDUAL_BONUS_COLUMNS } from "../../../data/v2";
+import residualFlareTop from "../../../assets/v2/residual-flare-top.svg";
+import residualFlareBottom from "../../../assets/v2/residual-flare-bottom.svg";
+
+// El bono residual se pinta de dos formas incompatibles: tabla de diez filas en
+// escritorio y carrusel de cards por debajo de 1024px (Figma 3523:12004). Las
+// dos viven en el DOM y se ocultan con `display: none` según el breakpoint, que
+// además las saca del árbol de accesibilidad: ningún lector encuentra el dato
+// duplicado y no hace falta JavaScript para alternarlas.
+const TEAM_HEADINGS = [
+  ["Binario", "2 EQUIPOS"],
+  ["Trinario", "3 EQUIPOS"],
+  ["Tetranario", "4 EQUIPOS"],
+];
+---
+
+<section class="residual-bonus" aria-labelledby="residual-bonus-title">
+  <h3 id="residual-bonus-title">Bono de ingreso residual</h3>
+  <div class="residual-bonus__table-shell">
+    <div
+      class="residual-bonus__table-wrap"
+      tabindex="0"
+      role="region"
+      aria-label="Rangos y ganancias del bono residual"
+    >
+      <table>
+        <colgroup
+          ><col class="rank-column" /><col span="3" class="team-column" /><col
+            span="2"
+            class="earnings-column"
+          /></colgroup
+        >
+        <thead>
+          <tr>
+            <th rowspan="2" scope="col"><span class="th-title">Rangos</span></th>
+            {
+              TEAM_HEADINGS.map(([name, teams]) => (
+                <th rowspan="2" scope="col">
+                  <span class="th-title">
+                    {name}
+                    <br />
+                    {teams}
+                  </span>
+                </th>
+              ))
+            }
+            <th colspan="2" scope="colgroup"
+              ><span class="th-title">Ganancias</span></th
+            >
+          </tr>
+          <tr
+            ><th scope="col">Quincenales</th><th scope="col">Mensuales</th></tr
+          >
+        </thead>
+        <tbody
+          >{
+            RESIDUAL_BONUS.map((row) => (
+              <tr>
+                <td>{row.rank}</td>
+                {RESIDUAL_BONUS_COLUMNS.map((column) => (
+                  <td>{row[column]}</td>
+                ))}
+              </tr>
+            ))
+          }</tbody
+        >
+      </table>
+    </div>
+    <img
+      class="residual-bonus__flare residual-bonus__flare--top"
+      src={residualFlareTop.src}
+      alt=""
+      aria-hidden="true"
+    />
+    <img
+      class="residual-bonus__flare residual-bonus__flare--bottom"
+      src={residualFlareBottom.src}
+      alt=""
+      aria-hidden="true"
+    />
+  </div>
+  <ul
+    class="residual-cards"
+    tabindex="0"
+    role="region"
+    aria-label="Rangos y ganancias del bono residual"
+  >
+    {
+      RESIDUAL_BONUS.map((row) => (
+        <li class="residual-card">
+          <div class="residual-card__body">
+            <h4 class="residual-card__rank">{row.rank}</h4>
+            <p class="residual-card__label">Puntos por equipo</p>
+            <dl class="residual-card__points">
+              <div>
+                <dt>Binario</dt>
+                <dd>{row.binario}</dd>
+              </div>
+              <div>
+                <dt>Trinario</dt>
+                <dd>{row.trinario}</dd>
+              </div>
+              <div>
+                <dt>Tetranario</dt>
+                <dd>{row.tetranario}</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="residual-card__earnings">
+            <p class="residual-card__label">Ganancias</p>
+            <dl>
+              <div>
+                <dt>Quincenal</dt>
+                <dd>{row.quincenal}</dd>
+              </div>
+              <div class="is-total">
+                <dt>Mensual total</dt>
+                <dd>{row.mensual}</dd>
+              </div>
+            </dl>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="residual-bonus__note">
+    *Los puntajes mostrados han sido calculados en base a un equipo TRINARIO y
+    TETRANARIO.
+  </p>
+</section>
+
+<style>
+  h3,
+  h4,
+  p,
+  dl,
+  dd,
+  ul {
+    margin: 0;
+  }
+  ul {
+    padding: 0;
+  }
+  /* Figma 3253:28162: 1280px wide, 94px header and ten 56px rows. */
+  .residual-bonus {
+    /* El bloque residual se consulta como una lámina: a 1124 × 639 debe
+       mostrar título, tabla y nota completos. La referencia de escala es el
+       frame de 812 px de alto de Figma; nunca agranda la tabla en pantallas
+       altas. */
+    --residual-scale: min(1, calc(100svh / 812px));
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    width: 100%;
+    margin-top: calc(var(--w) * 0.075);
+    flex-direction: column;
+    align-items: center;
+  }
+  .residual-bonus h3 {
+    width: min(100%, 806px);
+    margin-bottom: calc(48px * var(--residual-scale));
+    font-family: var(--font-title);
+    font-size: calc(40px * var(--residual-scale));
+    font-weight: 600;
+    line-height: calc(60px * var(--residual-scale));
+    letter-spacing: 0;
+    background: var(--gold-text);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-align: center;
+  }
+  .residual-bonus__table-shell {
+    position: relative;
+    width: 100%;
+  }
+  .residual-bonus__table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+  .residual-bonus__table-wrap:focus-visible,
+  .residual-cards:focus-visible {
+    outline: 2px solid #f3c864;
+    outline-offset: 4px;
+  }
+  table {
+    width: 100%;
+    min-width: calc(1000px * var(--residual-scale));
+    border-spacing: 0;
+    table-layout: fixed;
+    color: #fff9ec;
+    background: rgba(20, 20, 20, 0.75);
+    font-family: var(--font-title);
+    text-align: center;
+  }
+  .rank-column {
+    width: 10.9375%;
+  }
+  .team-column {
+    width: 17.708333%;
+  }
+  .earnings-column {
+    width: 17.96875%;
+  }
+  th,
+  td {
+    border: 0;
+    border-left: 1px solid #f3c864;
+    border-bottom: 1px solid #f3c864;
+  }
+  tr > :last-child {
+    border-right: 1px solid #f3c864;
+  }
+  .th-title {
+    display: block;
+    background: var(--gold-text);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  thead {
+    background: linear-gradient(rgba(48, 35, 10, 0.1), rgba(48, 35, 10, 0.1));
+  }
+  thead tr:first-child th {
+    height: calc(54px * var(--residual-scale));
+    border-top: 1px solid #f3c864;
+    padding: 0 calc(16px * var(--residual-scale));
+    background: linear-gradient(
+      130deg,
+      rgba(219, 168, 59, 0.8) -21.916%,
+      rgba(0, 0, 0, 0.4) 21.243%,
+      rgba(0, 0, 0, 0.48) 50.231%,
+      rgba(0, 0, 0, 0.4) 80%,
+      rgba(219, 168, 59, 0.8) 180%
+    );
+    font-size: calc(24px * var(--residual-scale));
+    font-weight: 700;
+    line-height: calc(28px * var(--residual-scale));
+  }
+  thead tr:first-child th[rowspan] {
+    height: calc(94px * var(--residual-scale));
+  }
+  thead tr:first-child th:first-child {
+    border-top-left-radius: 8px;
+  }
+  thead tr:first-child th:last-child {
+    padding-top: 12px;
+    border-top-right-radius: 8px;
+  }
+  thead tr:last-child th {
+    height: calc(40px * var(--residual-scale));
+    padding: 0 calc(8px * var(--residual-scale));
+    background: rgba(0, 0, 0, 0.4);
+    font-size: calc(20px * var(--residual-scale));
+    font-weight: 500;
+    line-height: calc(24px * var(--residual-scale));
+  }
+  tbody td {
+    height: calc(56px * var(--residual-scale));
+    padding: 0 calc(16px * var(--residual-scale));
+    background: rgba(48, 35, 10, 0.2);
+    font-size: calc(16px * var(--residual-scale));
+    font-weight: 500;
+    line-height: calc(24px * var(--residual-scale));
+    white-space: nowrap;
+  }
+  tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+  }
+  tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+  }
+  .residual-bonus__flare {
+    position: absolute;
+    z-index: 1;
+    display: block;
+    pointer-events: none;
+  }
+  .residual-bonus__flare--top {
+    top: -9px;
+    left: 0;
+    width: 10.9375%;
+    height: 18px;
+  }
+  .residual-bonus__flare--bottom {
+    bottom: -10px;
+    right: 0;
+    width: 20.234375%;
+    height: 20px;
+  }
+  .residual-bonus__note {
+    width: 100%;
+    margin-top: calc(24px * var(--residual-scale));
+    color: #c4bba8;
+    font-family: var(--font-title);
+    font-size: calc(18px * var(--residual-scale));
+    font-weight: 400;
+    line-height: calc(26px * var(--residual-scale));
+    text-align: center;
+  }
+  .residual-cards {
+    display: none;
+  }
+  @media (max-width: 1100px) {
+    .residual-bonus {
+      --residual-scale: clamp(0.72, calc(100vw / 1000px), 0.88);
+    }
+    .residual-bonus h3 {
+      margin-bottom: calc(32px * var(--residual-scale));
+      font-size: clamp(24px, calc(40px * var(--residual-scale)), 35px);
+      line-height: 1.5;
+    }
+    .residual-bonus__note {
+      font-size: clamp(12px, calc(18px * var(--residual-scale)), 16px);
+      line-height: 1.5;
+    }
+    .residual-bonus__flare--bottom {
+      display: none;
+    }
+  }
+
+  /* Por debajo de 1024px la tabla se retira entera y el dato se lee como un
+     carrusel de cards, una por rango. La tabla necesitaba scroll horizontal en
+     cualquier caso; la card lo cambia por un gesto con snap y todo el contenido
+     de un rango visible a la vez. */
+  @media (max-width: 1023px) {
+    .residual-bonus {
+      margin-top: 0;
+    }
+    .residual-bonus h3 {
+      margin-bottom: 24px;
+      font-size: 24px;
+      line-height: 28px;
+    }
+    .residual-bonus__table-shell {
+      display: none;
+    }
+    .residual-cards {
+      /* Figma fija 320px de card. El `min()` evita que en pantallas de 360 la
+         card se coma el asomo de las vecinas, que es la única señal de que hay
+         más rangos. */
+      --card-width: min(320px, calc(100vw - 70px));
+      display: flex;
+      /* El strip sangra hasta los bordes de la pantalla: es lo que deja asomar
+         las cards vecinas. `overflow-x: clip` del layout impide que esa sangría
+         genere scroll horizontal de página. */
+      width: 100vw;
+      margin-inline: calc(50% - 50vw);
+      /* El relleno lateral vale media pantalla menos media card: es lo que
+         permite que la primera y la última también queden centradas al hacer
+         snap, en vez de quedarse pegadas a su borde. */
+      padding: 4px calc((100vw - var(--card-width)) / 2);
+      gap: 16px;
+      list-style: none;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+    }
+    .residual-card {
+      display: flex;
+      width: var(--card-width);
+      height: 360px;
+      flex-shrink: 0;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      border: 1px solid #f3c864;
+      border-radius: 16px;
+      background: #141414;
+      scroll-snap-align: center;
+    }
+    .residual-card__body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .residual-card__rank {
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f3c864;
+      background: var(--gold-text);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: var(--font-title);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 33px;
+      letter-spacing: 0;
+      text-align: center;
+    }
+    .residual-card__label {
+      color: #fcd880;
+      font-family: var(--font-title);
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .residual-card__points,
+    .residual-card__earnings dl {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-family: var(--font-title);
+    }
+    .residual-card__points > div {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border-radius: 8px;
+      background: #333;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .residual-card__points dt {
+      color: #fff9ec;
+      font-weight: 400;
+    }
+    .residual-card__points dd {
+      color: #fff;
+      font-weight: 600;
+    }
+    .residual-card__earnings {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #30230a;
+    }
+    .residual-card__earnings dl {
+      flex-direction: row;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .residual-card__earnings dl > div {
+      display: flex;
+      min-width: 0;
+      flex: 1;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .residual-card__earnings dl > .is-total {
+      align-items: flex-end;
+      text-align: right;
+    }
+    .residual-card__earnings dt {
+      color: #fff9ec;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+    .residual-card__earnings dd {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .residual-card__earnings .is-total dd {
+      color: #fcd880;
+    }
+    .residual-bonus__note {
+      margin-top: 24px;
+      font-size: 18px;
+      line-height: 26px;
+    }
+  }
+</style>

@@ -1,0 +1,43 @@
+/* Estilos globales del layout `website`. Todo va namespaceado bajo
+   html[data-layout='website'] para no filtrarse a la ruta de presentación.
+   Los componentes de la home definen sus colores como hex literales tomados
+   de Figma; aquí solo viven los valores que necesita el chrome de la página. */
+
+:root {
+  --font-title: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --black: #050504;
+  --white: #fffefa;
+  --gold-200: #f6daa0;
+  --header-height: 104px;
+  /* Cuánto crecen los enlaces al pasar por encima. Vive aquí porque lo comparten
+     la cabecera y el footer, y así se afina en un solo sitio. */
+  --hover-scale: 1.05;
+  /* Degradado dorado de los títulos. Es un texto con background-clip, no un
+     color, así que va como token: lo usan los bloques de bonos, el programa de
+     embajadores y los beneficios de producto. */
+  --gold-text: linear-gradient(
+    90deg,
+    #6e582b 10.512%,
+    #f9cb69 50.363%,
+    #f0c365 58.373%,
+    #d8b05a 69.587%,
+    #b29049 85.607%,
+    #7d6431 103.23%,
+    #6e582b 108.03%
+  );
+}
+
+html[data-layout='website'] { scroll-behavior:smooth;scroll-padding-top:var(--header-height);background:var(--black); }
+html[data-layout='website'],html[data-layout='website'] body { min-width:280px;min-height:100%;margin:0;overflow-x:clip;background:var(--black);color:var(--white);font-family:var(--font-body);user-select:text;-webkit-user-select:text; }
+html[data-layout='website'] * { box-sizing:border-box; }
+html[data-layout='website'] img,html[data-layout='website'] svg { user-select:none;-webkit-user-select:none;-webkit-user-drag:none; }
+html[data-layout='website'] body.menu-is-open { overflow:hidden; }
+html[data-layout='website'] h1,html[data-layout='website'] h2,html[data-layout='website'] h3 { font-family:var(--font-title);font-weight:600;letter-spacing:-.035em; }
+html[data-layout='website'] :focus-visible { outline:2px solid var(--gold-200);outline-offset:4px; }
+html[data-layout='website'] section[id] { scroll-margin-top:var(--header-height); }
+
+.v2-page { overflow:clip;background:var(--black); }
+
+@media (max-width:767px), (max-width:1023px) and (max-height:600px) { :root { --header-height:64px; } }
+@media (prefers-reduced-motion:reduce) { html[data-layout='website'] { scroll-behavior:auto; } *,*::before,*::after { scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important; } }

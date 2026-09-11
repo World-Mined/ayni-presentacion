@@ -9,11 +9,20 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:responsive": "npm run build && playwright test tests/responsive-layout.spec.ts tests/reveal-video.spec.ts",
+    "test:unit": "playwright test --config playwright.unit.config.ts",
+    "test": "npm run test:unit && npm run test:responsive && npm run csp:check",
+    "csp:write": "node scripts/csp-hashes.mjs --write",
+    "csp:check": "node scripts/csp-hashes.mjs --check"
   },
   "dependencies": {
     "@vite-pwa/astro": "^1.2.0",
+    "animejs": "^4.5.0",
     "astro": "^7.0.0",
     "workbox-window": "^7.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }

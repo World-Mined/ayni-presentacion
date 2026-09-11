@@ -1,0 +1,19 @@
+---
+import HomeFooter from '../components/v2/HomeFooter/HomeFooter.astro';
+import PickupLocations from '../components/v2/PickupLocations/PickupLocations.astro';
+import SiteHeader from '../components/v2/SiteHeader/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+import '../styles/v2.css';
+---
+
+<Layout
+  variant="website"
+  title="Puntos de recojo — AYNI"
+  description="Encuentra los puntos de recojo de AYNI en Perú y revisa la disponibilidad de envíos en Bolivia."
+>
+  <SiteHeader active="pickup" />
+  <main class="v2-page">
+    <PickupLocations />
+  </main>
+  <HomeFooter />
+</Layout>

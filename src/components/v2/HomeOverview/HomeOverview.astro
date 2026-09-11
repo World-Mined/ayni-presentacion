@@ -1,0 +1,359 @@
+---
+import { Image, getImage } from 'astro:assets';
+import aboutBackground from '../../../assets/v2/about-background.webp';
+import aboutEarth from '../../../assets/v2/about-earth.webp';
+import aboutGradient from '../../../assets/v2/about-gradient.webp';
+import aboutTree from '../../../assets/v2/about-tree.webp';
+import aboutVideoClose from '../../../assets/v2/about-video-close.svg';
+import aboutVideoPoster from '../../../assets/v2/about-video-poster.png';
+import productsJungle from '../../../assets/v2/products-jungle-ayni.webp';
+import productsBgBlur from '../../../assets/v2/products-bg-blur.svg';
+import productsPlank from '../../../assets/v2/products-plank.webp';
+import productsShade from '../../../assets/v2/products-shade.webp';
+import { ABOUT_VIDEO_URL } from '../../../data/media';
+import { PRODUCT_LINE, ROUTES, SECTION_IDS } from '../../../data/v2';
+import MotionCta from '../MotionCta/MotionCta.astro';
+import PickupMap from '../PickupMap/PickupMap.astro';
+import VideoPlayer from '../VideoPlayer/VideoPlayer.astro';
+
+const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width: 1280, format: 'webp', quality: 78 });
+---
+
+<section
+  id={SECTION_IDS.about}
+  class="home-band home-band--about"
+  aria-labelledby="about-title"
+>
+  <div class="home-band__about-background" aria-hidden="true">
+    <Image
+      src={aboutBackground}
+      alt=""
+      loading="eager"
+      decoding="async"
+      fetchpriority="high"
+      width={1440}
+      height={600}
+    />
+  </div>
+  <div class="home-band__about-gradient" aria-hidden="true">
+    <Image src={aboutGradient} alt="" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" />
+  </div>
+  <div class="home-band__about-tree">
+    <Image
+      src={aboutTree}
+      alt="Árbol de amalaki con frutos"
+      loading="lazy"
+      widths={[320, 465]}
+      sizes="(max-width: 767px) 72vw, 465px"
+    />
+  </div>
+  <div class="home-band__about-earth" aria-hidden="true">
+    <Image src={aboutEarth} alt="" loading="lazy" width={1440} height={122} />
+  </div>
+  <div class="home-band__content home-band__content--left">
+    <h1 id="about-title">¿Qué es AYNI?</h1>
+    <p>Bienestar consciente basado en la reciprocidad: le das a tu cuerpo lo mejor de la naturaleza, y te devuelve su <strong>máxima vitalidad.</strong> Transformamos superalimentos en nutrición para tu día a día.</p>
+    <MotionCta class="home-band__cta" href="#about-video" aria-haspopup="dialog">
+      <span class="about-cta-label">Conoce más<span class="about-cta-label__mobile-suffix"> aquí</span></span>
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+    </MotionCta>
+  </div>
+</section>
+
+<dialog id="about-video" class="about-video-modal" aria-labelledby="about-video-title" data-about-video-modal>
+  <div class="about-video-modal__content">
+    <h2 id="about-video-title" class="sr-only">Video: ¿Qué es AYNI?</h2>
+    <button class="about-video-modal__close" type="button" data-about-video-close aria-label="Cerrar video">
+      <img src={aboutVideoClose.src} alt="" width="37" height="37" />
+    </button>
+    <div class="about-video-modal__player">
+      <VideoPlayer
+        src={ABOUT_VIDEO_URL}
+        poster={optimizedAboutVideoPoster.src}
+        ariaLabel="Video: ¿Qué es AYNI?"
+      />
+    </div>
+  </div>
+</dialog>
+
+<div class="home-bands__lower">
+<section
+  id={SECTION_IDS.products}
+  class="home-band home-band--products"
+  aria-labelledby="products-title"
+>
+  <div class="home-band__products-blur" aria-hidden="true">
+    <img src={productsBgBlur.src} alt="" loading="lazy" />
+  </div>
+  <div class="home-band__products-stage">
+    <div class="home-band__products-scene" aria-hidden="true">
+      <Image
+        src={productsJungle}
+        alt=""
+        loading="lazy"
+        widths={[768, 1280, 1440]}
+        sizes="100vw"
+      />
+    </div>
+    <div class="home-band__products-shade" aria-hidden="true">
+      <Image src={productsShade} alt="" loading="lazy" widths={[768, 1280, 1920]} sizes="100vw" />
+    </div>
+    <div class="home-band__products-plank" aria-hidden="true">
+      <Image src={productsPlank} alt="" loading="lazy" widths={[768, 1280, 1920]} sizes="100vw" />
+    </div>
+    <div class="home-band__products" aria-label="Moravi 360, Capucci 360 y Reset 360">
+      {PRODUCT_LINE.map((product) => (
+        <Image src={product.src} alt={product.alt} loading="lazy" widths={[220, 360, 520]} sizes="(max-width:767px) 35vw, 21vw" />
+      ))}
+    </div>
+    <div class="home-band__content home-band__content--right">
+      <h2 id="products-title">El ciclo infinito<br />de la reciprocidad</h2>
+      <p>Tres fórmulas maestras diseñadas para acompañar cada ritmo de tu vida: <strong>energía para tu mente, protección para tu cuerpo y ligereza para tu interior.</strong></p>
+      <MotionCta class="home-band__cta" href={ROUTES.products}>
+        <span class="products-cta-label">Conoce más aquí</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </MotionCta>
+    </div>
+  </div>
+</section>
+
+<section id={SECTION_IDS.pickup} class="home-band home-band--pickup" aria-labelledby="pickup-title">
+  <div class="home-band__pickup-layout">
+    <div class="home-band__content home-band__content--pickup">
+      <h2 id="pickup-title">¿Dónde recoger<br />mi producto?</h2>
+      <p>Descubre nuestros puntos de recojo autorizados y <strong>empieza a vivir</strong> el equilibrio natural.</p>
+      <MotionCta class="home-band__cta" href={ROUTES.pickup}>
+        <span>Ver mapa de puntos</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="cta-icon--stroked"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </MotionCta>
+    </div>
+    <div class="home-band__pickup-map">
+      <PickupMap />
+    </div>
+  </div>
+</section>
+</div>
+
+<style>
+  /* Píldora dorada compartida por los CTA. La capa base (negro sólido u
+     opaco al 60%) se define en cada regla porque cambia según el fondo. */
+  .home-band { --cta-sheen:linear-gradient(200.74deg,rgba(135,116,79,.2) 0%,rgba(43,43,43,.14) 100%);--cta-bevel:inset -2.62px -1.618px 4.23916px rgba(250,250,250,.22);--cta-bevel-sm:inset -1.71473px -1.05895px 2.77444px rgba(250,250,250,.22);position:relative;display:grid;width:100%;min-height:600px;align-items:center;overflow:hidden;background:#050504;color:#b1a58d;isolation:isolate; }
+  .home-band__content { position:relative;z-index:2;width:min(100%,600px);padding:72px clamp(28px,11vw,160px); }
+  .home-band__content--right { justify-self:end;padding-right:clamp(28px,9vw,130px);padding-left:28px; }
+  .home-band h1,.home-band h2 { margin:0 0 20px;color:#f9cb69;font-family:Poppins,sans-serif;font-size:clamp(30px,3.1vw,44px);font-weight:600;line-height:1.16;letter-spacing:-.02em; }
+  .home-band p { max-width:500px;margin:0 0 25px;font-family:Poppins,sans-serif;font-size:clamp(14px,1.35vw,18px);line-height:1.55; }
+  .home-band strong { color:#f0ede6;font-weight:600; }
+  /* Enlaces sueltos dentro de una banda. Excluye el CTA a propósito: ese lo
+     estiliza MotionCta y, con el atributo de scope que añade Astro, esta regla
+     sería más específica que las de banda y le impondría radio y color. */
+  .home-band a:not(.home-band__cta) { display:inline-flex;min-height:40px;align-items:center;gap:6px;padding:0 15px;border:1px solid rgba(249,203,105,.42);border-radius:22px;color:#b08b42;font-family:Poppins,sans-serif;font-size:14px;text-decoration:none; }
+  /* El aro en reposo conserva el acabado original. Durante el motion, debajo
+     de la cola queda el trazo uniforme de Figma: #A48955 al 20%. */
+  .home-band__asset { position:absolute;z-index:0;inset:0;pointer-events:none; }
+  .home-band--about { --about-copy-left:clamp(72px,11.111vw,160px);--about-copy-width:clamp(410px,41vw,527px);--about-tree-right:clamp(40px,7.2vw,104px);--about-tree-width:clamp(350px,36.3vw,465px);min-height:600px;background-color:#080a07; }
+  .home-band__about-background { position:absolute;z-index:0;inset:0;overflow:hidden;pointer-events:none; }
+  .home-band__about-background :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+  .home-band__about-gradient { position:absolute;z-index:1;inset:0;pointer-events:none; }
+  .home-band__about-gradient :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+  .home-band__about-tree { position:absolute;z-index:3;right:var(--about-tree-right);bottom:62px;width:var(--about-tree-width);filter:drop-shadow(0 14px 22px rgba(0,0,0,.28)); }
+  .home-band__about-tree :global(img) { display:block;width:100%;height:auto; }
+  .home-band__about-earth { position:absolute;z-index:2;right:0;bottom:0;left:0;width:100%;height:122px; }
+  .home-band__about-earth :global(img) { display:block;width:100%;height:122px;object-fit:cover; }
+  .home-band--about .home-band__content { display:flex;z-index:4;width:var(--about-copy-width);max-width:calc(100% - 48px);height:auto;margin-left:var(--about-copy-left);padding:0;flex-direction:column;align-items:flex-start;gap:0; }
+  .home-band--about h1 { width:auto;margin:0 0 16px;color:#f9cb69;font-family:Poppins,sans-serif;font-size:36px;font-weight:600;line-height:44px;letter-spacing:0; }
+  .home-band--about p { width:100%;max-width:100%;margin:0;color:#c4bba8;font-family:Poppins,sans-serif;font-size:18px;font-weight:300;line-height:26px; }
+  .home-band--about strong { color:#f2f0eb;font-weight:600; }
+  /* Las bandas solo fijan medidas y acabado; el mecanismo de la cola vive en
+     MotionCta.astro. Hace falta :global() porque el <a> lo renderiza ese
+     componente y lleva su propio atributo de scope, no el de este archivo. */
+  .home-band :global(.home-band__cta) { --cta-surface:linear-gradient(0deg,#000,#000),var(--cta-sheen);margin-top:24px; }
+  .cta-icon--stroked { fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .about-cta-label { white-space:nowrap; }
+  .about-cta-label__mobile-suffix { display:none; }
+  .about-video-modal { width:min(100% - 48px,1080px);max-width:none;padding:0;overflow:visible;background:transparent;border:0; }
+  .about-video-modal::backdrop { background:rgba(3,4,2,.86);backdrop-filter:blur(8px); }
+  .about-video-modal__content { position:relative;width:100%;padding:12px;background:#030402;border:1px solid #b1a58d;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6); }
+  .about-video-modal__player { width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:10px; }
+  .about-video-modal__close { position:absolute;z-index:5;top:-18px;right:-18px;display:grid;width:37px;height:37px;padding:0;place-items:center;background:transparent;border:0;border-radius:50%;cursor:pointer; }
+  .about-video-modal__close:focus-visible { outline:2px solid #f9cb69;outline-offset:3px; }
+  .about-video-modal__close img { display:block;width:100%;height:100%; }
+  .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+  .home-bands__lower { position:relative;overflow:hidden;background:#050504;isolation:isolate; }
+  .home-band--products { --products-plank-top:61.8%;--products-plank-inset:2.4%;--products-copy-width:clamp(360px,38vw,547px);--products-copy-right:clamp(40px,10.417vw,150px);--products-sink:21%;z-index:2;display:block;min-height:0;background:#000;overflow:visible; }
+  .home-band__products-blur { position:absolute;z-index:1;top:44px;left:calc(50% + 264px);width:min(52.22vw,752px);aspect-ratio:752/429;transform:translateX(-50%);pointer-events:none; }
+  .home-band__products-blur :global(img) { position:absolute;top:-58.28%;left:-33.24%;display:block;width:166.49%;height:216.55%;max-width:none; }
+  .home-band__products-stage { position:relative;z-index:2;display:grid;width:100%;min-height:480px;aspect-ratio:2000/667;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden;background:#080906; }
+  .home-band__products-scene { position:absolute;z-index:0;inset:0; }
+  .home-band__products-scene :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center 66%; }
+  .home-band__products-plank { position:absolute;z-index:1;top:var(--products-plank-top);right:0;bottom:0;left:0; }
+  .home-band__products-plank :global(img) { display:block;width:100%;height:100%;object-fit:fill; }
+  .home-band__products-shade { position:absolute;z-index:2;inset:0;pointer-events:none; }
+  .home-band__products-shade :global(img) { display:block;width:100%;height:100%;object-fit:fill; }
+  .home-band__products-shade::after { content:"";position:absolute;inset:0;background:linear-gradient(96deg,transparent 30%,rgba(5,6,4,.18) 55%,rgba(5,6,4,.4) 78%,rgba(5,6,4,.52) 100%); }
+  .home-band__products { position:absolute;z-index:4;right:50%;bottom:calc(100% - var(--products-plank-top) - var(--products-plank-inset));left:0;display:flex;align-items:end;justify-content:center;padding-left:clamp(28px,4.86vw,70px); }
+  /* --products-sink hunde los empaques en la mesa. En % de la altura de cada
+     imagen, así el apoyo se mantiene al escalar. Ajuste visual, no compensa
+     el padding transparente del asset (que es ~2%). */
+  /* El solape debe depender del tamaño de las bolsas, no del ancho completo
+     de la media pantalla. Con porcentajes, al crecer el viewport el margen
+     negativo seguía aumentando aunque los assets ya estuvieran limitados a
+     260px, y terminaban amontonados. El clamp conserva una composición
+     compacta en desktop normal y limita el cruce en pantallas grandes. */
+  .home-band__products img { width:min(42%,260px);height:auto;margin-inline:clamp(-48px,-2.5vw,-28px);transform:translateY(var(--products-sink)); }
+  .home-band__products img:nth-child(2) { position:relative;z-index:2; }
+  .home-band--products .home-band__content { display:flex;z-index:5;grid-column:2;width:var(--products-copy-width);max-width:calc(100% - 48px);padding:0;margin-right:var(--products-copy-right);flex-direction:column;justify-content:center;align-items:flex-start;gap:0;transform:none; }
+  .home-band--products h2 { width:min(100%,384px);margin:0 0 16px;color:#f9cb69;font-family:Poppins,sans-serif;font-size:40px;font-weight:600;line-height:48px;letter-spacing:0; }
+  .home-band--products p { width:100%;max-width:100%;margin:0 0 24px;color:#c4bba8;font-family:Poppins,sans-serif;font-size:18px;font-weight:300;line-height:26px; }
+  .home-band--products strong { color:#f2f0eb;font-weight:600; }
+  .home-band--products :global(.home-band__cta) { margin-top:0; }
+  .products-cta-label { white-space:nowrap; }
+  .home-band--pickup { z-index:1;display:flex;min-height:clamp(650px,54.585vw,786px);padding:80px;overflow:visible;background:transparent; }
+  .home-band__pickup-layout { position:relative;z-index:2;display:grid;width:min(100%,1280px);height:626px;margin-inline:auto;grid-template-columns:minmax(0,597fr) minmax(0,603fr);column-gap:80px;align-items:center; }
+  .home-band--pickup .home-band__content--pickup { z-index:3;width:480px;padding:0;margin-left:80px; }
+  .home-band--pickup h2 { width:332px;max-width:100%;margin-bottom:16px;font-size:40px;line-height:48px;letter-spacing:0; }
+  .home-band--pickup p { width:480px;max-width:100%;margin:0;color:#c4bba8;font-size:18px;font-weight:300;line-height:26px; }
+  .home-band__pickup-map { position:relative;z-index:3;width:394px;justify-self:center;filter:drop-shadow(0 16px 28px rgba(0,0,0,.35)); }
+  @media(min-width:1024px) and (max-width:1279px){
+    .home-band--about h1 { font-size:34px;line-height:42px; }
+    .home-band--about p { font-size:17px;line-height:25px; }
+    .home-band--products h2 { font-size:34px;line-height:42px; }
+    .home-band--products p { font-size:17px;line-height:25px; }
+    .home-band--pickup { min-height:clamp(650px,56.3vw,720px);padding:clamp(48px,4vw,64px); }
+    .home-band__pickup-layout { width:min(100%,1120px);height:clamp(554px,46.9vw,600px);grid-template-columns:minmax(0,1fr) minmax(320px,370px);column-gap:32px; }
+    .home-band--pickup .home-band__content--pickup { width:min(100%,430px);margin-left:0;justify-self:center; }
+    .home-band--pickup h2 { font-size:34px;line-height:42px; }
+    .home-band--pickup p { width:100%;font-size:17px;line-height:25px; }
+    .home-band__pickup-map { width:clamp(320px,30vw,370px); }
+  }
+  @media(min-width:768px) and (max-width:1023px){
+    .home-band--about { --about-copy-left:clamp(42px,7vw,72px);--about-copy-width:clamp(320px,40vw,410px);--about-tree-right:clamp(24px,4vw,40px);--about-tree-width:clamp(310px,35vw,370px);background-position:54% center; }
+    .home-band--about h1 { font-size:32px;line-height:40px; }
+    .home-band--about p { font-size:16px;line-height:24px; }
+    .home-band--products { --products-copy-width:clamp(300px,42vw,400px);--products-copy-right:clamp(24px,4vw,48px);--products-sink:20%; }
+    .home-band__products-stage { aspect-ratio:auto;min-height:520px; }
+    .home-band__products-scene :global(img) { object-position:16% center; }
+    .home-band__products { padding-left:clamp(12px,3vw,32px); }
+    .home-band--products h2 { font-size:32px;line-height:40px; }
+    .home-band--products p { font-size:16px;line-height:24px; }
+    .home-band--pickup { min-height:650px;padding:48px 42px; }
+    .home-band__pickup-layout { height:554px;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);column-gap:24px; }
+    .home-band--pickup .home-band__content--pickup { width:min(100%,410px);margin-left:0; }
+    .home-band--pickup h2 { font-size:34px; }
+    .home-band--pickup p { font-size:16px;line-height:24px; }
+    .home-band__pickup-map { width:clamp(290px,38vw,350px); }
+  }
+  @media(min-width:600px) and (max-width:767px){
+    .home-band--about { --about-copy-left:clamp(32px,5.5vw,42px);--about-copy-width:clamp(250px,42vw,320px);--about-tree-right:clamp(20px,4vw,30px);--about-tree-width:clamp(230px,40vw,310px);background-position:52% center; }
+    .home-band--about h1 { font-size:30px;line-height:38px; }
+    .home-band--about p { font-size:15px;line-height:23px; }
+    /* La franja 600–767px conserva las dos columnas de tablet, pero reduce
+       progresivamente el mapa y el gap: el arte de 394px no cabe junto a la
+       copia en este rango y antes invadía el titular y el CTA. */
+    .home-band--pickup { min-height:clamp(560px,80vw,620px);padding:40px 32px;overflow:hidden; }
+    .home-band__pickup-layout { width:100%;height:clamp(480px,70vw,540px);grid-template-columns:minmax(0,1fr) clamp(250px,40vw,300px);column-gap:clamp(20px,3vw,24px);align-items:center; }
+    .home-band--pickup .home-band__content--pickup { width:100%;padding:0;margin:0; }
+    .home-band--pickup h2 { width:100%;max-width:300px;margin:0 0 16px;font-size:30px;line-height:36px; }
+    .home-band--pickup p { width:100%;max-width:320px;margin:0;font-size:15px;line-height:22px; }
+    .home-band__pickup-map { width:100%;max-width:300px;margin:0;justify-self:center;filter:none; }
+  }
+  @media(max-width:767px){
+    /* Todos los coeficientes `vw` de este bloque son `medida_Figma / 390px`:
+       el mockup móvil se diseñó a 390 de ancho y cada valor se expresa como la
+       fracción del viewport que ocupaba ahí. Así 144.359vw son los 563px de
+       alto del escenario, 44.872vw los 175px del grupo de empaques y 8.205vw
+       los 32px del titular. Los `clamp()` sólo acotan ese escalado en los
+       extremos; el término central es la medida original.
+       (Misma convención documentada en el componente `ProductsBanner`.) */
+    .home-band--products { --products-mobile-height:clamp(438px,144.359vw,690px);--products-mobile-group-h:clamp(136px,44.872vw,240px);--products-mobile-gap:clamp(32px,10.256vw,48px);--products-copy-width:100%;--products-copy-right:0;--products-sink:0;min-height:0;padding:0;overflow-x:clip; }
+    .home-band__products-stage { display:grid;height:var(--products-mobile-height);min-height:0;aspect-ratio:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto var(--products-mobile-group-h);row-gap:var(--products-mobile-gap);align-content:center;justify-items:center; }
+    .home-band__products-scene :global(img) { object-position:center; }
+    .home-band__products-shade { display:flex;align-items:center;justify-content:center; }
+    .home-band__products-shade :global(img) { display:block;width:var(--products-mobile-height);height:100vw;max-width:none;object-fit:fill;transform:rotate(-90deg); }
+    .home-band__products-shade::after { display:none; }
+    .home-band__products-plank { top:auto;height:clamp(82px,27.179vw,150px);overflow:hidden; }
+    .home-band__products-plank :global(img) { position:absolute;top:0;left:50%;width:clamp(716px,236.154vw,1100px);height:100%;max-width:none;object-fit:fill;transform:translateX(-50%); }
+    /* El grupo de empaques se apoya en la mesa exactamente a 390px de ancho, y
+       hay que subirlo al alejarse de esa medida en cualquier dirección: el alto
+       del escenario y el de la mesa siguen curvas distintas, así que el punto de
+       apoyo se desplaza. Son dos rampas con la misma bisagra en 390px —una para
+       cada lado— y cada una queda anulada por su `clamp` cuando le toca al otro
+       lado. Los topes (-16px y -26px) se alcanzan en ~296px y ~746px. */
+    .home-band__products { --products-lift-narrow:clamp(-16px,calc((100vw - 390px) * .17),0px);--products-lift-wide:clamp(-26px,calc((390px - 100vw) * .073),0px);position:relative;right:auto;bottom:auto;left:auto;grid-row:2;width:100%;height:var(--products-mobile-group-h);padding:0;align-items:center;align-self:center;overflow:visible;transform:translateY(calc(var(--products-lift-narrow) + var(--products-lift-wide))); }
+    .home-band__products-blur { top:auto;right:auto;bottom:-6%;left:50%;width:max(500px,130vw);transform:translateX(-50%); }
+    .home-band__products img { width:clamp(154px,50.923vw,274px);height:auto;margin-inline:clamp(-48px,-8.762vw,-28px);transform:none; }
+    .home-band--products .home-band__content { position:relative;top:auto;left:auto;grid-row:1;grid-column:1;width:min(calc(100% - 32px),520px);max-width:none;padding:0;margin:0;align-items:center;justify-self:center;gap:0;transform:none;background:none;text-align:center; }
+    .home-band--products h2 { width:100%;margin:0 0 clamp(9px,2.685vw,14px);font-size:clamp(28px,8.205vw,34px);line-height:1.1875; }
+    .home-band--products p { width:100%;margin:0 0 clamp(14px,4.027vw,22px);font-size:clamp(11.5px,3.021vw,15px);line-height:1.444; }
+    /* El CTA de productos va en bronce apagado sobre la mesa iluminada: aro de
+       medio píxel del mismo tono que el texto. El `--cta-ring` va aquí y no en
+       el bloque de 599 para que no cambie de aspecto al cruzar ese límite. */
+    .home-band--products :global(.home-band__cta) { --cta-w:100%;--cta-h:clamp(36px,9.231vw,44px);--cta-font-size:clamp(10.472px,2.685vw,14px);--cta-color:#987c40;--cta-gap:0;--cta-ring:rgba(152,124,64,.58);--cta-ring-w:.5px;margin-top:0;padding:8px 10px; }
+    .home-band--products .cta-icon--stroked { width:clamp(15.707px,4.028vw,20px);height:clamp(15.707px,4.028vw,20px); }
+  }
+  @media(max-width:599px){
+    .home-band { min-height:640px;align-items:end; }
+    .home-band__content,.home-band__content--right { width:100%;padding:48px 24px;justify-self:start;background:linear-gradient(0deg,rgba(0,0,0,.94),rgba(0,0,0,.62),transparent); }
+    .home-band--about { --about-copy-left:0;--about-copy-width:auto;min-height:clamp(760px,calc(650.5px + 35vw),860px);align-items:start; }
+    .home-band__about-background :global(img) { position:absolute;top:50%;left:50%;width:auto;min-width:100%;max-width:none;height:104.2%;transform:translate(-50%,-50%); }
+    .home-band--about .home-band__content { position:absolute;top:clamp(78px,24.615vw,112px);right:auto;left:50%;width:min(85.385vw,480px);max-width:none;margin:0;padding:0;align-items:center;transform:translateX(-50%);background:none;text-align:center; }
+    .home-band__about-tree { z-index:3;right:50%;bottom:clamp(12px,4.103vw,24px);width:clamp(232px,67.18vw,360px);transform:translateX(50%);opacity:1; }
+    .home-band__about-earth { z-index:2;bottom:0;width:100%;height:clamp(28px,8.462vw,45px); }
+    .home-band__about-earth :global(img) { height:100%;object-position:center; }
+    .home-band--about h1 { margin-bottom:clamp(14px,4.103vw,18px);font-size:clamp(30px,8.205vw,38px);line-height:1.19; }
+    .home-band--about p { font-size:clamp(16px,4.615vw,20px);line-height:1.445; }
+    /* El bisel pequeño y el interlineado valen para todas las bandas; el resto
+       del dimensionado es el del CTA grande (about, pickup). Productos queda
+       excluido a propósito: sus medidas ya están completas en el bloque de
+       767px y antes había que repetirlas aquí sólo para deshacer esta regla,
+       que gana por orden de declaración y no por especificidad. */
+    .home-band :global(.home-band__cta) { --cta-bevel:var(--cta-bevel-sm);line-height:24px; }
+    .home-band:not(.home-band--products) :global(.home-band__cta) { --cta-w:100%;--cta-h:clamp(40px,10.5vw,46px);--cta-font-size:clamp(14px,3.85vw,16px);--cta-color:#987c40;--cta-ring:rgba(152,124,64,.58);--cta-ring-w:.75px;margin-top:clamp(20px,6.154vw,28px);padding:8px 16px; }
+    .home-band--about .cta-icon--stroked { width:clamp(15.71px,4.028vw,18px);height:clamp(15.71px,4.028vw,18px); }
+    .about-cta-label__mobile-suffix { display:inline; }
+    .home-band--products { min-height:0; }
+    .home-band--pickup { display:block;min-height:0;padding:40px 16px;overflow:hidden; }
+    .home-band__pickup-layout { display:flex;width:min(100%,358px);height:auto;margin-inline:auto;flex-direction:column;align-items:flex-start; }
+    .home-band--pickup .home-band__content--pickup { display:block;width:100%;padding:0;margin:0;background:none;text-align:left; }
+    .home-band--pickup h2 { width:min(100%,266px);max-width:none;margin:0 0 16px;font-size:32px;line-height:38px; }
+    .home-band--pickup p { width:100%;max-width:none;margin:0;font-size:18px;line-height:26px; }
+    .home-band--pickup :global(.home-band__cta) { display:none; }
+    .home-band__pickup-map { width:calc(100% - 2px);max-width:356px;margin:40px auto 0;filter:none; }
+    .about-video-modal { width:calc(100% - 28px); }
+    .about-video-modal__content { padding:6px;border-radius:12px; }
+    .about-video-modal__player { border-radius:8px; }
+    .about-video-modal__close { top:-14px;right:-8px;width:32px;height:32px; }
+  }
+</style>
+
+<script>
+  import '../../../scripts/v2/cta-motion';
+
+  document.querySelectorAll<HTMLElement>('.home-band--about').forEach((section) => {
+    const trigger = section.querySelector<HTMLAnchorElement>('[data-motion-cta]');
+    const modal = document.querySelector<HTMLDialogElement>('[data-about-video-modal]');
+    const close = modal?.querySelector<HTMLButtonElement>('[data-about-video-close]');
+    const video = modal?.querySelector<HTMLVideoElement>('[data-video-media]');
+
+    if (!trigger || !modal || !close || !video) return;
+
+    const stopVideo = () => {
+      video.pause();
+      video.currentTime = 0;
+    };
+
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!modal.open) modal.showModal();
+      // El clic sobre el CTA cuenta como gesto explícito: iniciamos el video
+      // con sonido al abrir. Si un navegador aún lo impide, queda visible el
+      // control de reproducción del reproductor.
+      video.play().catch(() => undefined);
+    });
+
+    close.addEventListener('click', () => modal.close());
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) modal.close();
+    });
+    modal.addEventListener('close', stopVideo);
+  });
+</script>

@@ -1,0 +1,384 @@
+---
+import { Image } from 'astro:assets';
+import type { ProductDetail } from '../../../data/products';
+import MotionCta from '../MotionCta/MotionCta.astro';
+
+interface Props {
+  subtitle: string;
+  items: ProductDetail['benefits']['items'];
+  ctaHref: string;
+  /** Nombre del producto: sale en el rótulo accesible del CTA. */
+  productName: string;
+}
+
+const { subtitle, items, ctaHref, productName } = Astro.props;
+---
+
+<section class="benefits" aria-labelledby="benefits-title">
+  <div class="benefits__inner">
+    <div class="benefits__glow" aria-hidden="true"></div>
+    <div class="benefits__glow-core" aria-hidden="true"></div>
+
+    <div class="benefits__head">
+      <h2 id="benefits-title">Beneficios</h2>
+      <p>{subtitle}</p>
+    </div>
+
+    <div class="benefits__carousel" data-benefits-carousel>
+      <ul class="benefits__cards" data-benefits-track>
+        {items.map((item) => (
+          <li class="benefits__card" data-benefits-card>
+            <Image
+              class="benefits__card-art"
+              src={item.image}
+              alt=""
+              widths={[225, 450]}
+              sizes="225px"
+              quality={72}
+              loading="lazy"
+            />
+            <div class="benefits__card-text">
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div class="benefits__pagination" aria-label="Paginación de beneficios">
+        {items.map((item, index) => (
+          <button
+            type="button"
+            aria-label={`Mostrar ${item.title}`}
+            aria-current={index === 0 ? 'true' : undefined}
+            data-benefits-dot={index}
+          ></button>
+        ))}
+      </div>
+    </div>
+
+    <MotionCta class="benefits__cta" href={ctaHref} target="_blank" rel="noopener noreferrer">
+      <span>Conoce más aquí</span>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4.5 12h14m0 0-5.6-5.6M18.5 12l-5.6 5.6"/></svg>
+      <span class="benefits__sr-only">sobre {productName}, se abre en otra pestaña</span>
+    </MotionCta>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-benefits-carousel]').forEach((carousel) => {
+    if (carousel.dataset.ready) return;
+    carousel.dataset.ready = 'true';
+
+    const stage = carousel.querySelector<HTMLElement>('[data-benefits-track]');
+    const cards = [...carousel.querySelectorAll<HTMLElement>('[data-benefits-card]')];
+    const dots = [...carousel.querySelectorAll<HTMLButtonElement>('[data-benefits-dot]')];
+    if (!stage || !cards.length) return;
+
+    /* El apilado solo existe por debajo de 768. En escritorio las tarjetas son
+       una rejilla estática y ninguna de estas variables se lee. */
+    const stacked = window.matchMedia('(max-width: 767px)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const total = cards.length;
+
+    /* Geometría de la escena, en fracciones del ancho de tarjeta. A la
+       distancia de perspectiva del CSS, hundir 0.4938 dibuja el 90 % y
+       desplazar 0.3309 deja los 67px que asoma una tarjeta lateral. */
+    const SIDE_X = 0.330864;
+    const SIDE_Z = -0.493827;
+    /* Cuánto se hunde de más a mitad de camino: es lo que hace que la tarjeta
+       se perciba yendo hacia atrás en vez de encogiendo. */
+    const DIVE = 0.35;
+    const TILT = 10;
+
+    /* Posición continua dentro del ciclo. El entero es la tarjeta al frente;
+       la parte decimal es el viaje, lo empuje el dedo o la animación. */
+    let position = 0;
+    let activeIndex = 0;
+    let frame = 0;
+
+    /* Distancia más corta dentro del ciclo, en el rango [-total/2, total/2). */
+    const wrap = (value: number) => {
+      const half = total / 2;
+      return ((value + half) % total + total) % total - half;
+    };
+
+    const place = () => {
+      cards.forEach((card, index) => {
+        const relative = wrap(index - position);
+        const distance = Math.abs(relative);
+        const side = relative < 0 ? -1 : 1;
+        /* Dos tramos: del frente al costado, y del costado al fondo. */
+        const leg = distance <= 1 ? distance : distance - 1;
+        const dive = Math.sin(Math.PI * leg) * DIVE;
+
+        const x = distance <= 1 ? relative * SIDE_X : side * SIDE_X * (2 - distance);
+        const z = SIDE_Z * ((distance <= 1 ? distance : 1) + dive);
+
+        card.style.setProperty('--bx', `${x.toFixed(4)}`);
+        card.style.setProperty('--bz', `${z.toFixed(4)}`);
+        card.style.setProperty('--brot', `${(-side * TILT * Math.sin(Math.PI * leg)).toFixed(2)}`);
+        card.style.setProperty('--bveil', `${Math.min(distance, 1).toFixed(3)}`);
+        card.style.zIndex = `${Math.round((2 - distance) * 10)}`;
+        if (distance < 0.5) card.dataset.role = 'active';
+        else card.removeAttribute('data-role');
+      });
+    };
+
+    const syncDots = () => {
+      dots.forEach((dot, index) => {
+        if (index === activeIndex) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+    };
+
+    /* El viaje se recorre a mano en vez de con una transición CSS para que la
+       tarjeta pase por el mismo hundimiento que dibuja el dedo. */
+    const settle = () => {
+      const from = position;
+      const distance = wrap(activeIndex - from);
+      cancelAnimationFrame(frame);
+      if (reducedMotion.matches || Math.abs(distance) < 0.001) {
+        position = activeIndex;
+        place();
+        return;
+      }
+      const started = performance.now();
+      const duration = 420;
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        position = from + distance * eased;
+        place();
+        if (progress < 1) frame = requestAnimationFrame(step);
+        else {
+          position = activeIndex;
+          place();
+        }
+      };
+      frame = requestAnimationFrame(step);
+    };
+
+    const goTo = (index: number) => {
+      activeIndex = (index % total + total) % total;
+      syncDots();
+      settle();
+    };
+
+    /* Arrastre: el dedo mueve la posición continua, así que la tarjeta se va
+       hundiendo y oscureciendo a la vez que la siguiente sube al frente. */
+    let pointerId: number | null = null;
+    let startX = 0;
+    let startY = 0;
+    let dragged = false;
+    const span = () => stage.getBoundingClientRect().width * 0.42;
+    const resetSwipe = () => {
+      pointerId = null;
+      stage.removeAttribute('data-dragging');
+    };
+
+    stage.addEventListener('pointerdown', (event) => {
+      if (
+        !stacked.matches
+        || !event.isPrimary
+        || (event.pointerType === 'mouse' && event.button !== 0)
+      ) return;
+      cancelAnimationFrame(frame);
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+      dragged = false;
+      /* Si el navegador rechaza la captura el gesto sigue siendo válido:
+         los eventos llegan igual mientras el dedo no salga del escenario. */
+      try {
+        stage.setPointerCapture(event.pointerId);
+      } catch {}
+    });
+    stage.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== pointerId) return;
+      const offset = event.clientX - startX;
+      const horizontal = Math.abs(offset);
+      if (horizontal > 8 && horizontal > Math.abs(event.clientY - startY)) {
+        dragged = true;
+        stage.setAttribute('data-dragging', '');
+      }
+      if (!dragged) return;
+      const progress = Math.max(-1, Math.min(1, -offset / span()));
+      position = activeIndex + progress;
+      place();
+    });
+    stage.addEventListener('pointerup', (event) => {
+      if (event.pointerId !== pointerId) return;
+      const offset = event.clientX - startX;
+      const progress = -offset / span();
+      const vertical = Math.abs(event.clientY - startY);
+      resetSwipe();
+      /* Un tercio del viaje basta para que el gesto cuente. */
+      if (dragged && Math.abs(progress) >= 0.33 && Math.abs(offset) > vertical) {
+        goTo(activeIndex + (progress > 0 ? 1 : -1));
+      } else {
+        settle();
+      }
+      /* El clic llega justo después del gesto; esta bandera evita que además
+         se interprete como una selección de tarjeta. */
+      window.setTimeout(() => { dragged = false; }, 0);
+    });
+    const cancelSwipe = () => {
+      if (pointerId === null) return;
+      resetSwipe();
+      settle();
+    };
+    stage.addEventListener('pointercancel', cancelSwipe);
+    stage.addEventListener('lostpointercapture', cancelSwipe);
+
+    /* Sin flechas, pulsar una tarjeta del fondo es la forma de avanzar con
+       ratón; los puntos siguen siendo el control accesible. */
+    cards.forEach((card, index) => {
+      card.addEventListener('click', () => {
+        if (!stacked.matches || dragged || index === activeIndex) return;
+        goTo(index);
+      });
+    });
+    dots.forEach((dot, index) => dot.addEventListener('click', () => goTo(index)));
+
+    carousel.addEventListener('keydown', (event) => {
+      if (!stacked.matches) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goTo(activeIndex - 1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goTo(activeIndex + 1);
+      }
+    });
+
+    place();
+  });
+</script>
+
+<style>
+  /* Marco de Figma: 1440×744, padding 80, contenedor de 1166 y separaciones
+     de 48. Igual que el resto de la v2, las medidas se expresan en vw sobre
+     1440 y se congelan con clamp. */
+  .benefits { display:flex;justify-content:center;padding:clamp(48px,5.556vw,80px) clamp(20px,5.556vw,80px);background:#000; }
+  .benefits__inner { position:relative;display:flex;width:min(100%,1166px);flex-direction:column;align-items:center;gap:clamp(32px,3.333vw,48px); }
+
+  /* Las dos elipses doradas desenfocadas que iluminan la banda por detrás. */
+  .benefits__glow { position:absolute;z-index:0;top:50%;left:50%;width:100%;height:340px;transform:translate(-50%,-50%);border-radius:10000px;background:var(--gold-text);filter:blur(150px);opacity:.25;pointer-events:none; }
+
+  .benefits__glow-core { display:none; }
+
+  .benefits__head { position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center; }
+  .benefits__head h2 { margin:0;color:#f9cb69;font-family:var(--font-title);font-size:clamp(28px,2.5vw,36px);font-weight:600;letter-spacing:0;line-height:1.2222; }
+  .benefits__head p { margin:0;color:#b1a58d;font-family:var(--font-title);font-size:clamp(16px,1.25vw,18px);font-weight:300;line-height:1.4444;text-wrap:balance; }
+
+  .benefits__cards { position:relative;z-index:1;display:flex;width:100%;flex-wrap:wrap;justify-content:center;gap:24px;margin:0;padding:0;list-style:none; }
+  .benefits__carousel { display:contents; }
+  .benefits__nav,.benefits__pagination { display:none; }
+  /* Las tarjetas son 225×340 en el diseño; mantienen la proporción al encoger
+     para que el degradado inferior siga cubriendo el mismo tercio. */
+  .benefits__card { position:relative;width:225px;max-width:calc(50% - 12px);aspect-ratio:225/340;overflow:hidden;border-radius:16px; }
+  .benefits__card-art { position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;transform:scale(1);transform-origin:center;transition:transform 300ms cubic-bezier(.22,1,.36,1);will-change:transform; }
+  /* El degradado del diseño mide 137 de 340 (40.3%) y arranca opaco hasta el
+     25.557% de su propio alto. */
+  .benefits__card::after { content:"";position:absolute;right:0;bottom:0;left:0;height:40.3%;background:linear-gradient(to top,#000 25.557%,rgba(20,20,20,0)); }
+  .benefits__card-text { position:absolute;z-index:1;right:8px;bottom:8px;left:8px;color:#fff;text-align:center; }
+  .benefits__card-text h3 { margin:0;font-family:Montserrat,var(--font-body);font-size:20px;font-weight:700;letter-spacing:-1px;line-height:28px; }
+  .benefits__card-text p { margin:4px 0 0;font-family:Montserrat,var(--font-body);font-size:14px;font-weight:400;line-height:20px; }
+
+  /* El CTA usa el mismo motor luminoso que el resto del sitio. Aquí solo se
+     adapta su estado de reposo a la variante dorada de Beneficios; la cola,
+     el foco de teclado y la compuerta para evitar hover pegado en touch viven
+     en MotionCta.astro. */
+  .benefits :global(.benefits__cta) { --cta-color:#987c40;--cta-color-hover:#f9cb69;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185.219deg,rgba(135,116,79,.2) 0%,rgba(43,43,43,.14) 100%);position:relative;z-index:1;padding:12px 16px; }
+  .benefits :global(.benefits__cta) svg { width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .benefits__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+
+  /* El estado hover conserva texto y degradado en su sitio y acerca la
+     fotografía lo suficiente para que la interacción resulte perceptible. */
+  @media (hover:hover) and (pointer:fine) {
+    .benefits__card:hover .benefits__card-art { transform:scale(1.05); }
+  }
+
+  @media (prefers-reduced-motion:reduce) {
+    .benefits__card-art { transition:none; }
+  }
+
+  /* Figma 837:10409. En móvil la banda deja la rejilla y pasa al apilado: la
+     tarjeta activa al frente a tamaño completo y las vecinas al 90 % detrás,
+     veladas. El 90 % de escala reproduce de una vez la caja, el radio y los
+     dos tamaños de texto del diseño. */
+  @media (max-width:767px) {
+    .benefits { padding:40px 16px; }
+    .benefits__inner { align-items:center;gap:48px; }
+    .benefits__glow { width:min(390px,100vw);height:340px; }
+    /* Segunda luz del diseño: un núcleo dorado más pequeño y sólido. */
+    .benefits__glow-core { position:absolute;z-index:0;top:50%;left:50%;display:block;width:min(308.5px,79vw);height:200.8px;transform:translate(-50%,-50%);border-radius:10000px;background:#f9cb69;filter:blur(150px);opacity:.25;pointer-events:none; }
+    .benefits__head { gap:16px;padding-inline:0; }
+    .benefits__head h2 { font-size:clamp(30px,9.231vw,36px);line-height:44px; }
+    /* El frame nuevo se queda solo con el título. */
+    .benefits__head p { display:none; }
+    .benefits__carousel {
+      --benefits-card-w:min(225px,59vw);
+      position:relative;
+      display:flex;
+      width:min(100%,358px);
+      flex-direction:column;
+      align-items:center;
+      gap:24px;
+    }
+    /* Escenario 3D. La perspectiva es proporcional a la tarjeta, así que
+       1000px sobre una tarjeta de 225 se mantiene al encoger. A esa distancia
+       una tarjeta hundida 111.1px se dibuja justo al 90 %, que es la medida
+       que pide el diseño. */
+    .benefits__cards {
+      position:relative;
+      width:calc(var(--benefits-card-w) * 1.4956);
+      height:calc(var(--benefits-card-w) * 340 / 225);
+      display:block;
+      perspective:calc(var(--benefits-card-w) * 4.4444);
+      transform-style:preserve-3d;
+      touch-action:pan-y;
+    }
+    /* El guion lo lleva el script: sitúa cada tarjeta en la escena mediante
+       estas variables, tanto durante el arrastre como en la vuelta a su sitio.
+       Los valores de reposo viven aquí para que la primera pintura ya sea la
+       correcta y para que sin JavaScript la banda siga teniendo sentido. */
+    .benefits__card {
+      position:absolute;
+      top:0;
+      left:calc(50% - var(--benefits-card-w) / 2);
+      width:var(--benefits-card-w);
+      max-width:none;
+      cursor:pointer;
+      transform:
+        translate3d(
+          calc(var(--bx, 0) * var(--benefits-card-w)),
+          0,
+          calc(var(--bz, 0) * var(--benefits-card-w))
+        )
+        rotateY(calc(var(--brot, 0) * 1deg));
+    }
+    .benefits__card:nth-child(1) { --bx:0;--bz:0;--bveil:0;z-index:20; }
+    .benefits__card:nth-child(2) { --bx:.330864;--bz:-.493827;--bveil:1;z-index:10; }
+    .benefits__card:nth-child(3) { --bx:0;--bz:-.493827;--bveil:1;z-index:0; }
+    .benefits__card:nth-child(4) { --bx:-.330864;--bz:-.493827;--bveil:1;z-index:10; }
+    .benefits__card[data-role='active'] { cursor:default; }
+    /* El velo va encima de todo: al oscurecer también el rótulo evita tener
+       que interpolar su color aparte, y el blanco al 20 % cae justo en el gris
+       que marca el diseño. */
+    .benefits__card::before { content:"";position:absolute;z-index:3;inset:0;background:rgba(0,0,0,.8);opacity:var(--bveil, 1); }
+    .benefits__card::after { z-index:1; }
+    .benefits__card-text { z-index:2; }
+    /* El punto activo se estira hasta la píldora de 50 del diseño. */
+    .benefits__pagination { display:flex;height:12px;align-items:center;justify-content:center;gap:12px; }
+    .benefits__pagination button { width:12px;height:12px;padding:0;border:0;border-radius:50%;background:#4a4741;cursor:pointer;transition:width 280ms cubic-bezier(.22,1,.36,1),border-radius 280ms cubic-bezier(.22,1,.36,1),background-color 280ms linear; }
+    .benefits__pagination button[aria-current='true'] { width:50px;border:1px solid #b1a58d;border-radius:8px;background:#8f7133; }
+    .benefits :global(.benefits__cta) { align-self:center; }
+  }
+
+  @media (max-width:767px) and (prefers-reduced-motion:reduce) {
+    .benefits__pagination button { transition:none; }
+  }
+
+</style>

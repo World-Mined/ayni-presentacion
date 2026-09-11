@@ -1,0 +1,189 @@
+---
+import { Image } from 'astro:assets';
+import type { ProductDetail } from '../../../data/products';
+import faqCapucciEffect from '../../../assets/v2/product-faq-capucci-effect.png';
+import faqMoraviEffect from '../../../assets/v2/product-faq-moravi-effect.png';
+import faqResetEffect from '../../../assets/v2/product-faq-reset-effect.png';
+import faqToggle from '../../../assets/v2/product-faq-toggle.svg';
+import MotionCta from '../MotionCta/MotionCta.astro';
+
+interface Props {
+  product: ProductDetail;
+}
+
+const { product } = Astro.props;
+const questionsArt = {
+  capucci: faqCapucciEffect,
+  moravi: faqMoraviEffect,
+  reset: faqResetEffect,
+}[product.revealId];
+---
+
+<section class:list={['product-questions', 'product-questions--immersive', `product-questions--${product.revealId}`]} data-product-questions aria-labelledby={`questions-${product.slug}`}>
+  <div class="product-questions__inner">
+    <div class="product-questions__stage">
+      <div class="product-questions__art" aria-hidden="true">
+        <Image
+          src={questionsArt}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          widths={[540, 800]}
+          sizes="(max-width: 767px) 302px, min(62vw, 800px)"
+          quality={78}
+        />
+      </div>
+      <div class="product-questions__intro">
+        <h2 id={`questions-${product.slug}`}>Preguntas</h2>
+        {product.questions.intro.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    </div>
+
+    <div class="product-questions__accordion">
+      {product.questions.items.map((item, index) => (
+        <details class:list={[item.hideOnMobile && 'product-questions__item--mobile-hidden']} data-open-on-mobile={item.openOnMobile ? 'true' : undefined} open>
+          <summary>
+            <span class="product-questions__title">{item.title}</span>
+            {item.mobileTitle && <span class="product-questions__title--mobile">{item.mobileTitle}</span>}
+            <Image class="product-questions__toggle" src={faqToggle} alt="" width={24} height={24} />
+          </summary>
+          <div class="product-questions__answer">
+            {item.body.map((paragraph) => <p>{paragraph}</p>)}
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <MotionCta class="product-questions__cta" href={product.questions.ctaHref ?? product.benefits.ctaHref} target="_blank" rel="noopener noreferrer">
+    <span>Ver tabla nutricional</span>
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+    <span class="product-questions__sr-only">de {product.name}, se abre en otra pestaña</span>
+  </MotionCta>
+</section>
+
+<script>
+  const productQuestions = document.querySelector('[data-product-questions]');
+
+  // El marcado sale con todas las secciones abiertas: es el estado de
+  // escritorio y, además, lo que deja la página legible sin JS. Aquí solo se
+  // pliega lo que sobra en móvil, donde el acordeón sí actúa como tal. Antes
+  // el servidor abría únicamente la primera y el script las abría todas al
+  // hidratar, así que en escritorio se veía el salto.
+  if (productQuestions) {
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const applyBreakpointDefaults = () => {
+      const isMobile = mobileQuery.matches;
+      productQuestions.querySelectorAll('details').forEach((item, index) => {
+        item.open = !isMobile || index === 0 || item.dataset.openOnMobile === 'true';
+      });
+    };
+
+    applyBreakpointDefaults();
+    mobileQuery.addEventListener('change', applyBreakpointDefaults);
+  }
+</script>
+
+<style>
+  .product-questions { --questions-cta-gap:64px;position:relative;isolation:isolate;overflow:hidden;padding:clamp(48px,5.556vw,80px);background:#000; }
+  .product-questions__art { pointer-events:none; }
+  .product-questions__art :global(img) { display:block; }
+  .product-questions__inner { position:relative;z-index:1;display:grid;width:min(100%,1280px);min-height:clamp(560px,55.833vw,804px);margin:0 auto;grid-template-columns:minmax(380px,1fr) minmax(400px,635px);gap:clamp(48px,8.333vw,120px);align-items:center; }
+  .product-questions__intro { max-width:525px;padding-left:40px;color:#fff9ec; }
+  .product-questions__intro h2 { margin:0 0 24px;color:#f9cb69;font-family:var(--font-title);font-size:clamp(30px,2.5vw,40px);line-height:1.2; }
+  .product-questions__intro p { margin:0;color:#fff9ec;font-family:var(--font-title);font-size:clamp(16px,1.667vw,24px);font-weight:400;line-height:1.1667; }
+  .product-questions__intro p + p { margin-top:24px; }
+  /* Contrato de los tres assets: Capucci, Moravi y Reset deben conservar el
+     mismo lienzo cuadrado y el mismo encuadre interno del sobre. Estas constantes
+     son compartidas a propósito; si un asset cambia de plantilla, debe recibir
+     ajustes por producto en vez de modificar silenciosamente esta geometría base.
+     El pack y el texto viven juntos en una "escena" (container query) para
+     que el texto quede impreso sobre el producto y lo siga si la escena cambia de
+     tamaño, en vez de sincronizar dos elementos independientes a mano. Los
+     coeficientes en cqw conservan la posición/tamaño confirmados contra Figma a 1440
+     (art 800x804, intro a offset 68/164 con 525px de ancho, texto a 24px),
+     re-expresados como % del propio ancho de la escena. */
+  .product-questions--immersive .product-questions__stage { --stage-w:clamp(500px,62vw,800px);position:relative;z-index:0;width:var(--stage-w);min-width:0;aspect-ratio:800/804;container-type:inline-size;margin-left:calc(var(--stage-w) * -0.085); }
+  .product-questions--immersive .product-questions__stage .product-questions__art { position:static;width:100%;height:100%;opacity:1; }
+  .product-questions--immersive .product-questions__stage .product-questions__art :global(img) { width:100%;height:100%;object-fit:cover;object-position:center; }
+  .product-questions--immersive .product-questions__stage .product-questions__intro { position:absolute;top:20.5cqw;left:8.5cqw;width:65.625cqw;max-width:none;padding-left:5cqw; }
+  .product-questions--immersive .product-questions__stage .product-questions__intro h2 { display:none; }
+  .product-questions--immersive .product-questions__stage .product-questions__intro p { font-size:3cqw; }
+  .product-questions--immersive .product-questions__stage .product-questions__intro p + p { margin-top:3cqw; }
+  .product-questions__accordion { position:relative;z-index:1;max-height:758px;overflow:auto;scrollbar-color:#4a4741 transparent; }
+  .product-questions details { border-top:1px solid #333; }
+  .product-questions details:last-child { border-bottom:1px solid #333; }
+  .product-questions summary { display:flex;min-height:76px;align-items:center;justify-content:space-between;gap:20px;padding:24px 16px;cursor:pointer;color:#f9cb69;font-family:var(--font-title);font-size:clamp(18px,1.667vw,24px);font-weight:600;line-height:1.1667;list-style:none; }
+  .product-questions summary::-webkit-details-marker { display:none; }
+  .product-questions__toggle { flex:none;transition:transform .2s ease; }
+  .product-questions details:not([open]) .product-questions__toggle { transform:rotate(180deg); }
+  .product-questions__title--mobile { display:none; }
+  .product-questions__answer { padding:0 16px 24px;color:#fef2d4;font-family:var(--font-title);font-size:clamp(16px,1.389vw,20px);line-height:1.2; }
+  .product-questions__answer p { margin:0; }
+  .product-questions__answer p + p { margin-top:0; }
+  .product-questions :global(.product-questions__cta) { position:relative;z-index:1;display:flex;width:max-content;max-width:100%;margin:var(--questions-cta-gap) auto 0;--cta-color:#987c40;--cta-ring:#b1a58d;--cta-ring-w:.75px;--cta-surface:linear-gradient(90deg,#000,#000),linear-gradient(185deg,rgba(135,116,79,.2),rgba(43,43,43,.14)); }
+  .product-questions :global(.product-questions__cta svg) { fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+  .product-questions__sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+  .product-questions--immersive { padding-top:clamp(32px,3.889vw,56px); }
+  @media (min-width:1440px) {
+    /* A 1440 el pack (800x804, calibrado a Figma) tiene un margen negro propio
+       dentro de su imagen (~8% arriba y abajo) antes de que empiece el sobre
+       visible. Las preguntas se alinean a ese margen visual, no a la caja
+       entera de 804px, para que ambos bloques "empiecen" y "terminen" a la
+       misma altura percibida. */
+    .product-questions--immersive .product-questions__accordion { max-height:673px; }
+    /* Como el acordeón (673) queda centrado dentro de la fila de 804 del pack,
+       le sobran ~65.5px de aire debajo antes de que termine la fila — el
+       margin-top del CTA se mide desde ahí, no desde el acordeón. Se descuenta
+       ese sobrante para que el espacio visible hasta el CTA sea 64px reales. */
+    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--questions-cta-gap) - 65.5px); }
+  }
+  @media (min-width:1100px) and (max-width:1439px) {
+    /* Tramo intermedio: no hay espacio para que el pack mantenga su tamaño de
+       1440 sin tocar la columna de preguntas. En vez de calcular a mano cuánto
+       "cabe" (frágil, como ya vimos), el pack simplemente llena lo que le queda
+       de su propia columna del grid — nunca puede invadir la de al lado. */
+    .product-questions--immersive { padding-inline:35px; }
+    .product-questions--immersive .product-questions__inner { container-type:inline-size;min-height:0;grid-template-columns:minmax(0,1fr) 480px;gap:16px; }
+    .product-questions--immersive .product-questions__stage { width:100%;margin-left:0; }
+    .product-questions--immersive .product-questions__accordion { margin-left:-100px;max-height:calc((100cqw - 496px) * 0.841); }
+    .product-questions--immersive :global(.product-questions__cta) { margin-top:calc(var(--questions-cta-gap) - (min(100vw - 70px,1280px) - 496px) * 0.082); }
+  }
+  @media (max-width:1099px) {
+    .product-questions__inner { display:block;min-height:auto; }
+    .product-questions--immersive .product-questions__stage { --stage-w:clamp(660px,68vw,800px);margin-left:auto;margin-right:auto;left:calc(var(--stage-w) * 0.067); }
+    .product-questions__accordion { width:100%;max-height:none;overflow:visible;margin-top:24px; }
+  }
+  @media (max-width:767px) {
+    .product-questions { padding:56px 16px 40px; }
+    .product-questions__inner { display:flex;min-height:0;flex-direction:column;gap:40px;align-items:stretch; }
+    .product-questions__intro { max-width:520px;padding:0; }
+    .product-questions__intro h2 { font-size:32px; }
+    .product-questions__intro p { font-size:17px;line-height:1.45; }
+    .product-questions__accordion { max-height:none;overflow:visible; }
+    .product-questions summary { min-height:64px;padding:18px 0;font-size:18px; }
+    .product-questions__answer { padding:0 0 20px;font-size:16px;line-height:1.45; }
+    .product-questions :global(.product-questions__cta) { width:100%;margin-top:var(--questions-cta-gap); }
+    .product-questions--immersive { display:block;min-height:0;height:auto;padding:0 12px 28px; }
+    .product-questions--immersive .product-questions__inner { position:static;padding-top:246px;gap:56px; }
+    .product-questions--immersive .product-questions__stage { display:contents; }
+    .product-questions--immersive .product-questions__stage .product-questions__art { position:absolute;top:0;bottom:auto;left:50%;width:270px;height:240px;opacity:1;transform:translateX(-50%); }
+    .product-questions--immersive .product-questions__stage .product-questions__art :global(img) { width:112%;height:112%;object-fit:contain;transform:translate(-6%,-10%); }
+    .product-questions--immersive .product-questions__stage .product-questions__intro { position:static;top:auto;left:auto;width:auto;max-width:326px;padding-left:0;margin:0 auto;text-align:center; }
+    .product-questions--immersive .product-questions__stage .product-questions__intro h2 { display:none; }
+    .product-questions--immersive .product-questions__stage .product-questions__intro p { font-size:15px;line-height:1.28; }
+    .product-questions--immersive .product-questions__stage .product-questions__intro p + p { margin-top:25px; }
+    .product-questions--immersive .product-questions__accordion { width:100%; }
+    .product-questions--immersive .product-questions__item--mobile-hidden { display:none; }
+    .product-questions--immersive .product-questions__title--mobile { display:inline; }
+    .product-questions--immersive .product-questions__title:has(+ .product-questions__title--mobile) { display:none; }
+    .product-questions--immersive details:not([open]) summary { color:#858585; }
+    .product-questions--immersive details[data-open-on-mobile] summary { color:#858585; }
+    .product-questions--immersive summary { min-height:0;padding:18px 12px;font-size:18px; }
+    .product-questions--immersive .product-questions__answer { padding:0 12px 18px;font-size:15px;line-height:1.18; }
+    .product-questions--immersive :global(.product-questions__cta) { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .product-questions__toggle { transition:none; }
+  }
+</style>
