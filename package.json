@@ -12,7 +12,9 @@
     "astro": "astro",
     "test:responsive": "npm run build && playwright test tests/responsive-layout.spec.ts tests/reveal-video.spec.ts",
     "test:unit": "playwright test --config playwright.unit.config.ts",
-    "test": "npm run test:unit && npm run test:responsive"
+    "test": "npm run test:unit && npm run test:responsive && npm run csp:check",
+    "csp:write": "node scripts/csp-hashes.mjs --write",
+    "csp:check": "node scripts/csp-hashes.mjs --check"
   },
   "dependencies": {
     "@vite-pwa/astro": "^1.2.0",

@@ -88,3 +88,52 @@ test('Otros Productos conserva la proporción y resolución del fondo móvil', a
   await expect(section.locator('a:visible')).toHaveCount(2);
   await expect(section.locator('a:visible').first()).toHaveClass(/other-products__mobile-cta/);
 });
+
+test('Puntos de recojo sirve los mapas de Google acotados por sandbox', async ({ page }) => {
+  await page.route(/^https:\/\/www\.google\.com\/maps\/embed\?pb=/, (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><title>Google Maps test double</title>',
+  }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/puntos-de-recojo');
+
+  const embeds = page.locator('iframe.pickup-map-view__embed');
+  await expect(embeds).toHaveCount(8);
+  await expect(page.locator('.pickup-map-panel__art')).toHaveCount(0);
+
+  const atributos = await embeds.evaluateAll((frames) => frames.map((frame) => ({
+    src: frame.getAttribute('src') ?? '',
+    sandbox: frame.getAttribute('sandbox') ?? '',
+  })));
+
+  for (const { src, sandbox } of atributos) {
+    expect(src.startsWith('https://www.google.com/maps/embed?pb=')).toBe(true);
+    expect(src).not.toContain('key=');
+    // Lo que el sandbox retiene es lo que importa: un embed comprometido no
+    // puede llevarse la ventana superior ni enviar formularios.
+    expect(sandbox).toContain('allow-scripts');
+    expect(sandbox).not.toContain('allow-top-navigation');
+    expect(sandbox).not.toContain('allow-forms');
+  }
+
+  await expect(page.locator('iframe[title="Mapa de la sede AYNI en Surco"]')).toBeVisible();
+  await expect(page.locator('iframe[title="Mapa de la sede AYNI en San Martín de Porres"]'))
+    .toHaveAttribute('src', /0x9105ce8dd668f1ef%3A0x1f5f7769509f66b3/);
+
+  const losOlivos = page.locator('[data-pickup-location="los-olivos"]');
+  await losOlivos.click();
+  await expect(losOlivos).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('iframe[title="Mapa de la sede AYNI en Los Olivos"]')).toBeVisible();
+
+  await losOlivos.press('ArrowDown');
+  await expect(page.locator('[data-pickup-location="trujillo"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('iframe[title="Mapa de la sede AYNI en Trujillo"]')).toBeVisible();
+
+  await page.getByRole('searchbox', { name: 'Buscar punto de recojo' }).fill('Arequipa');
+  await expect(page.locator('[data-pickup-location="arequipa"]')).toBeVisible();
+  await expect(page.locator('iframe[title="Mapa de la sede AYNI en Arequipa"]')).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Bolivia' }).click();
+  await expect(page.locator('.pickup-map-panel__unavailable')).toContainText(/Ubicación\s*no disponible/);
+  await expect(page.locator('iframe.pickup-map-view__embed:visible')).toHaveCount(0);
+});
