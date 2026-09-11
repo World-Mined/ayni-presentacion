@@ -13,6 +13,19 @@
   /* Cuánto crecen los enlaces al pasar por encima. Vive aquí porque lo comparten
      la cabecera y el footer, y así se afina en un solo sitio. */
   --hover-scale: 1.05;
+  /* Degradado dorado de los títulos. Es un texto con background-clip, no un
+     color, así que va como token: lo usan los bloques de bonos, el programa de
+     embajadores y los beneficios de producto. */
+  --gold-text: linear-gradient(
+    90deg,
+    #6e582b 10.512%,
+    #f9cb69 50.363%,
+    #f0c365 58.373%,
+    #d8b05a 69.587%,
+    #b29049 85.607%,
+    #7d6431 103.23%,
+    #6e582b 108.03%
+  );
 }
 
 html[data-layout='website'] { scroll-behavior:smooth;scroll-padding-top:var(--header-height);background:var(--black); }
