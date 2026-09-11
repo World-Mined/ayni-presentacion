@@ -1,11 +1,34 @@
 ---
-import { mediaUrl } from '../../../data/media';
+import { getImage } from 'astro:assets';
+
+import homeVideoPosterSource from '../../../assets/v2/home-video-poster.jpg';
 import { HOME_VIDEO_FILE } from '../../../data/home-video';
+import { mediaUrl } from '../../../data/media';
 import { SECTION_IDS } from '../../../data/v2';
+
+// Fotograma 0 del propio objeto de S3, no de la copia local: el README avisa de
+// que no son el mismo encode. Sin `poster`, y con el `autoplay` fuera del HTML
+// para respetar «menos movimiento», la portada quedaba en negro hasta que el
+// script arrancaba el video, y del todo si el script no llegaba a ejecutarse.
+const homeVideoPoster = await getImage({
+  src: homeVideoPosterSource,
+  width: 1280,
+  height: 768,
+  format: 'webp',
+  quality: 72,
+});
 ---
 
 <section id={SECTION_IDS.home} class="video-hero" aria-label="Presentación de AYNI" data-safe-frame="none">
-  <video class="video-hero__media" muted loop playsinline preload="metadata" data-home-video>
+  <video
+    class="video-hero__media"
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    poster={homeVideoPoster.src}
+    data-home-video
+  >
     <source src={mediaUrl(HOME_VIDEO_FILE)} type="video/mp4" />
   </video>
   <canvas class="video-hero__safe-frame" aria-hidden="true" data-title-safe-frame></canvas>
