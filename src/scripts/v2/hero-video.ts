@@ -116,7 +116,7 @@ function drawTitle(
   context.globalCompositeOperation = 'source-over';
 }
 
-export function initializeHeroSafeFrame(hero: HTMLElement) {
+function initializeHeroSafeFrame(hero: HTMLElement) {
   const video = hero.querySelector<HTMLVideoElement>('[data-home-video]');
   const canvas = hero.querySelector<HTMLCanvasElement>('[data-title-safe-frame]');
   if (!video || !canvas) return;

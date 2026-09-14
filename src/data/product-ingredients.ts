@@ -41,7 +41,7 @@ import resetPina from '../assets/v2/reset-ingrediente-pina.webp';
 import resetLogo from '../assets/v2/reset-logo.svg';
 import type { ProductId } from '../lib/reveal/products';
 
-export interface Ingredient {
+interface Ingredient {
   id: string;
   name: string;
   /** Frase que aparece dentro del círculo mientras el ingrediente está activo. */

@@ -8,13 +8,13 @@
 // el cierre del anillo se toma medido de la propia cinta (`video.ringCloseMs`)
 // en vez de reconstruirse a partir de una secuencia de referencia.
 
-export type Side = 'left' | 'right';
+type Side = 'left' | 'right';
 
 /** Claves de icono disponibles (ver icons.ts). */
 export type IconKey = 'leaf' | 'berry' | 'spiral' | 'mush' | 'root' | 'mol' | 'bean';
 
 /** Una "rama": etiqueta alrededor del círculo. */
-export interface LabelDef {
+interface LabelDef {
   /** Id compartido con la escena interactiva del ingrediente. */
   id: string;
   name: string;

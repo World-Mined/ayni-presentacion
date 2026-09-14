@@ -10,7 +10,7 @@ const googleMapEmbedUrl = (payload: string) => `${GOOGLE_MAP_EMBED_BASE_URL}${pa
 
 export type PickupCountry = 'peru' | 'bolivia';
 
-export type PickupLocationPreview =
+type PickupLocationPreview =
   | {
       type: 'image';
       image: ImageMetadata;
@@ -32,7 +32,7 @@ export type PickupLocationPreview =
       label?: string;
     };
 
-export interface PickupLocation {
+interface PickupLocation {
   id: string;
   name: string;
   address: string;

@@ -25,13 +25,13 @@ import moraviWordmark from '../assets/v2/moravi-logo.svg';
 import resetWordmark from '../assets/v2/reset-logo.svg';
 import type { ProductId } from '../lib/reveal/products';
 
-export interface ProductBenefit {
+interface ProductBenefit {
   title: string;
   description: string;
   image: ImageMetadata;
 }
 
-export interface ProductFaqItem {
+interface ProductFaqItem {
   title: string;
   body: string[];
   /** El diseño móvil condensa algunos rótulos y omite el ritual duplicado. */

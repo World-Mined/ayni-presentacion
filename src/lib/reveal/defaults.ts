@@ -8,7 +8,7 @@ import type { TimingConfig, GeometryConfig, ScrollConfig } from './types';
 
 /** Curva "popup": ease-out-back (pasa un pelín del destino y regresa).
  *  s más alto = MÁS rebote · s = 0 = sin rebote. */
-export const popupCurve = (s = 1.6) => (t: number) =>
+const popupCurve = (s = 1.6) => (t: number) =>
   1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
 
 export const DEFAULT_TIMING: TimingConfig = {

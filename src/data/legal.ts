@@ -4,7 +4,7 @@ import { POLITICAS_DE_REEMBOLSO } from './legal/politicas-de-reembolso';
 import { TERMINOS_Y_CONDICIONES } from './legal/terminos-y-condiciones';
 import { TRATAMIENTO_DE_DATOS_PERSONALES } from './legal/tratamiento-de-datos-personales';
 
-export interface LegalSection {
+interface LegalSection {
   /**
    * Encabezado de capítulo. Va en un cuerpo mayor que el de las secciones y
    * solo lo usa la política de reembolso, que agrupa sus secciones en dos

@@ -5,7 +5,7 @@ import revealMandala from '../assets/v2/products-reveal-mandala.webp';
 // como default para que un clon sin `.env` siga funcionando. `||` y no `??`:
 // una variable declarada vacía (`ARG` de Docker sin valor) también cae al
 // default, en vez de dejar rutas relativas como `/capucci.mp4`.
-export const MEDIA_BASE_URL = (
+const MEDIA_BASE_URL = (
   import.meta.env.PUBLIC_MEDIA_BASE_URL || 'https://ayni.s3.us-east-1.amazonaws.com/videos'
 ).replace(/\/+$/, '');
 export const REVEAL_BACKGROUND_URL = revealMandala.src;

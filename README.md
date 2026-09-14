@@ -1,87 +1,122 @@
-# AYNI - Presentación de Diapositivas PWA (Offline-First)
+# AYNI — sitio web V2
 
-Este proyecto es una aplicación web progresiva (PWA) offline-first para reproducir una presentación de diapositivas interactiva (estilo PowerPoint) del branding **AYNI**, basada en el diseño de Figma y construida con **Astro**.
+Sitio web público y responsive de AYNI, construido con Astro y generado como archivos estáticos. Incluye la página principal, catálogo y detalle de productos, puntos de recojo, embajadores, páginas legales y experiencia PWA.
 
-## 🚀 Arquitectura y Características
+## Rutas principales
 
-1. **Slides configurables (`src/data/slides.ts`)**: Todas las diapositivas, sus fondos, enlaces de botones interactivos (como el menú de productos, plan y bonos) y las flechas de navegación están definidos en un archivo de datos estructurado en JS. Cambiar el orden de las diapositivas o agregar nuevas es tan sencillo como modificar este archivo.
-2. **Presentación Responsiva (Aspect Ratio Lock)**: La aplicación escala de manera inteligente toda la presentación para ajustarse a cualquier resolución de pantalla (móvil, tablet, desktop) manteniendo siempre un formato de aspecto perfecto de `16:9` (1920x1080) sin deformar el texto o los assets.
-3. **PWA Completa & Offline-First**:
-   - **Precache total**: Todo el código de la aplicación (HTML, CSS, JS) y las imágenes de fondo se descargan en la primera visita. La aplicación funciona 100% sin conexión después de la primera carga.
-   - **iOS Safari Preferente**: Incluye splash screens personalizados para iPhone/iPad en modo horizontal, soporte de iconos táctiles y tags específicos de iOS (`apple-mobile-web-app-capable`).
-   - **UX de Conectividad**: Banner de advertencia de estado de red (online/offline) y avisos para actualizaciones silenciosas de nueva versión.
-   - **Instalación Directa**: Captura el evento `beforeinstallprompt` en Android/Chrome y muestra instrucciones detalladas con iconos de Safari en iOS.
+| Ruta | Contenido |
+| --- | --- |
+| `/` | Inicio |
+| `/productos` | Catálogo de productos |
+| `/productos/moravi-360` | Detalle de Moravi 360 |
+| `/productos/capucci-360` | Detalle de Capucci 360 |
+| `/productos/reset-360` | Detalle de Reset 360 |
+| `/puntos-de-recojo` | Puntos de recojo |
+| `/embajadores` | Programa de embajadores |
+| `/libro-de-reclamaciones` | Libro de reclamaciones |
+| `/legal/[slug]` | Documentos legales |
+| `/offline` | Página de respaldo sin conexión |
 
----
+La ruta `/reveal-demo` se genera únicamente durante el desarrollo.
 
-## 🛠️ Cómo Administrar las Diapositivas
+## Requisitos
 
-El archivo principal para controlar el contenido es `src/data/slides.ts`.
+- Node.js 22.12 o superior
+- npm
 
-### 1. Cambiar el Orden
-Para cambiar el orden de navegación, cambia el orden de los elementos en la constante `SLIDES` y asegúrate de actualizar las propiedades `prevSlide` y `nextSlide` en la configuración `header` de cada diapositiva.
+## Instalación
 
-### 2. Agregar un Nuevo Slide
-Para añadir una diapositiva:
-1. Coloca tu imagen de fondo en `public/assets/` (ej. `bg_nuevo_slide.png`).
-2. Agrega un nuevo objeto al array `SLIDES` en `src/data/slides.ts`:
-   ```typescript
-   {
-     id: "nuevo-slide-id",
-     name: "Nombre del Slide",
-     bgImage: "/assets/bg_nuevo_slide.png",
-     header: {
-       showClose: true,
-       closeTo: "home",
-       showArrows: true,
-       prevSlide: "slide-anterior-id",
-       nextSlide: "slide-siguiente-id"
-     }
-   }
-   ```
-3. Modifica el `nextSlide` de la diapositiva anterior y el `prevSlide` de la posterior para encadenarlo en el flujo.
+```bash
+npm install
+```
 
----
+Los videos se sirven desde el origen configurado en `PUBLIC_MEDIA_BASE_URL`. Si la variable no está definida, se usa el bucket público configurado en `src/data/media.ts`.
 
-## 🧞 Comandos del Proyecto
+```env
+PUBLIC_MEDIA_BASE_URL=https://ayni.s3.us-east-1.amazonaws.com/videos
+```
 
-| Comando | Acción |
-| :--- | :--- |
-| `npm install` | Instala las dependencias del proyecto |
-| `npm run dev` | Inicia el servidor de desarrollo local en `localhost:4321` |
-| `npm run build` | Compila la aplicación de producción en la carpeta `./dist/` |
-| `npm run preview` | Previsualiza localmente el build de producción |
+Consulta [public/media/README.md](public/media/README.md) para el contrato de publicación de medios.
 
----
+## Desarrollo
 
-## 📱 Cómo Probar el Funcionamiento Offline y PWA
+Inicia Astro en segundo plano:
 
-Dado que los Service Workers requieren HTTPS o localhost, sigue estas instrucciones específicas para pruebas locales y en dispositivos reales:
+```bash
+npm run astro -- dev --background
+```
 
-### 1. Probar Offline en tu Computadora (DevTools)
-1. Ejecuta la compilación de producción y abre el servidor de previsualización:
-   ```bash
-   npm run build
-   npm run preview
-   ```
-2. Abre la URL en Chrome u otro navegador (usualmente `http://localhost:4321` o `http://localhost:3000`).
-3. Deja que la app cargue por completo para que el Service Worker se registre y descargue los assets.
-4. Abre la consola de desarrollo (F12) -> ve a la pestaña **Application** (Aplicación) -> **Service Workers** -> activa el checkbox **Offline** (o desconecta la red wifi de tu computadora).
-5. Recarga la página y navega por los slides. ¡Verás que todo carga al instante sin internet!
+Administra el proceso con:
 
-### 2. Probar en un iPhone o iPad Real (Crítico para iOS)
-El simulador de iOS a veces no maneja correctamente el caché del Service Worker de Safari. Para probarlo en un dispositivo real:
-1. Conecta tu computadora y tu iPhone a la **misma red Wi-Fi**.
-2. Determina la **IP local** de tu computadora (ej. ejecutando `ipconfig` en la terminal de Windows. Busca la dirección IPv4, que suele ser del tipo `192.168.1.X`).
-3. Inicia el servidor de previsualización de Astro permitiendo el acceso en tu red local:
-   ```bash
-   npx astro preview --host
-   ```
-   Astro te mostrará una dirección de red del tipo `http://192.168.1.X:4321`.
-4. Abre **Safari** en tu iPhone y escribe esa dirección exacta.
-5. Una vez cargada la página:
-   - Pulsa el botón **Compartir** de Safari (icono de la caja con flecha arriba).
-   - Selecciona **Añadir a pantalla de inicio**.
-   - Cierra Safari y abre la app desde el nuevo icono de **AYNI** en tu pantalla de inicio.
-6. Ahora, pon tu iPhone en **Modo Avión** (sin Wi-Fi ni datos móviles).
-7. Abre la app de AYNI en tu pantalla de inicio. Verás cómo carga toda la presentación interactiva instantáneamente y de forma fluida.
+```bash
+npm run astro -- dev status
+npm run astro -- dev logs
+npm run astro -- dev stop
+```
+
+## Comandos
+
+| Comando | Descripción |
+| --- | --- |
+| `npm run build` | Genera el sitio estático en `dist/` |
+| `npm run preview` | Sirve localmente el build generado |
+| `npm run check` | Ejecuta las validaciones de Astro y TypeScript |
+| `npm run test:unit` | Ejecuta las pruebas unitarias con Playwright |
+| `npm run test:responsive` | Compila y ejecuta las pruebas responsive y de video |
+| `npm run csp:check` | Verifica que los hashes CSP estén actualizados |
+| `npm run csp:write` | Regenera los hashes CSP de producción |
+| `npm test` | Ejecuta check, pruebas unitarias, pruebas responsive y CSP |
+| `npx knip` | Detecta archivos, dependencias y exports sin uso |
+
+## Arquitectura
+
+```text
+src/
+├── components/
+│   ├── reveal/            # Composición y controles de ProductReveal
+│   └── v2/                # Componentes de las páginas actuales
+├── data/                  # Productos, legales, medios y puntos de recojo
+├── layouts/               # Estructura HTML compartida
+├── lib/reveal/            # Motor, geometría y temporización del reveal
+├── pages/                 # Rutas de Astro
+└── styles/v2.css          # Estilos globales del sitio V2
+
+scripts/
+└── csp-hashes.mjs         # Generación y validación de hashes CSP
+
+tests/                     # Pruebas unitarias, responsive y de video
+```
+
+La salida es estática y la interacción del cliente se implementa con scripts del navegador. Los datos compartidos se mantienen en `src/data/` y el comportamiento de las presentaciones de producto en `src/lib/reveal/`.
+
+## PWA y funcionamiento sin conexión
+
+El service worker se habilita en builds de producción y se actualiza automáticamente:
+
+- Precarga el shell de la aplicación, las páginas generadas y los recursos públicos incluidos en el build.
+- Las imágenes optimizadas bajo `/_astro/` se guardan en caché cuando se solicitan.
+- Si una navegación no está disponible, usa `/offline.html` como respaldo.
+- Los videos remotos no se precargan y requieren conexión.
+- El service worker está deshabilitado en el servidor de desarrollo.
+
+Para comprobar este comportamiento:
+
+```bash
+npm run build
+npm run preview
+```
+
+Visita primero las rutas e imágenes que quieras almacenar, activa el modo sin conexión en las herramientas del navegador y vuelve a cargarlas.
+
+## Estado del libro de reclamaciones
+
+La ruta está publicada, pero el envío del formulario permanece deshabilitado hasta que se configure un endpoint de backend. Mientras tanto, la página dirige las solicitudes al correo de soporte mostrado en la interfaz.
+
+## Build con Docker
+
+```bash
+docker build -t ayni-presentacion .
+docker run --rm -p 8080:80 ayni-presentacion
+```
+
+El build de la imagen genera el sitio, actualiza la CSP y lo sirve mediante Nginx.
