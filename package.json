@@ -8,11 +8,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",
     "test:responsive": "npm run build && playwright test tests/responsive-layout.spec.ts tests/reveal-video.spec.ts",
     "test:unit": "playwright test --config playwright.unit.config.ts",
-    "test": "npm run test:unit && npm run test:responsive && npm run csp:check",
+    "test": "npm run check && npm run test:unit && npm run test:responsive && npm run csp:check",
     "csp:write": "node scripts/csp-hashes.mjs --write",
     "csp:check": "node scripts/csp-hashes.mjs --check"
   },
@@ -23,6 +24,8 @@
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.63.0",
+    "typescript": "^6.0.3"
   }
 }

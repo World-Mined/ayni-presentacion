@@ -134,6 +134,11 @@ const DEFAULT_PREVIEW_ZOOM = 15;
               )}
 
               {location.preview?.type === 'embed' && (
+                /* El embed es de otro origen, así que `allow-same-origin` no le
+                   da acceso a este sitio: solo le devuelve su propio
+                   almacenamiento, que Google Maps necesita para pintar. Lo que
+                   queda fuera es lo que importa, `allow-top-navigation` y
+                   `allow-forms`: el marco no puede llevarse la ventana. */
                 <iframe
                   class="pickup-map-view__embed"
                   src={location.preview.url}
@@ -141,11 +146,6 @@ const DEFAULT_PREVIEW_ZOOM = 15;
                   loading="lazy"
                   allowfullscreen
                   referrerpolicy="strict-origin-when-cross-origin"
-                  {/* El embed es de otro origen, así que `allow-same-origin` no le
-                      da acceso a este sitio: solo le devuelve su propio
-                      almacenamiento, que Google Maps necesita para pintar. Lo que
-                      queda fuera es lo que importa, `allow-top-navigation` y
-                      `allow-forms`: el marco no puede llevarse la ventana. */}
                   sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                 ></iframe>
               )}

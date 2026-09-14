@@ -20,7 +20,7 @@ for (const product of products) {
     for (const width of viewports) {
       await page.setViewportSize({ width, height: 833 });
       await section.scrollIntoViewIfNeeded();
-      await expect.poll(() => people.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+      await expect.poll(() => people.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
 
       const bounds = await people.boundingBox();
       expect(bounds).not.toBeNull();
@@ -56,9 +56,9 @@ test('Otros Productos conserva la proporción y resolución del fondo móvil', a
   const section = page.locator('.other-products');
   await section.scrollIntoViewIfNeeded();
   const scene = section.locator('.other-products__scene img');
-  await expect.poll(() => scene.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+  await expect.poll(() => scene.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
 
-  const image = await scene.evaluate(async (element) => {
+  const image = await scene.evaluate(async (element: HTMLImageElement) => {
     await element.decode();
     const response = await fetch(element.currentSrc);
     const bitmap = await createImageBitmap(await response.blob());

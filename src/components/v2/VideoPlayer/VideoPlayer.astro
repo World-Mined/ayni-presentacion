@@ -44,7 +44,7 @@ const { src, poster, ariaLabel } = Astro.props;
     <div class="video-player__control-row">
       <button class="video-player__button" type="button" data-video-toggle aria-label="Reproducir video">
         <svg data-icon-play viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 5.2v13.6L19 12 8.2 5.2Z"></path></svg>
-        <svg data-icon-pause viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z"></path></svg>
+        <svg class="is-hidden" data-icon-pause viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z"></path></svg>
       </button>
 
       <button class="video-player__button video-player__seek" type="button" data-video-seek="-10" aria-label="Retroceder 10 segundos">
@@ -64,7 +64,7 @@ const { src, poster, ariaLabel } = Astro.props;
 
       <button class="video-player__button" type="button" data-video-mute aria-label="Silenciar video">
         <svg data-icon-volume viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.25v5.5h4L13 19V5L8 9.25H4Zm11.2-.95a5 5 0 0 1 0 7.4l1.35 1.48a7 7 0 0 0 0-10.36L15.2 8.3Z"></path></svg>
-        <svg data-icon-muted viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M4 9.25v5.5h4L13 19V5L8 9.25H4Zm11.1.15 1.4-1.4 2 2 2-2 1.4 1.4-2 2 2 2-1.4 1.4-2-2-2 2-1.4-1.4 2-2-2-2Z"></path></svg>
+        <svg class="is-hidden" data-icon-muted viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.25v5.5h4L13 19V5L8 9.25H4Zm11.1.15 1.4-1.4 2 2 2-2 1.4 1.4-2 2 2 2-1.4 1.4-2-2-2 2-1.4-1.4 2-2-2-2Z"></path></svg>
       </button>
       <input class="video-player__volume" data-video-volume type="range" min="0" max="1" step="0.05" value="1" aria-label="Volumen" />
 
@@ -88,7 +88,7 @@ const { src, poster, ariaLabel } = Astro.props;
 
       <button class="video-player__button" type="button" data-video-fullscreen aria-label="Ver en pantalla completa">
         <svg data-icon-expand viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h5v2H7v3H5V5Zm9 0h5v5h-2V7h-3V5ZM5 14h2v3h3v2H5v-5Zm12 0h2v5h-5v-2h3v-3Z"></path></svg>
-        <svg data-icon-collapse viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M10 10H5V8h3V5h2v5Zm4 0V5h2v3h3v2h-5Zm-4 4v5H8v-3H5v-2h5Zm4 0h5v2h-3v3h-2v-5Z"></path></svg>
+        <svg class="is-hidden" data-icon-collapse viewBox="0 0 24 24" aria-hidden="true"><path d="M10 10H5V8h3V5h2v5Zm4 0V5h2v3h3v2h-5Zm-4 4v5H8v-3H5v-2h5Zm4 0h5v2h-3v3h-2v-5Z"></path></svg>
       </button>
     </div>
   </div>
@@ -101,12 +101,10 @@ const { src, poster, ariaLabel } = Astro.props;
     return `${minutes}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
   };
 
-  // `hidden` es una propiedad de HTMLElement, no de SVGElement: asignarla sobre
-  // un <svg> crea un campo suelto en el objeto y no toca el atributo, así que
-  // los iconos se quedaban congelados en su estado inicial. El atributo —que es
-  // lo que mira el CSS— hay que escribirlo a mano.
+  // `hidden` no forma parte de SVGElement. Una clase mantiene el estado visual
+  // alineado con el DOM sin crear propiedades sueltas sobre los iconos.
   const setIconVisible = (root: Element, selector: string, visible: boolean) => {
-    root.querySelectorAll(selector).forEach((icon) => icon.toggleAttribute('hidden', !visible));
+    root.querySelectorAll(selector).forEach((icon) => icon.classList.toggle('is-hidden', !visible));
   };
 
   type FullscreenDocument = Document & {
@@ -260,7 +258,7 @@ const { src, poster, ariaLabel } = Astro.props;
       updateMuted();
     });
 
-    settings.addEventListener('click', () => setMenuOpen(menu.hidden));
+    settings.addEventListener('click', () => setMenuOpen(menu.hasAttribute('hidden')));
     player.querySelectorAll<HTMLButtonElement>('[data-video-rate]').forEach((button) => button.addEventListener('click', () => {
       video.playbackRate = Number(button.dataset.videoRate);
       player.querySelectorAll('[data-video-rate]').forEach((item) => item.classList.toggle('is-active', item === button));
@@ -370,6 +368,7 @@ const { src, poster, ariaLabel } = Astro.props;
   .video-player__menu span { display:block;padding:4px 8px 7px;color:#c4bba8;font-family:Poppins,sans-serif;font-size:11px; }
   .video-player__menu button { display:block;width:100%;padding:6px 8px;color:#fff;background:transparent;border:0;border-radius:6px;font-family:Poppins,sans-serif;text-align:left;cursor:pointer; }
   .video-player__menu button:hover,.video-player__menu button.is-active { color:#f6c65b;background:rgba(246,198,91,.12); }
+  .video-player svg.is-hidden { display:none; }
   .video-player__error { position:absolute;z-index:6;inset:0;display:grid;place-content:center;justify-items:center;background:rgba(0,0,0,.82);font-family:Poppins,sans-serif; }
   .video-player__error[hidden] { display:none; }
   .video-player__error p { margin:0 0 12px; }

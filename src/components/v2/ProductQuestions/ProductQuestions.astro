@@ -40,7 +40,7 @@ const questionsArt = {
     </div>
 
     <div class="product-questions__accordion">
-      {product.questions.items.map((item, index) => (
+      {product.questions.items.map((item) => (
         <details class:list={[item.hideOnMobile && 'product-questions__item--mobile-hidden']} data-open-on-mobile={item.openOnMobile ? 'true' : undefined} open>
           <summary>
             <span class="product-questions__title">{item.title}</span>

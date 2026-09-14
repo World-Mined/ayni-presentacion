@@ -3,7 +3,6 @@ import {
   HOME_VIDEO_CUES,
   HOME_VIDEO_DURATION_TOLERANCE,
   HOME_VIDEO_EXPECTED_DURATION,
-  HOME_VIDEO_SOURCE_FRAME,
 } from '../../data/home-video';
 import {
   fitCrop,
@@ -11,7 +10,6 @@ import {
   scaleToVideo,
   TITLE_CROP_WIDTH,
   TITLE_FADE_STOPS,
-  visibleWidthFraction,
 } from './hero-frame';
 import type { Rect } from './hero-frame';
 
