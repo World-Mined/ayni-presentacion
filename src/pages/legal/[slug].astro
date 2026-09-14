@@ -16,7 +16,7 @@ export function getStaticPaths() {
 const { document } = Astro.props;
 ---
 
-<Layout variant="website" title={`${document.navLabel} — AYNI`} description={document.description}>
+<Layout title={`${document.navLabel} — AYNI`} description={document.description}>
   <SiteHeader active="legal" />
   <main class="v2-page">
     <LegalDocumentView document={document} />

@@ -1,5 +1,6 @@
-/* Estilos globales del layout `website`. Todo va namespaceado bajo
-   html[data-layout='website'] para no filtrarse a la ruta de presentación.
+/* Estilos globales del layout. Todo va namespaceado bajo
+   html[data-layout='website'] para no filtrarse a páginas que no usan
+   `Layout.astro`, como el banco de pruebas del reveal.
    Los componentes de la home definen sus colores como hex literales tomados
    de Figma; aquí solo viven los valores que necesita el chrome de la página. */
 

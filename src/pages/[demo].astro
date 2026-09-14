@@ -1,13 +1,18 @@
 ---
 import ProductReveal from '../components/reveal/ProductReveal/ProductReveal.astro';
+
+// Banco de pruebas del componente, no contenido del sitio. Es una ruta dinámica
+// solo para poder excluirla del build: en desarrollo sirve `/reveal-demo` y en
+// producción no emite ninguna página.
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { demo: 'reveal-demo' } }] : [];
+}
 ---
 
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Banco de pruebas del componente, no contenido del sitio: el build
-         estático la publica igual, así que se excluye del índice a mano. -->
     <meta name="robots" content="noindex, nofollow" />
     <title>Reveal · demo (componente)</title>
     <style>

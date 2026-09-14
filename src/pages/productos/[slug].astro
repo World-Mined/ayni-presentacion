@@ -25,7 +25,7 @@ const { product } = Astro.props;
 const ingredients = PRODUCT_INGREDIENTS[product.revealId];
 ---
 
-<Layout variant="website" title={`${product.name} — AYNI`} description={product.description}>
+<Layout title={`${product.name} — AYNI`} description={product.description}>
   <SiteHeader active="products" />
   <main class="v2-page">
     <ProductHero
