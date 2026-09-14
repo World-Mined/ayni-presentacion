@@ -1,0 +1,170 @@
+name: PR Checks
+
+# Pipeline de validación de Pull Requests — estándar CodeReviews (stack FRONTEND).
+# Adaptado a este repo: Astro 7 + Playwright sobre Node 22 (ver `engines` en package.json).
+# Corre en CADA PR para que la verificación determinista (build, tests, lint, secretos, código muerto)
+# la haga el CI y NO la revisión manual. La revisión humana+IA se concentra en lo semántico.
+#
+# Fuente canónica: CuevaTech/cuevatech-codereviews-history → standards/ci/pr-checks-frontend.yml
+# Instalar en el repo revisado como: .github/workflows/pr-checks.yml
+# Ajustar `NODE_VERSION` si el repo fija otra versión (engines/.nvmrc).
+#
+# REGLA DE ORO: ningún job required pasa en verde sin haber ejecutado algo. Si falta el script
+# (build/test) el job FALLA con un mensaje explícito; si el repo de verdad no lo tiene, se declara
+# arriba en `env:` (ALLOW_MISSING_*), que deja constancia deliberada en el YAML en vez de un verde
+# silencioso. Los jobs informativos publican su resultado real en el Summary del workflow, porque
+# `continue-on-error` (a nivel de job) NO los pinta de verde: el job sale en ROJO en `gh pr checks`;
+# lo que queda en verde es la conclusión del RUN completo. Verificado el 2026-09-08.
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  # Excepciones DELIBERADAS. 'true' = el repo no tiene ese script y se acepta como deuda: el job queda
+  # verde pero con un ::notice:: explícito. Registrarlo en la lista de seguimiento de la revisión.
+  ALLOW_MISSING_BUILD: 'false'
+  ALLOW_MISSING_TEST: 'false'
+
+jobs:
+  build:
+    name: Build / type-check        # REQUIRED
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: npm run build (falla si no existe el script)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)"; then
+            npm run build
+          elif [ "${ALLOW_MISSING_BUILD:-false}" = "true" ]; then
+            echo "::notice title=Sin script build::Excepción declarada (ALLOW_MISSING_BUILD=true): el repo no define \"build\"."
+          else
+            echo "::error title=Sin script build::package.json no define el script \"build\". Un job required que no ejecuta nada pasaría en verde sin validar nada. Agrega el script, o declara la excepción con ALLOW_MISSING_BUILD: 'true' y regístrala en la revisión."
+            exit 1
+          fi
+
+  test:
+    name: Tests                     # REQUIRED
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # La suite de este repo es Playwright (`test` = test:unit + test:responsive + csp:check),
+      # no vitest: necesita el navegador y sus librerías de sistema instalados antes de correr.
+      - name: Instala el navegador de Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run tests (falla si no existe el script)
+        shell: bash
+        # Sin `-- --run`: eso es de vitest. `playwright test` ya es single-run, y pasarle un flag
+        # desconocido lo haría fallar por parámetro inválido, no por un test roto.
+        run: |
+          set -euo pipefail
+          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            npm run test
+          elif [ "${ALLOW_MISSING_TEST:-false}" = "true" ]; then
+            echo "::notice title=Sin tests::Excepción declarada (ALLOW_MISSING_TEST=true): el repo no define el script \"test\"."
+          else
+            echo "::error title=Sin tests::package.json no define el script \"test\". Este job es required y sin script pasaría en verde sin ejecutar nada. Agrega la suite, o declara la excepción con ALLOW_MISSING_TEST: 'true' y regístrala como deuda en la revisión."
+            exit 1
+          fi
+
+  lint:
+    name: Lint (informativo, NO bloquea)   # Quitar continue-on-error -> REQUIRED cuando el baseline esté limpio
+    runs-on: ubuntu-latest
+    # OJO: con continue-on-error a nivel de job, el check sale en ROJO en `gh pr checks` pero NO bloquea
+    # el merge y el RUN completo se reporta en verde. Por eso el nombre del job
+    # lo dice y el resultado real se publica en el Summary del workflow.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: npm run lint
+        shell: bash
+        run: |
+          set -uo pipefail
+          if ! node -e "process.exit(require('./package.json').scripts?.lint ? 0 : 1)"; then
+            echo "::warning title=Sin script lint::El repo no define el script \"lint\"."
+            echo "### ⚠️ Lint: el repo no define el script \`lint\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm run lint 2>&1 | tee lint.log; code=${PIPESTATUS[0]}
+          if [ "$code" -eq 0 ]; then
+            echo "### ✅ Lint limpio" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=Lint falló (informativo)::exit $code — ver el Summary del workflow."
+            {
+              echo "### ⚠️ Lint FALLÓ (informativo, no bloquea) — exit $code"
+              echo '```'
+              tail -n 80 lint.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$code"
+
+  secret-scan:
+    name: Secret scan (diff del PR) # REQUIRED — solo escanea lo que el PR introduce, no el historial
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: TruffleHog (OSS, sin licencia para repos privados)
+        # Pinneado al SHA de v3.97.0 en vez de @main: una rama móvil ejecuta código de terceros no
+        # revisado en cada PR. Al actualizar, subir el tag del comentario junto con el SHA.
+        uses: trufflesecurity/trufflehog@bcfcf73aaf4759d4dadc2783177c245a02792318 # v3.97.0
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+
+  dead-code:
+    name: Código / deps muertas (informativo)   # detecta el patrón "código muerto tras refactor"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: knip (exports/dependencias sin uso)
+        shell: bash
+        # Sin `|| true`: ese patrón hacía indistinguible "no hay código muerto" de "knip reventó por
+        # config faltante". Ahora el resultado (hallazgos o error) se publica en el Summary.
+        run: |
+          set -uo pipefail
+          npx --yes knip 2>&1 | tee knip.log; code=${PIPESTATUS[0]}
+          if [ "$code" -eq 0 ]; then
+            echo "### ✅ knip: sin código/deps muertas" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=Código muerto (informativo)::knip terminó con exit $code — ver el Summary del workflow."
+            {
+              echo "### ⚠️ knip: hallazgos o error de ejecución (informativo, no bloquea) — exit $code"
+              echo '```'
+              tail -n 80 knip.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$code"
