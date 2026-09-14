@@ -97,7 +97,7 @@
 }
 
 /* Título de texto: solo queda como respaldo cuando el componente se usa sin
-   escena, que hoy es únicamente `reveal-demo.astro`. */
+   escena, que hoy es únicamente la demo `/reveal-demo`. */
 .reveal-title h2 {
   margin: 0;
   color: var(--reveal-gold);
@@ -132,7 +132,7 @@
 }
 
 /* Poppins Light + SemiBold para el número, como el nodo de Figma. El fallback
-   literal de la familia hace falta porque `reveal-demo.astro` no carga v2.css
+   literal de la familia hace falta porque la demo `/reveal-demo` no carga v2.css
    y allí `--font-title` no existe. */
 .reveal-title p.reveal-formula {
   margin: 0;

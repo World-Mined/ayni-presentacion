@@ -61,7 +61,6 @@ export interface GeometryConfig {
 export interface ScrollConfig {
   trackVH: number;   // alto de la sección (en pantallas)
   showAt: number;    // % para aparecer
-  hideAt: number;    // % para desaparecer (debe ser < showAt)
   revRate: number;   // velocidad de la desaparición (>1 = más rápida)
 }
 

@@ -103,7 +103,7 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
         </div>
       ) : (
         /* Sin escena no hay logotipo que pintar: queda el título de texto, que
-           es la ruta que usa `reveal-demo.astro`. */
+           es la ruta que usa la demo `/reveal-demo`. */
         <div class="reveal-title">
           <h2>{cfg.title.main}</h2>
           <p>{cfg.title.sub}</p>
@@ -203,6 +203,7 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
 </noscript>
 
 <script>
+  import { COMPACT_VIEWPORT_QUERY } from '../../../lib/breakpoints';
   import { createReveal } from '../../../lib/reveal/engine';
   import { PRODUCTS } from '../../../lib/reveal/products';
 
@@ -220,9 +221,7 @@ const mobileLabelsStagger = cfg.timing?.labelsStagger ?? DEFAULT_TIMING.labelsSt
     const layers = root.querySelectorAll<HTMLElement>('[data-media],[data-phrase]');
     const circle = root.querySelector<HTMLElement>('.reveal-media-circle');
     const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const compactViewport = window.matchMedia(
-      '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
-    );
+    const compactViewport = window.matchMedia(COMPACT_VIEWPORT_QUERY);
     if (!circle || !layers.length) return () => controller.abort();
 
     const syncMobileTrack = (id: string | null) => {

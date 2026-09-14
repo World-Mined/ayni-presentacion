@@ -61,6 +61,8 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
 </header>
 
 <script>
+  import { COMPACT_VIEWPORT_QUERY } from '../../../lib/breakpoints';
+
   const header = document.querySelector<HTMLElement>('[data-site-header]');
   const trigger = header?.querySelector<HTMLButtonElement>('[data-menu-trigger]');
   const nav = header?.querySelector<HTMLElement>('[data-site-nav]');
@@ -87,7 +89,7 @@ const sectionHref = (section: string) => onLanding ? `#${section}` : `${ROUTES.h
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && trigger.getAttribute('aria-expanded') === 'true') closeMenu(true);
     });
-    const compactHeader = window.matchMedia('(max-width: 767px), (max-width: 1023px) and (max-height: 600px)');
+    const compactHeader = window.matchMedia(COMPACT_VIEWPORT_QUERY);
     compactHeader.addEventListener('change', (event) => {
       if (!event.matches) closeMenu();
     });

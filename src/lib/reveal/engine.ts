@@ -7,6 +7,7 @@ import {
   DEFAULT_SCROLL,
 } from './defaults';
 import { clamp, resolveRingTiming } from './timing';
+import { COMPACT_VIEWPORT_QUERY } from '../breakpoints';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 /** Fracción del anillo durante la que su trazo termina de aparecer. Con el 5% el
@@ -42,6 +43,20 @@ const SNAP_SETTLE_MS = 180;
  * alcanzar su intensidad, para que la luz crezca junto con el cierre del giro. */
 const MOBILE_BLUR_LEAD_MS = 300;
 const MOBILE_BLUR_DURATION_MS = 650;
+/** Alto del track en vista compacta: un tramo breve de 20svh sobre la
+ *  pantalla, suficiente para que el encaje al producto complete su movimiento
+ *  sin retener el scroll. */
+const COMPACT_TRACK_HEIGHT = '120svh';
+/** En vista compacta la escena se activa cuando el track entra a esta altura
+ *  del viewport, en tanto por uno, en vez de esperar al borde superior. */
+const COMPACT_ENTRY_RATIO = 0.28;
+/** Y conserva el foco hasta que el sticky ha subido esta fracción del
+ *  viewport, con un tope en píxeles para pantallas altas. */
+const COMPACT_EXIT_RATIO = 0.14;
+const COMPACT_EXIT_MAX_PX = 120;
+/** Cuánto antes del final se deja el MP4 en el estado sin movimiento: el
+ *  último fotograma exacto puede no decodificarse en algunos navegadores. */
+const REDUCED_MOTION_END_OFFSET_S = 0.05;
 const pct = (v: number, total: number) => `${(v / total) * 100}%`;
 
 /** Fusiona la config del producto con los defaults. */
@@ -83,13 +98,9 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   video.playsInline = true;
   video.autoplay = true;
 
-  const compactViewport = window.matchMedia(
-    '(max-width: 767px), (max-width: 1023px) and (max-height: 600px)',
-  );
+  const compactViewport = window.matchMedia(COMPACT_VIEWPORT_QUERY);
   const syncTrackHeight = () => {
-    // Móvil conserva un tramo breve de 20svh, suficiente para que el encaje
-    // al producto pueda completar su movimiento sin retener el scroll.
-    root.style.height = compactViewport.matches ? '120svh' : `${C.scroll.trackVH}vh`;
+    root.style.height = compactViewport.matches ? COMPACT_TRACK_HEIGHT : `${C.scroll.trackVH}vh`;
   };
   syncTrackHeight();
   compactViewport.addEventListener('change', syncTrackHeight);
@@ -104,11 +115,15 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   let mediaReady = false;
   let disposed = false;
   let refreshAfterMediaReady = () => {};
+  // Todos los listeners sobre el <video> cuelgan de esta señal, para que el
+  // dispose los suelte aunque el evento nunca haya llegado.
+  const videoListeners = new AbortController();
   const ready = new Promise<void>((resolve) => {
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
     else {
-      video.addEventListener('loadeddata', () => resolve(), { once: true });
-      video.addEventListener('error', () => resolve(), { once: true });
+      const options = { once: true, signal: videoListeners.signal };
+      video.addEventListener('loadeddata', () => resolve(), options);
+      video.addEventListener('error', () => resolve(), options);
     }
   });
   void ready.then(() => {
@@ -302,12 +317,25 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   //    controla la velocidad de cada dirección de forma fiable. ──
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
-    video.currentTime = video.duration || 0;
-    tl.seek(DUR); // accesibilidad: estado final sin movimiento
+    // Accesibilidad: estado final sin movimiento. El MP4 lleva `autoplay` en el
+    // HTML y arriba se fuerza también en el DOM para Safari, así que hay que
+    // quitarlo y pausarlo aquí; si no, la entrada se reproduce igual. Al montar
+    // la duración suele ser aún `NaN`, por eso el salto al último fotograma
+    // espera a los metadatos.
+    video.autoplay = false;
+    video.removeAttribute('autoplay');
+    video.pause();
+    const showLastFrame = () => {
+      video.currentTime = Math.max(0, video.duration - REDUCED_MOTION_END_OFFSET_S);
+    };
+    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) showLastFrame();
+    else video.addEventListener('loadedmetadata', showLastFrame, { once: true, signal: videoListeners.signal });
+    tl.seek(DUR);
     root.dataset.revealState = 'shown';
     built.forEach(({ label }) => { label.disabled = false; });
     return () => {
       disposed = true;
+      videoListeners.abort();
       compactViewport.removeEventListener('change', syncTrackHeight);
       tl.pause();
       root.classList.remove('reveal-initialized');
@@ -346,7 +374,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
       duration,
       ease: 'linear',
       onUpdate: () => tl.seek(DUR * clamp(driver.p, 0, 1)),
-      onComplete,
+      onComplete: onComplete ?? (() => {}),
     });
   };
   const goShow = () => {
@@ -404,8 +432,13 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
   // Por eso comprobamos la llegada y, si no se produjo, soltamos el seguro.
   const verifySnapArrival = (target: number, release: () => void) => {
     clearTimeout(snapVerifyTimer);
-    stopVideoReverse();
-    video.pause();
+    // Solo se congela el MP4 mientras la escena está oculta. En vista compacta
+    // el reveal puede haber arrancado ya en este mismo scroll, y pausarlo ahí
+    // dejaba la entrada detenida a mitad si el enganche se rearmaba.
+    if (!shown) {
+      stopVideoReverse();
+      video.pause();
+    }
     snapVerifyTimer = setTimeout(() => {
       const missed = Math.abs(window.scrollY - target) > SNAP_ARRIVAL_TOLERANCE;
       if (!missed) {
@@ -488,8 +521,8 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
     // mover mandala, etiquetas ni contenido central.
     const parallax = compact ? 0 : (p - 0.5);
     root.style.setProperty('--reveal-gradient-shift', `${(parallax * 20).toFixed(2)}px`);
-    const compactEntryLine = window.innerHeight * 0.28;
-    const compactExitLead = Math.min(120, window.innerHeight * 0.14);
+    const compactEntryLine = window.innerHeight * COMPACT_ENTRY_RATIO;
+    const compactExitLead = Math.min(COMPACT_EXIT_MAX_PX, window.innerHeight * COMPACT_EXIT_RATIO);
     const isCompactFocus =
       rect.top <= compactEntryLine
       && rect.bottom >= window.innerHeight - compactExitLead;
@@ -514,6 +547,7 @@ export function createReveal(root: HTMLElement, config: RevealConfig): () => voi
 
   return () => {
     disposed = true;
+    videoListeners.abort();
     compactViewport.removeEventListener('change', syncTrackHeight);
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);

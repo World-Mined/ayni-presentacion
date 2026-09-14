@@ -36,6 +36,5 @@ export const DEFAULT_SCROLL: ScrollConfig = {
   // reveal en una pantalla larga retenida.
   trackVH: 160,
   showAt: 0.12,   // % para aparecer. MENOR → con menos scroll
-  hideAt: 0.08,   // % para desaparecer (⚠ debe ser < showAt)
   revRate: 1.9,   // velocidad original de la animación inversa
 };
