@@ -28,15 +28,15 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
     <Image
       src={aboutBackground}
       alt=""
-      loading="eager"
+      loading="lazy"
       decoding="async"
-      fetchpriority="high"
       width={1440}
       height={600}
+      quality={68}
     />
   </div>
   <div class="home-band__about-gradient" aria-hidden="true">
-    <Image src={aboutGradient} alt="" loading="lazy" widths={[768, 1440, 2880]} sizes="100vw" />
+    <Image src={aboutGradient} alt="" loading="lazy" widths={[480, 768, 1440]} sizes="100vw" quality={65} />
   </div>
   <div class="home-band__about-tree">
     <Image
@@ -45,10 +45,11 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
       loading="lazy"
       widths={[320, 465]}
       sizes="(max-width: 767px) 72vw, 465px"
+      quality={68}
     />
   </div>
   <div class="home-band__about-earth" aria-hidden="true">
-    <Image src={aboutEarth} alt="" loading="lazy" width={1440} height={122} />
+    <Image src={aboutEarth} alt="" loading="lazy" widths={[480, 768, 1440]} sizes="100vw" quality={68} />
   </div>
   <div class="home-band__content home-band__content--left">
     <h1 id="about-title">¿Qué es AYNI?</h1>
@@ -71,6 +72,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
         src={ABOUT_VIDEO_URL}
         poster={optimizedAboutVideoPoster.src}
         ariaLabel="Video: ¿Qué es AYNI?"
+        deferSource
       />
     </div>
   </div>
@@ -91,8 +93,9 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
         src={productsJungle}
         alt=""
         loading="lazy"
-        widths={[768, 1280, 1440]}
+        widths={[480, 768, 1280, 1440]}
         sizes="100vw"
+        quality={65}
       />
     </div>
     <div class="home-band__products-shade" aria-hidden="true">
@@ -344,10 +347,6 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
       if (!modal.open) modal.showModal();
-      // El clic sobre el CTA cuenta como gesto explícito: iniciamos el video
-      // con sonido al abrir. Si un navegador aún lo impide, queda visible el
-      // control de reproducción del reproductor.
-      video.play().catch(() => undefined);
     });
 
     close.addEventListener('click', () => modal.close());

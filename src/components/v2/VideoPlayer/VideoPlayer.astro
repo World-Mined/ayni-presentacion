@@ -3,9 +3,10 @@ interface Props {
   src: string;
   poster?: string;
   ariaLabel: string;
+  deferSource?: boolean;
 }
 
-const { src, poster, ariaLabel } = Astro.props;
+const { src, poster, ariaLabel, deferSource = false } = Astro.props;
 ---
 
 <div class="video-player is-paused" data-video-player tabindex="0" role="group" aria-label={ariaLabel}>
@@ -13,11 +14,16 @@ const { src, poster, ariaLabel } = Astro.props;
     class="video-player__media"
     data-video-media
     playsinline
-    preload="metadata"
+    preload={deferSource ? 'none' : 'metadata'}
     poster={poster}
     aria-label={ariaLabel}
   >
-    <source src={src} type="video/mp4" />
+    <source
+      src={deferSource ? undefined : src}
+      data-src={deferSource ? src : undefined}
+      data-video-source
+      type="video/mp4"
+    />
   </video>
 
   <div class="video-player__error" data-video-error role="alert" hidden>
@@ -95,6 +101,8 @@ const { src, poster, ariaLabel } = Astro.props;
 </div>
 
 <script>
+  import { ensureVideoSource } from '../../../scripts/v2/video-source';
+
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
@@ -167,6 +175,7 @@ const { src, poster, ariaLabel } = Astro.props;
     const togglePlayback = async () => {
       if (video.paused) {
         try {
+          ensureVideoSource(video);
           await video.play();
         } catch (cause) {
           // `NotAllowedError` es el navegador negando el gesto, no un fallo de
@@ -245,6 +254,7 @@ const { src, poster, ariaLabel } = Astro.props;
     player.querySelector<HTMLButtonElement>('[data-video-fullscreen]')?.addEventListener('click', toggleFullscreen);
     player.querySelector<HTMLButtonElement>('[data-video-retry]')?.addEventListener('click', () => {
       error.hidden = true;
+      ensureVideoSource(video);
       video.load();
     });
 
