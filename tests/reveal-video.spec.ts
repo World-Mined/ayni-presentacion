@@ -53,13 +53,13 @@ test('el reenganche compacto no pausa un reveal que ya está entrando', async ({
       );
       return nativePause.call(this);
     };
-    window.scrollTo = ((...args: Parameters<typeof window.scrollTo>) => {
-      const options = args[0];
-      if (typeof options === 'object' && options?.behavior === 'smooth') {
+    window.scrollTo = ((first: number | ScrollToOptions, second?: number) => {
+      if (typeof first === 'object' && first.behavior === 'smooth') {
         state.__revealSnapCount = (state.__revealSnapCount ?? 0) + 1;
         return;
       }
-      nativeScrollTo(...args);
+      if (typeof first === 'object') nativeScrollTo(first);
+      else nativeScrollTo(first, second ?? 0);
     }) as typeof window.scrollTo;
   });
 
