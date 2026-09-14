@@ -57,7 +57,7 @@ const countries: readonly CountryState[] = [
   {countries.map(({ id, asset }) => (
     <img
       class:list={['pickup-map__state', `pickup-map__state--${id}`]}
-      src={asset.src}
+      data-src={asset.src}
       alt=""
       aria-hidden="true"
       loading="lazy"
@@ -141,10 +141,33 @@ const countries: readonly CountryState[] = [
     const triggers = Array.from(map.querySelectorAll<HTMLButtonElement>('[data-map-trigger]'));
     const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)');
     let selectedCountry: CountryId | null = null;
+    let visibilityRequest = 0;
 
-    const setVisibleCountry = (country: CountryId | null) => {
-      if (country) map.dataset.activeCountry = country;
-      else delete map.dataset.activeCountry;
+    const loadCountry = async (country: CountryId) => {
+      const image = map.querySelector<HTMLImageElement>(`[data-map-state="${country}"]`);
+      const deferredSrc = image?.dataset.src;
+      if (!image || !deferredSrc) return false;
+
+      if (!image.src) image.src = deferredSrc;
+      if (!image.complete || image.naturalWidth === 0) {
+        try {
+          await image.decode();
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    const setVisibleCountry = async (country: CountryId | null) => {
+      const request = ++visibilityRequest;
+      if (!country) {
+        delete map.dataset.activeCountry;
+        return;
+      }
+
+      const loaded = await loadCountry(country);
+      if (loaded && request === visibilityRequest) map.dataset.activeCountry = country;
     };
 
     const setSelectedCountry = (country: CountryId | null) => {
@@ -152,22 +175,24 @@ const countries: readonly CountryState[] = [
       triggers.forEach((trigger) => {
         trigger.setAttribute('aria-pressed', String(trigger.dataset.mapTrigger === country));
       });
-      setVisibleCountry(country);
+      void setVisibleCountry(country);
     };
 
     triggers.forEach((trigger) => {
       const country = trigger.dataset.mapTrigger as CountryId;
 
       trigger.addEventListener('pointerenter', () => {
-        if (supportsHover.matches) setVisibleCountry(country);
+        if (supportsHover.matches) void setVisibleCountry(country);
       });
+
+      trigger.addEventListener('pointerdown', () => void loadCountry(country));
 
       trigger.addEventListener('pointerleave', () => {
-        if (supportsHover.matches) setVisibleCountry(selectedCountry);
+        if (supportsHover.matches) void setVisibleCountry(selectedCountry);
       });
 
-      trigger.addEventListener('focus', () => setVisibleCountry(country));
-      trigger.addEventListener('blur', () => setVisibleCountry(selectedCountry));
+      trigger.addEventListener('focus', () => void setVisibleCountry(country));
+      trigger.addEventListener('blur', () => void setVisibleCountry(selectedCountry));
 
       trigger.addEventListener('click', (event) => {
         setSelectedCountry(selectedCountry === country ? null : country);
