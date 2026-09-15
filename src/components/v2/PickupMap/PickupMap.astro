@@ -54,28 +54,25 @@ const countries: readonly CountryState[] = [
     height={MAP_HEIGHT}
   />
 
+  {countries.map(({ id, label, hotspot }) => (
+    <a
+      class:list={['pickup-map__hotspot', `pickup-map__hotspot--${id}`]}
+      style={`--hotspot-top:${hotspot.top};--hotspot-left:${hotspot.left};--hotspot-width:${hotspot.width};--hotspot-height:${hotspot.height}`}
+      href={`/puntos-de-recojo?pais=${id}`}
+      aria-label={`Ver puntos de recojo en ${label}`}
+    ></a>
+  ))}
+
   {countries.map(({ id, asset }) => (
     <img
       class:list={['pickup-map__state', `pickup-map__state--${id}`]}
-      data-src={asset.src}
+      src={asset.src}
       alt=""
       aria-hidden="true"
       loading="lazy"
       width={MAP_WIDTH}
       height={MAP_HEIGHT}
-      data-map-state={id}
     />
-  ))}
-
-  {countries.map(({ id, label, hotspot }) => (
-    <button
-      class:list={['pickup-map__hotspot', `pickup-map__hotspot--${id}`]}
-      style={`--hotspot-top:${hotspot.top};--hotspot-left:${hotspot.left};--hotspot-width:${hotspot.width};--hotspot-height:${hotspot.height}`}
-      type="button"
-      aria-label={`Mostrar puntos de recojo en ${label}`}
-      aria-pressed="false"
-      data-map-trigger={id}
-    ></button>
   ))}
 </div>
 
@@ -89,6 +86,7 @@ const countries: readonly CountryState[] = [
 
   .pickup-map__state {
     position: absolute;
+    z-index: 1;
     inset: 0;
     display: block;
     width: 100%;
@@ -99,11 +97,7 @@ const countries: readonly CountryState[] = [
     transition: opacity 300ms ease-out;
   }
 
-  .pickup-map__state--default { opacity: 1; }
-  .pickup-map[data-active-country='peru'] .pickup-map__state--default,
-  .pickup-map[data-active-country='bolivia'] .pickup-map__state--default { opacity: 0; }
-  .pickup-map[data-active-country='peru'] .pickup-map__state--peru,
-  .pickup-map[data-active-country='bolivia'] .pickup-map__state--bolivia { opacity: 1; }
+  .pickup-map__state--default { z-index: 0;opacity: 1; }
 
   .pickup-map__hotspot {
     position: absolute;
@@ -126,86 +120,15 @@ const countries: readonly CountryState[] = [
     outline-offset: 3px;
   }
 
+  /* El estado visual depende del hover nativo del navegador, no de un evento
+     JavaScript. Asi tambien responde cuando el puntero ya estaba sobre una
+     ventana que acaba de recuperar el foco. */
+  .pickup-map__hotspot--peru:hover ~ .pickup-map__state--peru,
+  .pickup-map__hotspot--peru:focus-visible ~ .pickup-map__state--peru,
+  .pickup-map__hotspot--bolivia:hover ~ .pickup-map__state--bolivia,
+  .pickup-map__hotspot--bolivia:focus-visible ~ .pickup-map__state--bolivia { opacity: 1; }
+
   @media (prefers-reduced-motion: reduce) {
     .pickup-map__state { transition: none; }
   }
 </style>
-
-<script>
-  type CountryId = 'peru' | 'bolivia';
-
-  document.querySelectorAll<HTMLElement>('[data-pickup-map]').forEach((map) => {
-    if (map.dataset.initialized === 'true') return;
-    map.dataset.initialized = 'true';
-
-    const triggers = Array.from(map.querySelectorAll<HTMLButtonElement>('[data-map-trigger]'));
-    const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)');
-    let selectedCountry: CountryId | null = null;
-    let visibilityRequest = 0;
-
-    const loadCountry = async (country: CountryId) => {
-      const image = map.querySelector<HTMLImageElement>(`[data-map-state="${country}"]`);
-      const deferredSrc = image?.dataset.src;
-      if (!image || !deferredSrc) return false;
-
-      if (!image.src) image.src = deferredSrc;
-      if (!image.complete || image.naturalWidth === 0) {
-        try {
-          await image.decode();
-        } catch {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    const setVisibleCountry = async (country: CountryId | null) => {
-      const request = ++visibilityRequest;
-      if (!country) {
-        delete map.dataset.activeCountry;
-        return;
-      }
-
-      const loaded = await loadCountry(country);
-      if (loaded && request === visibilityRequest) map.dataset.activeCountry = country;
-    };
-
-    const setSelectedCountry = (country: CountryId | null) => {
-      selectedCountry = country;
-      triggers.forEach((trigger) => {
-        trigger.setAttribute('aria-pressed', String(trigger.dataset.mapTrigger === country));
-      });
-      void setVisibleCountry(country);
-    };
-
-    triggers.forEach((trigger) => {
-      const country = trigger.dataset.mapTrigger as CountryId;
-
-      trigger.addEventListener('pointerenter', () => {
-        if (supportsHover.matches) void setVisibleCountry(country);
-      });
-
-      trigger.addEventListener('pointerdown', () => void loadCountry(country));
-
-      trigger.addEventListener('pointerleave', () => {
-        if (supportsHover.matches) void setVisibleCountry(selectedCountry);
-      });
-
-      trigger.addEventListener('focus', () => void setVisibleCountry(country));
-      trigger.addEventListener('blur', () => void setVisibleCountry(selectedCountry));
-
-      trigger.addEventListener('click', (event) => {
-        setSelectedCountry(selectedCountry === country ? null : country);
-        // El click de mouse/toque no debe dejar visible el contorno de foco
-        // sobre el arte de Figma. El foco sí se conserva al activar con teclado.
-        if (event.detail > 0) trigger.blur();
-      });
-    });
-
-    map.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape') return;
-      setSelectedCountry(null);
-      (event.target as HTMLElement | null)?.blur();
-    });
-  });
-</script>

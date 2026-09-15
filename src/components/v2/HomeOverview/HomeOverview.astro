@@ -121,6 +121,9 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
 </section>
 
 <section id={SECTION_IDS.pickup} class="home-band home-band--pickup" aria-labelledby="pickup-title">
+  <div class="home-band__pickup-blur" aria-hidden="true">
+    <img src={productsBgBlur.src} alt="" loading="lazy" />
+  </div>
   <div class="home-band__pickup-layout">
     <div class="home-band__content home-band__content--pickup">
       <h2 id="pickup-title">¿Dónde recoger<br />mi producto?</h2>
@@ -202,7 +205,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
      negativo seguía aumentando aunque los assets ya estuvieran limitados a
      260px, y terminaban amontonados. El clamp conserva una composición
      compacta en desktop normal y limita el cruce en pantallas grandes. */
-  .home-band__products img { width:min(42%,260px);height:auto;margin-inline:clamp(-48px,-2.5vw,-28px);transform:translateY(var(--products-sink)); }
+  .home-band__products img { width:min(42%,260px);height:auto;margin-inline:clamp(-58px,-3.25vw,-36px);transform:translateY(var(--products-sink)); }
   .home-band__products img:nth-child(2) { position:relative;z-index:2; }
   .home-band--products .home-band__content { display:flex;z-index:5;grid-column:2;width:var(--products-copy-width);max-width:calc(100% - 48px);padding:0;margin-right:var(--products-copy-right);flex-direction:column;justify-content:center;align-items:flex-start;gap:0;transform:none; }
   .home-band--products h2 { width:min(100%,384px);margin:0 0 16px;color:#f9cb69;font-family:Poppins,sans-serif;font-size:40px;font-weight:600;line-height:48px;letter-spacing:0; }
@@ -211,6 +214,8 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
   .home-band--products :global(.home-band__cta) { margin-top:0; }
   .products-cta-label { white-space:nowrap; }
   .home-band--pickup { z-index:1;display:flex;min-height:clamp(650px,54.585vw,786px);padding:80px;overflow:visible;background:transparent; }
+  .home-band__pickup-blur { position:absolute;z-index:0;top:0;left:50%;width:min(820px,90vw);aspect-ratio:752/429;transform:translate(-50%,-52%);pointer-events:none; }
+  .home-band__pickup-blur :global(img) { position:absolute;top:-58.28%;left:-33.24%;display:block;width:166.49%;height:216.55%;max-width:none; }
   .home-band__pickup-layout { position:relative;z-index:2;display:grid;width:min(100%,1280px);height:626px;margin-inline:auto;grid-template-columns:minmax(0,597fr) minmax(0,603fr);column-gap:80px;align-items:center; }
   .home-band--pickup .home-band__content--pickup { z-index:3;width:480px;padding:0;margin-left:80px; }
   .home-band--pickup h2 { width:332px;max-width:100%;margin-bottom:16px;font-size:40px;line-height:48px;letter-spacing:0; }
@@ -236,6 +241,7 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
     .home-band__products-stage { aspect-ratio:auto;min-height:520px; }
     .home-band__products-scene :global(img) { object-position:16% center; }
     .home-band__products { padding-left:clamp(12px,3vw,32px); }
+    .home-band__products img { width:min(calc(42% + 3px),263px);margin-inline:-28px; }
     .home-band--products h2 { font-size:32px;line-height:40px; }
     .home-band--products p { font-size:16px;line-height:24px; }
     .home-band--pickup { min-height:650px;padding:48px 42px; }
@@ -268,6 +274,9 @@ const optimizedAboutVideoPoster = await getImage({ src: aboutVideoPoster, width:
        extremos; el término central es la medida original.
        (Misma convención documentada en el componente `ProductsBanner`.) */
     .home-band--products { --products-mobile-height:clamp(438px,144.359vw,690px);--products-mobile-group-h:clamp(136px,44.872vw,240px);--products-mobile-gap:clamp(32px,10.256vw,48px);--products-copy-width:100%;--products-copy-right:0;--products-sink:0;min-height:0;padding:0;overflow-x:clip; }
+    /* En movil ya llega el resplandor de la banda de Productos; evitamos
+       duplicarlo y conservamos su escala original. */
+    .home-band__pickup-blur { display:none; }
     .home-band__products-stage { display:grid;height:var(--products-mobile-height);min-height:0;aspect-ratio:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto var(--products-mobile-group-h);row-gap:var(--products-mobile-gap);align-content:center;justify-items:center; }
     .home-band__products-scene :global(img) { object-position:center; }
     .home-band__products-shade { display:flex;align-items:center;justify-content:center; }

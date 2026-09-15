@@ -89,6 +89,35 @@ test('Otros Productos conserva la proporción y resolución del fondo móvil', a
   await expect(section.locator('a:visible').first()).toHaveClass(/other-products__mobile-cta/);
 });
 
+test('Los empaques de la banda de Productos conservan un grupo compacto', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 929 });
+  await page.goto('/');
+
+  const products = page.locator('.home-band__products img');
+  await expect(products).toHaveCount(3);
+  const bounds = await products.evaluateAll((images) => images.map((image) => {
+    const box = image.getBoundingClientRect();
+    return { left: box.left, right: box.right, width: box.width };
+  }));
+
+  expect(bounds[1].left - bounds[0].left).toBeLessThanOrEqual(168);
+  expect(bounds[2].left - bounds[1].left).toBeLessThanOrEqual(168);
+  expect(bounds[0].right - bounds[1].left).toBeGreaterThanOrEqual(90);
+  expect(bounds[1].right - bounds[2].left).toBeGreaterThanOrEqual(90);
+
+  await page.setViewportSize({ width: 773, height: 833 });
+  const tabletBounds = await products.evaluateAll((images) => images.map((image) => {
+    const box = image.getBoundingClientRect();
+    return { left: box.left, right: box.right, width: box.width };
+  }));
+
+  // En tablet las bolsas son mas pequenas y necesitan menos solape para que
+  // sus frentes no queden pegados entre si.
+  expect(tabletBounds[1].left - tabletBounds[0].left).toBeGreaterThanOrEqual(95);
+  expect(tabletBounds[2].left - tabletBounds[1].left).toBeGreaterThanOrEqual(95);
+  expect(tabletBounds[0].width).toBeCloseTo(155.6, 0);
+});
+
 test('Puntos de recojo sirve los mapas de Google acotados por sandbox', async ({ page }) => {
   await page.route(/^https:\/\/www\.google\.com\/maps\/embed\?pb=/, (route) => route.fulfill({
     contentType: 'text/html',
@@ -136,4 +165,46 @@ test('Puntos de recojo sirve los mapas de Google acotados por sandbox', async ({
   await page.getByRole('tab', { name: 'Bolivia' }).click();
   await expect(page.locator('.pickup-map-panel__unavailable')).toContainText(/Ubicación\s*no disponible/);
   await expect(page.locator('iframe.pickup-map-view__embed:visible')).toHaveCount(0);
+});
+
+test('El mapa de paises resalta con hover y enlaza la seccion correspondiente', async ({ page }) => {
+  await page.goto('/');
+
+  const map = page.locator('[data-pickup-map]');
+  await map.scrollIntoViewIfNeeded();
+
+  const peru = page.getByRole('link', { name: 'Ver puntos de recojo en Perú' });
+  const peruState = map.locator('.pickup-map__state--peru');
+  await expect(peru).toHaveAttribute('href', '/puntos-de-recojo?pais=peru');
+  await peru.hover();
+  await expect(peruState).toHaveCSS('opacity', '1');
+
+  const bolivia = page.getByRole('link', { name: 'Ver puntos de recojo en Bolivia' });
+  await expect(bolivia).toHaveAttribute('href', '/puntos-de-recojo?pais=bolivia');
+  await bolivia.click();
+
+  await expect(page).toHaveURL(/\/puntos-de-recojo\?pais=bolivia$/);
+  await expect(page.getByRole('tab', { name: 'Bolivia' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.pickup-map-panel__unavailable')).toBeVisible();
+});
+
+test('El resplandor de puntos de recojo permanece en todos los breakpoints', async ({ page }) => {
+  await page.goto('/');
+
+  const pickup = page.locator('.home-band--pickup');
+  const blur = page.locator('.home-band__pickup-blur');
+
+  for (const width of [768, 987, 1128]) {
+    await page.setViewportSize({ width, height: 833 });
+    await pickup.scrollIntoViewIfNeeded();
+
+    const overlap = await Promise.all([pickup.boundingBox(), blur.boundingBox()]);
+    expect(overlap[0]).not.toBeNull();
+    expect(overlap[1]).not.toBeNull();
+    if (!overlap[0] || !overlap[1]) continue;
+
+    expect(overlap[1].y).toBeLessThan(overlap[0].y + overlap[0].height);
+    expect(overlap[1].y + overlap[1].height).toBeGreaterThan(overlap[0].y);
+    await expect(blur.locator('img')).toBeVisible();
+  }
 });

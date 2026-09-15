@@ -303,6 +303,11 @@ const DEFAULT_PREVIEW_ZOOM = 15;
     });
 
     search?.addEventListener('input', filterLocations);
+
+    const requestedCountry = new URLSearchParams(window.location.search).get('pais');
+    if (requestedCountry && tabs.some((tab) => tab.dataset.pickupTab === requestedCountry)) {
+      selectCountry(requestedCountry);
+    }
   });
 </script>
 
