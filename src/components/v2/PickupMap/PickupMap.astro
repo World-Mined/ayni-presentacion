@@ -1,0 +1,134 @@
+---
+// Los mapas se importan en vez de referenciarse por ruta pública: así el build
+// falla si uno se renombra, y cada archivo sale con hash de contenido. Es la
+// misma vía que usa el resto de v2 (ver el componente `HomeOverview`).
+import mapBolivia from '../../../assets/v2/pickup-map-bolivia.svg';
+import mapDefault from '../../../assets/v2/pickup-map-default.svg';
+import mapPeru from '../../../assets/v2/pickup-map-peru.svg';
+
+/** Los tres mapas comparten lienzo; el intercambio depende de que encajen. */
+const MAP_WIDTH = 395;
+const MAP_HEIGHT = 627;
+
+interface CountryState {
+  id: 'peru' | 'bolivia';
+  label: string;
+  asset: ImageMetadata;
+  hotspot: {
+    top: string;
+    left: string;
+    width: string;
+    height: string;
+  };
+}
+
+const countries: readonly CountryState[] = [
+  {
+    id: 'peru',
+    label: 'Perú',
+    asset: mapPeru,
+    hotspot: { top: '15%', left: '0%', width: '37%', height: '30%' },
+  },
+  {
+    id: 'bolivia',
+    label: 'Bolivia',
+    asset: mapBolivia,
+    hotspot: { top: '33%', left: '21%', width: '34%', height: '20%' },
+  },
+] as const;
+---
+
+<div
+  id="pickup-map"
+  class="pickup-map"
+  role="group"
+  aria-label="Mapa de puntos de recojo en Perú y Bolivia"
+  data-pickup-map
+>
+  <img
+    class="pickup-map__state pickup-map__state--default"
+    src={mapDefault.src}
+    alt="Mapa vectorial de Sudamérica con puntos de recojo en Perú y Bolivia"
+    loading="lazy"
+    width={MAP_WIDTH}
+    height={MAP_HEIGHT}
+  />
+
+  {countries.map(({ id, label, hotspot }) => (
+    <a
+      class:list={['pickup-map__hotspot', `pickup-map__hotspot--${id}`]}
+      style={`--hotspot-top:${hotspot.top};--hotspot-left:${hotspot.left};--hotspot-width:${hotspot.width};--hotspot-height:${hotspot.height}`}
+      href={`/puntos-de-recojo?pais=${id}`}
+      aria-label={`Ver puntos de recojo en ${label}`}
+    ></a>
+  ))}
+
+  {countries.map(({ id, asset }) => (
+    <img
+      class:list={['pickup-map__state', `pickup-map__state--${id}`]}
+      src={asset.src}
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+      width={MAP_WIDTH}
+      height={MAP_HEIGHT}
+    />
+  ))}
+</div>
+
+<style>
+  .pickup-map {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 395 / 627;
+    isolation: isolate;
+  }
+
+  .pickup-map__state {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease-out;
+  }
+
+  .pickup-map__state--default { z-index: 0;opacity: 1; }
+
+  .pickup-map__hotspot {
+    position: absolute;
+    z-index: 2;
+    top: var(--hotspot-top);
+    left: var(--hotspot-left);
+    width: var(--hotspot-width);
+    height: var(--hotspot-height);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pickup-map__hotspot:focus-visible {
+    border-radius: 45%;
+    outline: 2px solid rgba(249, 203, 105, .92);
+    outline-offset: 3px;
+  }
+
+  /* El estado visual depende del hover nativo del navegador, no de un evento
+     JavaScript. Asi tambien responde cuando el puntero ya estaba sobre una
+     ventana que acaba de recuperar el foco. */
+  .pickup-map__hotspot--peru:hover ~ .pickup-map__state--peru,
+  .pickup-map__hotspot--peru:focus-visible ~ .pickup-map__state--peru,
+  .pickup-map__hotspot--bolivia:hover ~ .pickup-map__state--bolivia,
+  .pickup-map__hotspot--bolivia:focus-visible ~ .pickup-map__state--bolivia { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pickup-map__state { transition: none; }
+  }
+</style>

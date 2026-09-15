@@ -1,0 +1,105 @@
+---
+/**
+ * Botón con la cola luminosa que recorre el contorno en hover.
+ *
+ * Todo el estilo del botón vive aquí y no depende de la banda que lo contenga:
+ * la caja, el aro, la cola y su motor. Quien lo use solo ajusta las medidas
+ * desde fuera con las variables de abajo, sin volver a declarar el mecanismo.
+ *
+ *   --cta-w / --cta-h        caja del botón
+ *   --cta-radius             radio (por defecto, píldora)
+ *   --cta-font-size / -weight / --cta-gap
+ *   --cta-surface            relleno del botón
+ *   --cta-color              color de la etiqueta en reposo
+ *   --cta-color-hover        color de la etiqueta en hover
+ *   --cta-ring / --cta-ring-hover      degradado del aro en cada estado
+ *   --cta-ring-w / --cta-ring-hover-w  grosor del aro en cada estado
+ *   --cta-tail-turn          largo de la cola, en fracción de vuelta
+ *   --cta-motion-w           grosor uniforme del trazo animado
+ *   --cta-glow               resplandor exterior del trazo
+ *   --cta-glow-pulse        fluctuación sutil de la intensidad del halo
+ *   --cta-glow-travel       recorrido mínimo del núcleo hacia delante y atrás
+ *   --cta-end-speed          aceleración sutil en los extremos verticales
+ *   --cta-cardinal-speed     aceleración sutil en los tramos horizontales
+ *   --cta-tail-end-speed     aceleración lateral sólo del final de la cola
+ *   --cta-tail-end-right-boost refuerzo adicional en el lateral derecho
+ *   --cta-horizontal-shrink contracción de la cola en arriba y abajo
+ *
+ * El sentido de giro no se configura: es el del diseño y lo fija el script.
+ */
+interface Props {
+  href: string;
+  class?: string;
+  'aria-label'?: string;
+  target?: string;
+  rel?: string;
+}
+
+const { href, class: className, ...rest } = Astro.props;
+---
+
+<a
+  class:list={['motion-cta', className]}
+  href={href}
+  data-motion-cta
+  {...rest}
+>
+  <span class="motion-cta__stroke" aria-hidden="true"></span>
+  <span class="motion-cta__content"><slot /></span>
+</a>
+
+<style>
+  .motion-cta {
+    --cta-w:auto;--cta-h:48px;--cta-radius:999px;--cta-gap:8px;
+    --cta-font-size:16px;--cta-font-weight:400;
+    --cta-surface:linear-gradient(0deg,#000,#000),linear-gradient(200.74deg,rgba(135,116,79,.2) 0%,rgba(43,43,43,.14) 100%);
+    --cta-bevel:inset -2.62px -1.618px 4.23916px rgba(250,250,250,.22);
+    --cta-color:#fffefa;--cta-color-hover:#f7c45f;
+    --cta-ring-w:1px;--cta-ring-hover-w:2px;
+    --cta-ring:linear-gradient(115deg,#fffefa 0%,#f9cb69 100%);
+    --cta-ring-hover:rgba(164,137,85,.2);
+    position:relative;isolation:isolate;display:inline-flex;box-sizing:border-box;width:var(--cta-w);max-width:100%;height:var(--cta-h);
+    align-items:center;justify-content:center;padding:12px 18px;border:0;border-radius:var(--cta-radius);
+    background:var(--cta-surface);box-shadow:var(--cta-bevel);
+    color:var(--cta-color);font-family:Poppins,sans-serif;font-size:var(--cta-font-size);
+    font-weight:var(--cta-font-weight);line-height:24px;text-decoration:none;
+    transition:color 160ms linear;
+  }
+  /* Dos aros superpuestos que se cruzan en opacidad: un degradado no se puede
+     interpolar en `transition`, así que el paso de reposo a hover se hace
+     fundiendo dos capas en vez de animar el `background`. */
+  .motion-cta::before,.motion-cta::after { content:"";position:absolute;z-index:1;inset:0;border-radius:inherit;pointer-events:none;transition:opacity 160ms linear;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude; }
+  .motion-cta::before { padding:var(--cta-ring-w);background:var(--cta-ring); }
+  .motion-cta::after { padding:var(--cta-ring-hover-w);background:var(--cta-ring-hover);opacity:0; }
+  .motion-cta:focus-visible { outline:2px solid rgba(249,203,105,.72);outline-offset:3px; }
+  /* El estado activo llega como atributo y no como `:hover` porque Safari y
+     otros navegadores táctiles dejan `:hover` pegado después de un toque.
+     Quién puede activarlo lo decide `cta-motion.ts`, que exige un puntero con
+     hover real o un foco visible; aquí no hace falta repetir esa condición. */
+  .motion-cta[data-motion-active="true"]::before { opacity:0; }
+  .motion-cta[data-motion-active="true"]::after { opacity:1; }
+  .motion-cta[data-motion-active="true"] { color:var(--cta-color-hover); }
+
+  .motion-cta__content { position:relative;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:var(--cta-gap);white-space:nowrap; }
+  .motion-cta__content :global(svg) { display:block;width:24px;height:24px;flex:none; }
+
+  /* Una única superficie cónica recorre una máscara con forma de píldora.
+     No hay segmentos ni una segunda línea para el núcleo: la intensidad,
+     transparencia de las puntas y pequeño pulso central pertenecen al mismo
+     gradiente continuo. Esto evita las bandas que aparecían al rasterizar el
+     antiguo conjunto de cientos de trazos SVG a escalas pequeñas. */
+  .motion-cta__stroke { --cta-tail-turn:.38;--cta-motion-w:1px;--cta-end-speed:.1;--cta-cardinal-speed:.12;--cta-tail-end-speed:.045;--cta-tail-end-right-boost:.008;--cta-horizontal-shrink:.063;--cta-glow:1.05px;--cta-glow-pulse:.18;--cta-glow-travel:3.25px;position:absolute;z-index:2;inset:0;display:block;box-sizing:border-box;padding:var(--cta-motion-w);border-radius:inherit;background:transparent;opacity:0;pointer-events:none;transition:opacity 140ms linear;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;will-change:background,filter; }
+  .motion-cta[data-motion-active="true"] .motion-cta__stroke { opacity:1; }
+
+  /* Quien pide menos movimiento pierde la cola animada, pero conserva el resto
+     del estado activo: el cambio de color y el intercambio de aros no son
+     movimiento y siguen siendo la única señal de que el CTA responde. */
+  @media(prefers-reduced-motion:reduce){
+    .motion-cta,.motion-cta::before,.motion-cta::after,.motion-cta__stroke { transition:none; }
+    .motion-cta[data-motion-active="true"] .motion-cta__stroke { opacity:0; }
+  }
+</style>
+
+<script>
+  import '../../../scripts/v2/cta-motion';
+</script>

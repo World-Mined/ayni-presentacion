@@ -1,0 +1,910 @@
+---
+import { Image, getImage } from "astro:assets";
+import bonusesBackground from "../../../assets/v2/ambassadors-bonuses-background.webp";
+import bonusFocus from "../../../assets/v2/ambassadors-bonus-focus.webp";
+import bonusFocusMobile from "../../../assets/v2/ambassadors-bonus-focus-mobile.webp";
+import BonusesIntro from "../BonusesIntro/BonusesIntro.astro";
+import ResidualBonus from "../ResidualBonus/ResidualBonus.astro";
+import SponsorshipBonus from "../SponsorshipBonus/SponsorshipBonus.astro";
+import estrellaLogo from "../../../assets/v2/ambassadors-star/logo-lockup.webp";
+import estrellaFlare from "../../../assets/v2/ambassadors-star/flare-v3.webp";
+import mancora from "../../../assets/v2/ambassadors-star/mancora.webp";
+import uyuni from "../../../assets/v2/ambassadors-star/uyuni.webp";
+import cartagena from "../../../assets/v2/ambassadors-star/cartagena.webp";
+import salinas from "../../../assets/v2/ambassadors-star/salinas.webp";
+import trophy from "../../../assets/v2/ambassadors-star/trophy.webp";
+import calendar from "../../../assets/v2/ambassadors-star/calendar.webp";
+import flareV2 from "../../../assets/v2/ambassadors-star/flare-v2.webp";
+
+const STAR_DESTINATIONS = [
+  { image: mancora, name: "Máncora", country: "Perú" },
+  { image: uyuni, name: "Salar de Uyuni", country: "Bolivia" },
+  { image: cartagena, name: "Cartagena", country: "Colombia" },
+  { image: salinas, name: "Salinas", country: "Ecuador" },
+];
+const optimizedBonusFocusMobile = await getImage({
+  src: bonusFocusMobile,
+  widths: [390, 780],
+  format: "webp",
+  quality: 88,
+});
+---
+
+<div class="ambassadors-bands">
+  <section class="ambassadors-bonuses" aria-labelledby="bonuses-title">
+    <Image
+      class="ambassadors-bonuses__background"
+      src={bonusesBackground}
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+      widths={[768, 1440, 2880]}
+      sizes="100vw"
+    />
+    <div class="ambassadors-bonuses__content">
+      <div class="bonuses-screen">
+        <BonusesIntro />
+        <ResidualBonus />
+      </div>
+      <div class="bonuses-screen">
+        <SponsorshipBonus />
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="ambassadors-band ambassadors-band--focus"
+    aria-labelledby="bonus-focus-title"
+    data-band-reveal
+  >
+    <div class="ambassadors-band__backdrop" aria-hidden="true">
+      <picture>
+        <source
+          media="(max-width: 767px)"
+          srcset={optimizedBonusFocusMobile.srcSet.attribute}
+          sizes="100vw"
+        /><Image
+          src={bonusFocus}
+          alt=""
+          loading="eager"
+          widths={[768, 1440, 2880]}
+          sizes="100vw"
+        />
+      </picture><span></span>
+    </div>
+    <div class="ambassadors-band__text">
+      <h2 id="bonus-focus-title">Bono Enfoque</h2><p>
+        Al cerrar el año, AYNI te recompensa con un 10% adicional acumulado de
+        tus comisiones. Solo debes mantener tu membresía IBO y estado "Activo"
+        ininterrumpidamente, con un rango menor a GEN 5000 en cada ciclo.
+      </p>
+    </div>
+  </section>
+
+  <section class="ambassadors-star" aria-labelledby="ayni-star-title">
+    <div class="ambassadors-star__content">
+      <div class="ambassadors-star__brand" aria-hidden="true">
+        <div class="ambassadors-star__logo-frame">
+          <div class="ambassadors-star__logo-lockup">
+            <Image
+              class="ambassadors-star__flare"
+              src={estrellaFlare}
+              alt=""
+              loading="lazy"
+              widths={[768, 1440]}
+              sizes="30vw"
+            />
+            <Image
+              class="ambassadors-star__logo"
+              src={estrellaLogo}
+              alt=""
+              loading="eager"
+              widths={[768, 1080]}
+              sizes="30vw"
+            />
+          </div>
+        </div>
+      </div>
+      <h2 id="ayni-star-title">Requisitos para el viaje:</h2>
+      <div class="ambassadors-star__requirements">
+        <article class="star-requirement">
+          <img
+            class="star-requirement__flare"
+            src={flareV2.src}
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="star-requirement__number">1</span><Image
+            class="star-requirement__icon"
+            src={trophy}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            widths={[102]}
+            sizes="6vw"
+          />
+          <p>Mantener un mínimo de 100<br />puntos quincenales</p>
+        </article>
+        <article class="star-requirement">
+          <img
+            class="star-requirement__flare"
+            src={flareV2.src}
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="star-requirement__number">2</span><Image
+            class="star-requirement__icon"
+            src={calendar}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            widths={[128]}
+            sizes="6vw"
+          />
+          <p>
+            <strong>Durante 24 Ciclos Consecutivos</strong><small
+              >¡No te pierdas tu racha de cumplimiento!</small
+            >
+          </p>
+        </article>
+      </div>
+      <div class="ambassadors-star__destinations">
+        {
+          STAR_DESTINATIONS.map(({ image, name, country }) => (
+            <article class="star-destination">
+              <>
+                <div class="star-destination__image">
+                  <>
+                    <div class="star-destination__photo">
+                      <Image
+                        src={image}
+                        alt={`Vista de ${name}`}
+                        loading="eager"
+                        widths={[480, 768, 1440]}
+                        sizes="(max-width: 767px) 92vw, (max-aspect-ratio: 13 / 10) 46vw, 22vw"
+                      />
+                    </div>
+                    <img
+                      class="star-destination__flare"
+                      src={flareV2.src}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </>
+                </div>
+                <h3>{name}</h3>
+                <p>({country})</p>
+              </>
+            </article>
+          ))
+        }
+      </div>
+      <p class="ambassadors-star__footnote">
+        * El ganador podrá elegir un destino.
+      </p>
+    </div>
+  </section>
+</div>
+
+<style>
+  .ambassadors-bonuses {
+    --w: min(100vw, 1440px);
+    position: relative;
+    isolation: isolate;
+    min-height: calc(var(--w) * 1.52);
+    overflow: hidden;
+    background: #050504;
+  }
+  .ambassadors-bonuses__background {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .ambassadors-bonuses__content {
+    display: flex;
+    min-height: calc(var(--w) * 1.52);
+    width: min(100%, 1440px);
+    margin: auto;
+    padding: calc(var(--w) * 0.05556) calc(var(--w) * 0.05556)
+      calc(var(--w) * 0.1);
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h2,
+  h3,
+  h4,
+  p {
+    margin: 0;
+  }
+
+  /* En escritorio los paneles no existen para la maquetación: los tres bloques
+     se apilan con sus propios márgenes, como hasta ahora. Por debajo de 1024px
+     cada uno pasa a ser una pantalla, que es como está compuesta la versión
+     móvil en Figma (3410:20024). */
+  .bonuses-screen {
+    display: contents;
+  }
+  @media (max-width: 1023px) {
+    .ambassadors-bonuses,
+    .ambassadors-bonuses__content {
+      min-height: 0;
+    }
+    .ambassadors-bonuses__content {
+      padding: 0 16px;
+      gap: 0;
+    }
+    .bonuses-screen {
+      display: flex;
+      width: 100%;
+      /* `min-height` y no `height`: en móviles bajos el contenido manda y nunca
+         se recorta. Mismo criterio que la banda Estrella. */
+      min-height: calc(100svh - var(--header-height));
+      padding-block: 48px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+  }
+
+  .ambassadors-band {
+    --w: min(100vw, 1920px, 200svh);
+    position: relative;
+    height: calc(var(--w) / 2);
+    overflow: hidden;
+    background: #000;
+    isolation: isolate;
+  }
+  .ambassadors-band__backdrop {
+    position: absolute;
+    inset: 0;
+  }
+  .ambassadors-band__backdrop picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .ambassadors-band__backdrop :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ambassadors-band__backdrop span {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      100% 400% at 100% 50%,
+      rgba(110, 88, 43, 0.2),
+      rgba(0, 0, 0, 0) 70%
+    );
+  }
+  .ambassadors-band__text {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    display: flex;
+    width: calc(var(--w) * 0.8097);
+    flex-direction: column;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    align-items: flex-start;
+    gap: calc(var(--w) * 0.005556);
+  }
+  .ambassadors-band h2 {
+    color: #f9cb69;
+    font-family: Poppins, sans-serif;
+    font-size: calc(var(--w) * 0.027778);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .ambassadors-band p {
+    width: calc(var(--w) * 0.3646);
+    color: #fefaf0;
+    font-family: Montserrat, sans-serif;
+    font-size: calc(var(--w) * 0.013889);
+    line-height: 1.2;
+  }
+  .ambassadors-band--focus {
+    --whip: 1.35s;
+    --whip-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --whip-lag: 0.1s;
+  }
+  .ambassadors-band--focus[data-revealed="true"] .ambassadors-band__text {
+    transition: transform var(--whip) var(--whip-ease);
+  }
+  .ambassadors-band--focus[data-revealed="true"] .ambassadors-band__text p {
+    transition: transform calc(var(--whip) + 0.1s) var(--whip-ease)
+      var(--whip-lag);
+  }
+  .ambassadors-band--focus[data-revealed="true"] h2 {
+    transition: color 0.9s ease 0.5s;
+  }
+  .ambassadors-band--focus[data-revealed="false"] h2 {
+    color: #fff;
+  }
+  .ambassadors-band--focus[data-revealed="false"] .ambassadors-band__text {
+    transform: translate(
+      calc(-50% + var(--w) * -0.67153),
+      calc(-50% + var(--w) * -0.10833)
+    );
+  }
+  .ambassadors-band--focus[data-revealed="false"] .ambassadors-band__text p {
+    transform: translateX(calc(var(--w) * -0.06));
+  }
+  /* Mobile: the HTML copy overlays the portrait asset's empty upper area.
+     The desktop composition and horizontal reveal remain unchanged. */
+  @media (max-width: 767px) {
+    .ambassadors-band--focus {
+      height: calc(100svh - var(--header-height));
+      background: #000;
+    }
+    .ambassadors-band--focus .ambassadors-band__backdrop {
+      position: absolute;
+      inset: 0;
+    }
+    .ambassadors-band--focus .ambassadors-band__backdrop picture {
+      height: 100%;
+    }
+    .ambassadors-band--focus .ambassadors-band__backdrop :global(img) {
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+    .ambassadors-band--focus .ambassadors-band__backdrop span {
+      display: none;
+    }
+    .ambassadors-band--focus .ambassadors-band__text,
+    .ambassadors-band--focus[data-revealed="true"] .ambassadors-band__text,
+    .ambassadors-band--focus[data-revealed="false"] .ambassadors-band__text {
+      position: absolute;
+      inset: 0 0 auto;
+      width: 100%;
+      padding: clamp(2rem, 6svh, 3.25rem) 1rem 0;
+      align-items: center;
+      gap: clamp(0.875rem, 2svh, 1rem);
+      text-align: center;
+      transform: none;
+    }
+    .ambassadors-band--focus .ambassadors-band__text p,
+    .ambassadors-band--focus[data-revealed="true"] .ambassadors-band__text p,
+    .ambassadors-band--focus[data-revealed="false"] .ambassadors-band__text p {
+      width: min(100%, 20rem);
+      transform: none;
+    }
+    .ambassadors-band--focus h2 {
+      font-size: clamp(1.5rem, 4.2svh, 2rem);
+    }
+    .ambassadors-band--focus[data-revealed="false"] h2 {
+      color: #f9cb69;
+    }
+    .ambassadors-band--focus p {
+      font-size: clamp(0.8125rem, 2.35svh, 1.125rem);
+      line-height: 1.42;
+    }
+  }
+  .ambassadors-star {
+    --star-w: min(100vw, 1920px);
+    position: relative;
+    isolation: isolate;
+    min-height: calc(var(--star-w) * 0.5556);
+    overflow: hidden;
+    background: #000;
+  }
+  .ambassadors-star__pattern {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
+    opacity: 0.12;
+    object-fit: cover;
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      transparent 0 52%,
+      #000 86%
+    );
+    mask-image: radial-gradient(ellipse at center, transparent 0 52%, #000 86%);
+  }
+  .ambassadors-star__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: min(89%, 1720px);
+    margin: auto;
+    padding: clamp(2rem, 4.2vw, 5rem) 0 clamp(2.5rem, 4vw, 4.75rem);
+    flex-direction: column;
+    align-items: center;
+  }
+  .ambassadors-star__brand {
+    position: relative;
+    width: clamp(15rem, 27.5vw, 33rem);
+    height: clamp(4.8rem, 8.6vw, 10.5rem);
+    overflow: visible;
+  }
+  .ambassadors-star__logo-lockup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 82%;
+    isolation: isolate;
+    transform: translate(-50%, -50%);
+  }
+  .ambassadors-star__flare {
+    position: absolute;
+    z-index: 0;
+    top: 92%;
+    left: 49.6%;
+    width: 90%;
+    height: auto;
+    mix-blend-mode: screen;
+    transform: translate(-50%, -50%);
+  }
+  .ambassadors-star__logo-frame {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    overflow: visible;
+    aspect-ratio: 5/1;
+  }
+  .ambassadors-star__logo-frame :global(.ambassadors-star__logo) {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: auto;
+    object-fit: contain;
+  }
+  .ambassadors-star h2 {
+    margin: var(
+      --star-title-margin,
+      clamp(0.7rem, 1.5vw, 1.8rem) 0 clamp(1.5rem, 3.1vw, 3.7rem)
+    );
+    background: linear-gradient(90deg, #a57e27, #f9cb69 49%, #a57e27);
+    background-clip: text;
+    color: transparent;
+    font-family: var(--font-title);
+    font-size: var(--star-title-size, clamp(1.1rem, 2vw, 3rem));
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    padding-block: 0.08em;
+  }
+  .ambassadors-star__requirements {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.4rem, 2.2vw, 2.65rem);
+  }
+  .star-requirement {
+    position: relative;
+    display: flex;
+    min-height: clamp(5.7rem, 8.3vw, 10rem);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #f3c864;
+    border-radius: 8px;
+    background: linear-gradient(
+      105deg,
+      rgba(111, 80, 18, 0.6),
+      rgba(0, 0, 0, 0.54) 35%,
+      rgba(61, 47, 15, 0.48)
+    );
+    box-shadow:
+      0 1.1rem 1.8rem rgba(0, 0, 0, 0.6),
+      0 0.1rem 1.1rem rgba(249, 203, 105, 0.25);
+  }
+  .star-requirement__flare {
+    position: absolute;
+    left: var(--flare-x, 28%);
+    top: 100%;
+    width: 47%;
+    max-width: 16rem;
+    height: auto;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .star-requirement__number {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    display: grid;
+    width: clamp(2.6rem, 3.7vw, 4.4rem);
+    height: clamp(2.6rem, 3.7vw, 4.4rem);
+    place-items: center;
+    border: 2px solid #c99b37;
+    border-radius: 50%;
+    background: #050504;
+    color: #fff9ec;
+    font-family: var(--font-title);
+    font-size: clamp(1.25rem, 1.65vw, 2rem);
+    font-weight: 700;
+    transform: translate(-50%, -76%);
+  }
+  .star-requirement__icon {
+    position: relative;
+    display: block;
+    width: clamp(2.7rem, 4.2vw, 5rem);
+    height: clamp(2.7rem, 4.2vw, 5rem);
+    margin-right: clamp(1rem, 2.4vw, 3rem);
+    flex: 0 0 auto;
+    color: #f9cb69;
+    filter: none;
+  }
+  .star-requirement p {
+    margin: 0;
+    color: #fff9ec;
+    font-family: var(--font-title);
+    font-size: clamp(0.8rem, 1.05vw, 1.3rem);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .star-requirement small {
+    display: block;
+    margin-top: 0.15em;
+    color: #c4bba8;
+    font-family: var(--font-body);
+    font-size: 0.75em;
+    font-weight: 400;
+  }
+  .ambassadors-star__destinations {
+    display: grid;
+    width: 100%;
+    margin-top: clamp(1.8rem, 2.3vw, 2.8rem);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1rem, 1.7vw, 2rem);
+  }
+  .star-destination {
+    min-width: 0;
+    text-align: center;
+  }
+  .star-destination__image {
+    position: relative;
+    aspect-ratio: 1.78;
+    border: 1px solid #f3c864;
+    border-radius: 8px;
+    box-shadow:
+      0 0.8rem 1.4rem rgba(0, 0, 0, 0.65),
+      0 0.1rem 1rem rgba(249, 203, 105, 0.42);
+  }
+  .star-destination__photo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 7px;
+  }
+  .star-destination__photo :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1);
+    transform-origin: center;
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+  .star-destination__flare {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 69%;
+    max-width: 14rem;
+    height: auto;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .star-destination h3 {
+    margin: clamp(0.7rem, 1.05vw, 1.3rem) 0 0;
+    color: #f9cb69;
+    font-family: var(--font-title);
+    font-size: clamp(1rem, 1.55vw, 1.85rem);
+    font-weight: 700;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+  .star-destination p {
+    margin: 0.2rem 0 0;
+    color: #c4bba8;
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 1.55vw, 1.85rem);
+    font-weight: 400;
+    line-height: 1.05;
+    text-transform: none;
+  }
+  .ambassadors-star__footnote {
+    margin: clamp(2rem, 3.8vw, 4.6rem) 0 0;
+    color: #c4bba8;
+    font-family: var(--font-body);
+    font-size: clamp(0.7rem, 1.2vw, 1.45rem);
+    letter-spacing: clamp(0.14rem, 0.52vw, 0.62rem);
+    text-align: center;
+    text-transform: uppercase;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .star-destination:hover .star-destination__photo :global(img) {
+      transform: scale(1.05);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .star-destination__photo :global(img) {
+      transition: none;
+    }
+  }
+  .star-requirement__icon--trophy::before {
+    position: absolute;
+    top: 7%;
+    left: 24%;
+    width: 52%;
+    height: 48%;
+    border: clamp(2px, 0.22vw, 4px) solid #f9cb69;
+    border-top: 0;
+    border-radius: 0 0 48% 48%;
+    content: "";
+  }
+  .star-requirement__icon--trophy::after {
+    position: absolute;
+    bottom: 5%;
+    left: 19%;
+    width: 62%;
+    height: 12%;
+    border: clamp(2px, 0.22vw, 4px) solid #f9cb69;
+    border-radius: 2px;
+    box-shadow:
+      0 calc(clamp(2px, 0.28vw, 5px) * -2.9) 0
+        calc(clamp(2px, 0.22vw, 4px) * -1.1) #000,
+      0 calc(clamp(2px, 0.28vw, 5px) * -2.9) 0 0 #f9cb69;
+    content: "";
+  }
+  .star-requirement__icon--calendar {
+    border: clamp(2px, 0.22vw, 4px) solid #f9cb69;
+    border-radius: 12%;
+    background:
+      radial-gradient(circle, #f9cb69 0 12%, transparent 15%) 20% 66%/28% 28%,
+      radial-gradient(circle, #f9cb69 0 12%, transparent 15%) 50% 66%/28% 28%,
+      radial-gradient(circle, #f9cb69 0 12%, transparent 15%) 80% 66%/28% 28%;
+  }
+  .star-requirement__icon--calendar::before {
+    position: absolute;
+    top: 25%;
+    right: 0;
+    left: 0;
+    border-top: clamp(2px, 0.22vw, 4px) solid #f9cb69;
+    content: "";
+  }
+  .star-requirement__icon--calendar::after {
+    position: absolute;
+    top: calc(clamp(2px, 0.22vw, 4px) * -2);
+    left: 22%;
+    width: 12%;
+    height: 21%;
+    border: clamp(2px, 0.22vw, 4px) solid #f9cb69;
+    border-radius: 1rem;
+    box-shadow: calc(clamp(2px, 0.22vw, 4px) * 9) 0 0
+      calc(clamp(2px, 0.22vw, 4px) * -1);
+    content: "";
+  }
+  /* Figma 3211:12329 is composed as one desktop viewport below the 104px header. */
+  @media (min-width: 768px) {
+    .ambassadors-star {
+      display: flex;
+      min-height: calc(100svh - var(--header-height));
+      overflow: visible;
+    }
+    .ambassadors-star__content {
+      margin-block: auto;
+    }
+    .ambassadors-star__content {
+      --star-title-margin: clamp(0.8rem, 1.35vw, 1.4rem) 0
+        clamp(1.4rem, 2.5vw, 2.8rem);
+      --star-title-size: clamp(1.3rem, 1.9vw, 2.25rem);
+      padding: clamp(1.25rem, 2vw, 2.4rem) 0 clamp(1.5rem, 2.2vw, 2.7rem);
+    }
+    .ambassadors-star__brand {
+      width: clamp(13.5rem, 24.5vw, 29rem);
+      height: clamp(4.2rem, 6.5vw, 8rem);
+    }
+    .star-requirement {
+      min-height: clamp(5.7rem, 7vw, 9rem);
+    }
+    .star-requirement__icon {
+      width: clamp(2.4rem, 3.2vw, 3.9rem);
+      height: clamp(2.4rem, 3.2vw, 3.9rem);
+    }
+    .ambassadors-star__destinations {
+      margin-top: clamp(1.9rem, 2.4vw, 2.75rem);
+    }
+    .star-destination h3 {
+      margin-top: clamp(0.45rem, 0.6vw, 0.7rem);
+      font-size: clamp(0.9rem, 1.3vw, 1.55rem);
+    }
+    .star-destination p {
+      margin-top: 0.15rem;
+      font-size: clamp(0.9rem, 1.3vw, 1.55rem);
+    }
+    .ambassadors-star__footnote {
+      margin-top: clamp(1.8rem, 2.5vw, 3rem);
+      font-size: clamp(0.65rem, 1vw, 1.2rem);
+    }
+  }
+
+  /* Portrait-ish desktop/tablet viewports cannot host the 16:9 composition
+     without shrinking it to a sliver, so reflow to a 2x2 destination grid
+     and drive the vertical rhythm off svh to fill the viewport. */
+  @media (min-width: 768px) and (max-aspect-ratio: 13 / 10) {
+    .ambassadors-star__content {
+      --star-title-size: clamp(1.4rem, min(3.4vw, 3.1svh), 2.6rem);
+      --star-title-margin: clamp(0.6rem, 1.2svh, 1.4rem) 0
+        clamp(1.1rem, 2.2svh, 2.4rem);
+      width: min(92%, 60rem, calc((100svh - var(--header-height)) * 0.95));
+      padding-block: clamp(1rem, 1.8svh, 2.4rem);
+    }
+    .ambassadors-star__brand {
+      width: clamp(13rem, min(33vw, 30svh), 26rem);
+      height: clamp(4rem, min(9.5vw, 8.6svh), 7.5rem);
+    }
+    .ambassadors-star__requirements {
+      gap: clamp(1.2rem, 2.6vw, 2.4rem);
+    }
+    .star-requirement {
+      min-height: clamp(4.6rem, min(11vw, 9.5svh), 7.5rem);
+      padding-inline: clamp(0.9rem, 2vw, 1.6rem);
+    }
+    .star-requirement__icon {
+      width: clamp(2.2rem, min(5.4vw, 4.6svh), 3.6rem);
+      height: clamp(2.2rem, min(5.4vw, 4.6svh), 3.6rem);
+      margin-right: clamp(0.8rem, 2.2vw, 1.8rem);
+    }
+    .star-requirement p {
+      font-size: clamp(0.85rem, min(1.9vw, 1.75svh), 1.25rem);
+    }
+    .ambassadors-star__destinations {
+      margin-top: clamp(1.1rem, 2.2svh, 2.4rem);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(1rem, 2.2svh, 2rem) clamp(1rem, 2.4vw, 2rem);
+    }
+    .star-destination__image {
+      aspect-ratio: 2.1;
+    }
+    .star-destination h3 {
+      margin-top: clamp(0.4rem, 0.9svh, 0.8rem);
+      font-size: clamp(0.95rem, min(2.1vw, 1.9svh), 1.4rem);
+    }
+    .star-destination p {
+      font-size: clamp(0.95rem, min(2.1vw, 1.9svh), 1.4rem);
+    }
+    .ambassadors-star__footnote {
+      margin-top: clamp(1rem, 2.2svh, 2.2rem);
+      font-size: clamp(0.65rem, min(1.5vw, 1.4svh), 1rem);
+      letter-spacing: clamp(0.12rem, 0.5vw, 0.4rem);
+    }
+  }
+
+  /* Below the desktop composition the band follows the stacked Figma layout:
+     one destination per row and a natural page-flow height instead of a
+     viewport-locked band. */
+  @media (max-width: 767px) {
+    .ambassadors-star {
+      display: block;
+      min-height: 0;
+    }
+    .ambassadors-star__content {
+      --star-title-margin: clamp(1rem, 4vw, 1.6rem) 0 clamp(1.6rem, 7vw, 2.6rem);
+      --star-title-size: clamp(1.15rem, 5.2vw, 1.6rem);
+      width: min(92%, 30rem);
+      margin-block: 0;
+      padding-block: clamp(2.2rem, 9vw, 3.2rem);
+    }
+    .ambassadors-star__brand {
+      width: min(88%, 22rem);
+      height: clamp(4.6rem, 17vw, 6.5rem);
+    }
+    .ambassadors-star__requirements {
+      /* En móvil las tarjetas van una debajo de otra: a dos columnas el texto
+         más largo ("Durante 24 Ciclos Consecutivos") se sale de su caja. Es la
+         misma decisión que toma abajo `__destinations`. */
+      width: 100%;
+      grid-template-columns: 1fr;
+      gap: clamp(2.4rem, 9vw, 3.4rem);
+    }
+    .star-requirement {
+      min-height: clamp(5.6rem, 25vw, 8rem);
+      padding: clamp(1rem, 4vw, 1.5rem) clamp(1rem, 4.5vw, 1.7rem);
+      justify-content: flex-start;
+    }
+    .star-requirement__icon {
+      width: clamp(2.9rem, 13vw, 4rem);
+      height: clamp(2.9rem, 13vw, 4rem);
+      margin-right: clamp(0.9rem, 4vw, 1.5rem);
+    }
+    .star-requirement p {
+      font-size: clamp(0.9rem, 3.9vw, 1.2rem);
+    }
+    .star-requirement small {
+      font-size: 0.82em;
+    }
+    .ambassadors-star__destinations {
+      width: 100%;
+      margin-top: clamp(2rem, 8vw, 3rem);
+      grid-template-columns: 1fr;
+      gap: clamp(1.6rem, 6.5vw, 2.4rem);
+    }
+    .star-destination__image {
+      aspect-ratio: 2.25;
+    }
+    .star-destination h3 {
+      margin-top: clamp(0.6rem, 2.6vw, 0.9rem);
+      font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+      text-transform: none;
+    }
+    .star-destination p {
+      font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+    }
+    .ambassadors-star__footnote {
+      max-width: 100%;
+      margin-top: clamp(2rem, 8vw, 3rem);
+      font-size: clamp(0.62rem, 2.6vw, 0.85rem);
+    }
+  }
+</style>
+
+<script>
+  const bands = [
+    ...document.querySelectorAll<HTMLElement>("[data-band-reveal]"),
+  ];
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (bands.length && "IntersectionObserver" in window && !reducedMotion) {
+    for (const band of bands) band.dataset.revealed = "false";
+
+    const reveal = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const band = entry.target as HTMLElement;
+          const screenful = entry.rootBounds
+            ? entry.intersectionRect.height / entry.rootBounds.height
+            : 0;
+          if (entry.intersectionRatio >= 0.6 || screenful >= 0.6)
+            band.dataset.revealed = "true";
+          else if (!entry.isIntersecting) band.dataset.revealed = "false";
+        }
+      },
+      { threshold: [0, 0.25, 0.4, 0.6, 0.8, 1] },
+    );
+
+    for (const band of bands) reveal.observe(band);
+  }
+
+  const requirementCards = [
+    ...document.querySelectorAll<HTMLElement>(".star-requirement"),
+  ];
+  if (requirementCards.length) {
+    const positionFlares = () => {
+      for (const card of requirementCards) {
+        const icon = card.querySelector<HTMLElement>(".star-requirement__icon");
+        const text = card.querySelector<HTMLElement>("p");
+        const flare = card.querySelector<HTMLElement>(
+          ".star-requirement__flare",
+        );
+        if (!icon || !text || !flare) continue;
+        const cardRect = card.getBoundingClientRect();
+        const iconRect = icon.getBoundingClientRect();
+        const textRect = text.getBoundingClientRect();
+        const midX = (iconRect.right + textRect.left) / 2;
+        const fraction = (midX - cardRect.left) / cardRect.width;
+        card.style.setProperty("--flare-x", `${(fraction * 100).toFixed(2)}%`);
+      }
+    };
+
+    positionFlares();
+    window.addEventListener("resize", positionFlares);
+    document.fonts?.ready.then(positionFlares).catch(() => {});
+  }
+</script>

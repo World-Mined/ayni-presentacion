@@ -1,0 +1,55 @@
+---
+import { Image } from 'astro:assets';
+import ambassadorsHero from '../../../assets/v2/ambassadors-hero.webp';
+---
+
+<section class="ambassadors-hero">
+  <!-- Sin `widths`/`sizes`: la foto se recorta con `cover` sobre una caja tan
+       alta como la pantalla, así que el ancho necesario lo manda la altura
+       (alto × 1440/720), no el del viewport —con `100vw` el móvil se bajaba una
+       variante de 390×195 y la estiraba—. El original de Figma son 1440×720, de
+       modo que esa única variante es también la mayor que existe. -->
+  <div class="ambassadors-hero__backdrop" aria-hidden="true">
+    <Image src={ambassadorsHero} alt="" />
+  </div>
+  <div class="ambassadors-hero__veil" aria-hidden="true"></div>
+  <div class="ambassadors-hero__content">
+    <p class="ambassadors-hero__wordmark">AYNI</p>
+    <p class="ambassadors-hero__copy">
+      Nuestro propósito es devolverle al cuerpo su equilibrio natural a través de la sabiduría de
+      nuestros superalimentos. Es un honor que emprendedores como tú se unan a esta cadena de
+      reciprocidad y sean parte de la historia que estamos sembrando juntos.
+    </p>
+  </div>
+</section>
+
+<style>
+  /* Portada a pantalla completa: los 720px del frame de Figma se quedan cortos
+     en cuanto el monitor pasa de 1440. Se descuenta el header —es sticky y
+     ocupa sitio en el flujo, no va superpuesto—. `svh` en vez de `vh` para que
+     en móvil la barra del navegador no deje el hero más alto que la pantalla;
+     la línea previa es el respaldo para navegadores sin `svh`. Si la ventana es
+     muy baja, el propio padding y el texto marcan el mínimo. */
+  .ambassadors-hero { position:relative;display:grid;min-height:calc(100vh - var(--header-height));min-height:calc(100svh - var(--header-height));align-items:center;justify-items:center;overflow:hidden;padding:120px 80px;background:#050504;isolation:isolate; }
+  .ambassadors-hero__backdrop { position:absolute;z-index:0;inset:0;pointer-events:none; }
+  .ambassadors-hero__backdrop :global(img) { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+  /* Dos capas en un solo elemento: encima el degradado radial de Figma —una
+     elipse rotada que `radial-gradient` no reproduce, así que va tal cual como
+     SVG— y debajo el velo negro al 45% que baja el contraste de la foto. */
+  .ambassadors-hero__veil { position:absolute;z-index:1;inset:0;background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 1440 720' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%25' width='100%25' fill='url(%23grad)'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-200.65 115.35 -271.18 -471.71 1716 -249.5)'><stop stop-color='rgba(0,0,0,0.64)' offset='0.45532'/><stop stop-color='rgba(0,0,0,0)' offset='1'/></radialGradient></defs></svg>"),linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45));background-position:center;background-size:100% 100%;pointer-events:none; }
+  .ambassadors-hero__content { position:relative;z-index:2;display:flex;width:min(100%,1048px);flex-direction:column;align-items:center;gap:16px;padding-block:24px;text-align:center; }
+  .ambassadors-hero__wordmark { margin:0;color:#ece9e3;font-family:Poppins,sans-serif;font-size:72px;font-weight:800;line-height:80px; }
+  .ambassadors-hero__copy { margin:0;color:#fefaf0;font-family:Poppins,sans-serif;font-size:28px;font-weight:400;line-height:33px; }
+  @media(max-width:767px){
+    /* El frame móvil mantiene los 720px de alto y el AYNI a 72px; sólo bajan el
+       padding lateral (16px) y el cuerpo (16px). El radial se estrecha a 586px
+       anclado a la izquierda del viewport: 586/390 = 150.26% de ancho, y con
+       `background-position:100%` su borde izquierdo cae en -196px, como en Figma. */
+    .ambassadors-hero { padding:120px 16px; }
+    .ambassadors-hero__veil { background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 586 720' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%25' width='100%25' fill='url(%23grad)'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-81.653 115.35 -110.35 -471.71 698.32 -249.5)'><stop stop-color='rgba(0,0,0,0.64)' offset='0.45532'/><stop stop-color='rgba(0,0,0,0)' offset='1'/></radialGradient></defs></svg>"),linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45));background-position:100% 0,center;background-size:150.26% 100%,100% 100%; }
+    .ambassadors-hero__copy { font-size:16px; }
+  }
+  @media(max-width:359px){
+    .ambassadors-hero__wordmark { font-size:64px;line-height:72px; }
+  }
+</style>
